@@ -100,6 +100,14 @@ main{position:fixed;top:var(--oben,110px);left:0;right:0;bottom:0}
 .liste-kopf{display:flex;justify-content:space-between;align-items:center;gap:10px}
 .liste-kopf h2{margin-bottom:14px}
 .hilfe-knopf{width:30px;height:30px;border-radius:50%;border:1px solid var(--linie);background:#fff;color:var(--kakao);font-weight:700;margin-right:4px}
+#datenschutz{position:fixed;inset:0;background:rgba(43,33,27,.45);z-index:2600;display:grid;place-items:center;padding:16px}
+.ds-karte{width:min(620px,100%)}
+.ds-inhalt{font-size:14px;line-height:1.55}
+.ds-inhalt h3{font-size:15px;color:var(--kakao);margin:16px 0 6px}
+.ds-inhalt p{margin:0 0 8px}
+.ds-inhalt ul{margin:0 0 8px;padding-left:18px}
+.ds-inhalt li{margin-bottom:6px}
+.ds-inhalt a{color:var(--kakao)}
 #rundgang{position:fixed;inset:0;background:rgba(43,33,27,.45);z-index:2500;display:grid;place-items:center;padding:16px}
 .rg-karte{background:var(--papier);border-radius:18px;box-shadow:0 12px 40px rgba(0,0,0,.25);width:min(480px,100%);max-height:calc(100vh - 32px);overflow:auto;padding:18px 20px 16px}
 .rg-kopf{display:flex;justify-content:space-between;align-items:center;font-size:13px}
@@ -246,6 +254,7 @@ table.team td,table.team th{padding:8px 10px;border-bottom:1px solid var(--linie
       <button class="knopf" id="link-knopf" style="width:100%">Anmelde-Link schicken</button>
       <div id="login-nachricht" class="hinweis"></div>
       <div class="hinweis">Du bekommst einen Link per Mail – ein Klick darauf, und du bist angemeldet. Kein Passwort nötig.</div>
+      <div class="hinweis"><a href="#" data-datenschutz style="color:var(--kakao)">Datenschutzhinweis</a></div>
     </div>
     <div id="login-demo" class="versteckt">
       <p>Demo mit Beispieldaten – nichts davon wird gespeichert oder geteilt.</p>
@@ -296,6 +305,60 @@ table.team td,table.team th{padding:8px 10px;border-bottom:1px solid var(--linie
 </main>
 
 <div id="toast"></div>
+<div id="datenschutz" class="versteckt" role="dialog" aria-modal="true" aria-labelledby="ds-titel">
+  <div class="rg-karte ds-karte">
+    <div class="rg-kopf"><span class="leise">Stand: 24.09.2026</span><button class="rg-zu" data-ds-zu aria-label="Schließen">×</button></div>
+    <h2 id="ds-titel">Datenschutzhinweis</h2>
+    <div class="ds-inhalt">
+      <p>Die Botschafter-Karte ist eine interne Arbeitsplattform für Botschafterinnen und Botschafter,
+         die den Kakao von Maya Munay weitertragen. Hier steht offen, welche Daten dabei entstehen und wo sie liegen.</p>
+
+      <h3>Wer ist zuständig?</h3>
+      <p>Verantwortlicher im Sinne der DSGVO:<br>Yilmaz Sürmeli, Nordrehr 16, 31515 Wunstorf<br>
+         E-Mail: <a href="mailto:aloha@yilmazkoshua.de">aloha@yilmazkoshua.de</a></p>
+
+      <h3>Welche Daten gespeichert werden</h3>
+      <p><b>Über dich als Teammitglied:</b> Name, E-Mail-Adresse, Rolle (Betreuung oder Teamleitung), Region,
+         der Zeitpunkt deiner Anmeldungen sowie deine Einträge (Besuche, Proben, Notizen) mit deinem Namen.</p>
+      <p><b>Über die Orte:</b> Geschäftsangaben wie Name, Adresse, Telefon, Website, Status, Art und Notizen –
+         und, falls eingetragen, der Name einer Ansprechperson (z.B. „Anna, Inhaberin“). Bitte hier nur das Nötigste eintragen.</p>
+      <p><b>Technisch:</b> Beim Aufruf der Seite erhalten die unten genannten Dienste deine IP-Adresse.
+         Dein Browser speichert deine Anmeldung und kleine Einstellungen (z.B. Sortierung der Liste).
+         Es gibt kein Tracking und keine Werbung.</p>
+
+      <h3>Wofür und auf welcher Grundlage</h3>
+      <p>Die Daten dienen der Zusammenarbeit im Team: sehen, wo der Kakao schon ist, wer welchen Ort betreut
+         und wann der nächste Kontakt ansteht. Grundlage ist bei Teammitgliedern Art. 6 Abs. 1 lit. b DSGVO
+         (Zusammenarbeit), bei Ansprechpersonen und für den technischen Betrieb Art. 6 Abs. 1 lit. f DSGVO
+         (berechtigtes Interesse an geschäftlichem Kontakt und einer sicheren, funktionierenden App).</p>
+
+      <h3>Wer Daten erhält (Dienstleister)</h3>
+      <ul>
+        <li><b>Supabase</b> – Datenbank und Anmeldung. Server in Frankfurt (EU). Supabase Inc. hat ihren Sitz in den USA;
+            die Übermittlung ist über Standardvertragsklauseln abgesichert.</li>
+        <li><b>Brevo</b> (Sendinblue SAS, Frankreich) – Versand der Anmelde- und Einladungs-Mails.</li>
+        <li><b>Google Maps Platform</b> (Google Ireland Ltd. / Google LLC) – Karte und Ortssuche. Dabei kann es zu einer
+            Übermittlung in die USA kommen (EU-US Data Privacy Framework).</li>
+        <li><b>GitHub Pages</b> (GitHub Inc., USA) – stellt die Seite bereit (Server-Protokolle mit IP-Adresse).</li>
+        <li><b>jsDelivr / cdnjs</b> – liefern Programm-Bausteine der App aus (IP-Adresse beim Laden).</li>
+      </ul>
+      <p>Die Daten werden nicht an weitere Personen gegeben und nicht für Werbung genutzt. Innerhalb der App
+         sehen nur eingeladene Teammitglieder die Inhalte.</p>
+
+      <h3>Wie lange</h3>
+      <p>Deine Daten bleiben gespeichert, solange du im Team bist. Wirst du aus dem Team entfernt, werden dein Name und
+         deine E-Mail-Adresse gelöscht; deine Besuche und Proben bleiben ohne Namen erhalten. Orte bleiben, bis die
+         Teamleitung sie entfernt – auf Wunsch einer Ansprechperson werden deren Angaben umgehend gelöscht.</p>
+
+      <h3>Deine Rechte</h3>
+      <p>Du hast das Recht auf Auskunft, Berichtigung, Löschung, Einschränkung, Datenübertragbarkeit und Widerspruch.
+         Schreib dazu einfach an <a href="mailto:aloha@yilmazkoshua.de">aloha@yilmazkoshua.de</a>.
+         Außerdem kannst du dich bei einer Datenschutz-Aufsichtsbehörde beschweren, z.B. bei der
+         Landesbeauftragten für den Datenschutz Niedersachsen.</p>
+    </div>
+    <div class="rg-fuss" style="justify-content:flex-end"><button class="knopf gold" data-ds-zu>Schließen</button></div>
+  </div>
+</div>
 <div id="rundgang" class="versteckt" role="dialog" aria-modal="true" aria-labelledby="rg-titel">
   <div class="rg-karte">
     <div class="rg-kopf"><span id="rg-schritt" class="leise"></span><button class="rg-zu" data-rg="zu" aria-label="Rundgang schließen">×</button></div>
@@ -710,7 +773,7 @@ async function googleKarte(key){
   const el = document.getElementById('karte');
   // mapId: 'DEMO_MAP_ID' reicht zum Testen; für die fertige App eigene Map-ID aus der Google Cloud Console
   const m = new Map(el, {center:{lat:51, lng:9.5}, zoom:6, mapId:'DEMO_MAP_ID', disableDefaultUI:true, zoomControl:true,
-    gestureHandling:'greedy', clickableIcons:false});
+    gestureHandling:'greedy', clickableIcons:false});   // Google-eigene Orte bewusst nicht anklickbar (Tageslimit schonen)
   let orte = [], kand = {};
   const merc = lat => Math.log(Math.tan(Math.PI / 4 + lat * Math.PI / 360));
   const punkt = kl => { const d = document.createElement('div'); d.className = 'gpunkt ' + kl; return d; };
@@ -1165,7 +1228,11 @@ async function ortKarteOeffnen(id){
   zeichnen(null, null);
   panel.classList.add('offen'); document.body.classList.add('panel-offen');
   if (k.google) {
-    try { const d = await googleDetails(k.google); if (offeneKarte === id) zeichnen(d, null); }
+    try {
+      const d = await googleDetails(k.google);
+      k.name = k.name || d.displayName || ''; k.adresse = k.adresse || d.formattedAddress || '';
+      if (offeneKarte === id) zeichnen(d, null);
+    }
     catch(e){ console.error(e); if (offeneKarte === id) zeichnen(null, istLimit(e) ? 'Google-Tageslimit für heute erreicht' : String(e.message || e).slice(0, 160)); }
   }
 }
@@ -1430,6 +1497,7 @@ function einstellungenZeichnen(){
       <button class="knopf klein" id="g-sichern">Sichern & neu laden</button>
       ${googleSchluessel() ? '<button class="knopf rot klein" id="g-weg">Schlüssel entfernen</button>' : ''}</div>
     <div class="hinweis" style="text-align:left">${DEMO ? 'Demo: Der Schlüssel bleibt nur in diesem Browser.' : 'Der Schlüssel gilt für das ganze Team und ist nur für angemeldete Personen lesbar.'} Anleitung: google-einrichten.md im Projektordner.</div>` : ''}
+    <p class="hinweis" style="text-align:left;margin-top:18px"><a href="#" data-datenschutz style="color:var(--kakao)">Datenschutzhinweis</a></p>
     ${leitung ? `<h3>Daten</h3>
     <div class="inline">
       <button class="knopf klein" data-excel>⬇︎ Excel-Tabelle herunterladen</button>
@@ -1530,7 +1598,7 @@ document.addEventListener('click', e => { if (e.target.closest('[data-excel]')) 
 const legZeile = (status, text) => `<div class="rg-leg"><span class="leg-sym" style="--farbe:${STATUS[status].farbe}">${statusSvg(status, 16)}</span><span>${text}</span></div>`;
 const RUNDGANG = [
   {titel:'Aloha, schön, dass du da bist 🌱', html:() => `
-    <p>Die <b>Botschafter-Karte</b> ist unsere gemeinsame Karte für den Kakao von Maya Munay.</p>
+    <p>Die <b>Botschafter-Karte</b> ist unsere einheitliche Karte für den Kakao von Maya Munay.</p>
     <p>Hier sehen wir alle Orte, an denen der Kakao schon ist oder gut hinpassen könnte –
        <b>Cafés, Yoga-Studios, Höfe, Supermärkte und Event-Locations</b>.</p>
     <p>So weiß jede und jeder im Team, wer wo schon war, und niemand fragt doppelt an.</p>`},
@@ -1564,6 +1632,7 @@ const RUNDGANG = [
     <p>🇪🇺 Die Daten liegen auf <b>Servern in der EU</b> (Frankfurt). Jede Person bearbeitet ihre eigenen Orte, die Teamleitung koordiniert.</p>
     <p>🗺️ Die Karte kommt von <b>Google Maps</b> – beim Laden erhält Google deine IP-Adresse.</p>
     <p>🙏 Bei Ansprechpersonen bitte nur das Nötigste eintragen, z.B. „Anna (Inhaberin)“.</p>
+    <p><a href="#" data-datenschutz style="color:var(--kakao)">Den ganzen Datenschutzhinweis lesen</a></p>
     <p class="leise" style="font-size:13px">Diesen Rundgang findest du jederzeit wieder über das <b>?</b> oben rechts.</p>`},
 ];
 let rgSchritt = 0;
@@ -1596,6 +1665,12 @@ document.addEventListener('keydown', e => {
   if (e.key === 'ArrowLeft') rundgangZeigen(rgSchritt - 1);
 });
 document.getElementById('hilfe-knopf').onclick = () => rundgangZeigen(0);
+
+/* ============ Datenschutzhinweis ============ */
+document.addEventListener('click', e => {
+  if (e.target.closest('[data-datenschutz]')) { e.preventDefault(); document.getElementById('datenschutz').classList.remove('versteckt'); }
+  if (e.target.closest('[data-ds-zu]') || e.target.id === 'datenschutz') document.getElementById('datenschutz').classList.add('versteckt');
+});
 
 /* ============ Start ============ */
 function allesZeichnen(){
