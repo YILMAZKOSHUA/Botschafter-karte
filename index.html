@@ -97,6 +97,35 @@ main{position:fixed;top:var(--oben,110px);left:0;right:0;bottom:0}
 .leer-hinweis{border-color:#c0392b!important;box-shadow:0 0 0 3px rgba(192,57,43,.15)}
 .feld small{color:var(--leise);font-weight:400}
 .leise{color:var(--leise)}
+.liste-kopf{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.liste-kopf h2{margin-bottom:14px}
+.hilfe-knopf{width:30px;height:30px;border-radius:50%;border:1px solid var(--linie);background:#fff;color:var(--kakao);font-weight:700;margin-right:4px}
+#rundgang{position:fixed;inset:0;background:rgba(43,33,27,.45);z-index:2500;display:grid;place-items:center;padding:16px}
+.rg-karte{background:var(--papier);border-radius:18px;box-shadow:0 12px 40px rgba(0,0,0,.25);width:min(480px,100%);max-height:calc(100vh - 32px);overflow:auto;padding:18px 20px 16px}
+.rg-kopf{display:flex;justify-content:space-between;align-items:center;font-size:13px}
+.rg-zu{border:0;background:var(--creme);border-radius:50%;width:30px;height:30px;font-size:18px}
+.rg-karte h2{color:var(--kakao);font-size:20px;margin:6px 0 10px}
+.rg-inhalt{font-size:15px;line-height:1.5}
+.rg-inhalt p{margin:0 0 10px}
+.rg-limit{background:var(--creme);border:1px solid var(--linie);border-radius:10px;padding:8px 10px;font-size:14px}
+.rg-leg{display:flex;align-items:center;gap:10px;margin:6px 0;font-size:14px}
+.rg-punkte{display:flex;justify-content:center;gap:6px;margin:12px 0}
+.rg-punkte span{width:8px;height:8px;border-radius:50%;background:var(--linie)}
+.rg-punkte span.an{background:var(--gold);width:20px;border-radius:4px}
+.rg-fuss{display:flex;justify-content:space-between;gap:10px}
+.reiter{display:flex;gap:6px;margin:4px 0 12px}
+.reiter button{border:1px solid var(--linie);background:#fff;border-radius:999px;padding:7px 14px;font-weight:600;color:var(--leise)}
+.reiter button.aktiv{background:var(--gold-hell);border-color:var(--gold);color:var(--kakao)}
+.cafe-karte .zuletzt{color:var(--kakao)}
+.chronik h3{margin:16px 0 6px}
+.chronik-zeile{display:flex;gap:10px;align-items:flex-start;background:var(--papier);border:1px solid var(--linie);border-radius:var(--radius);padding:10px 12px;margin-bottom:6px;cursor:pointer;font-size:14px}
+.chronik-zeile:hover{border-color:var(--gold)}
+.chronik-zeile .info{flex:1;min-width:0}
+.chronik-zeile .klein{font-size:12px;color:var(--leise);margin-top:2px}
+.chronik-sym{font-size:18px;line-height:1.2}
+.eintrag-kopf{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.weg{border:0;background:transparent;color:var(--leise);font-size:18px;line-height:1;padding:0 2px;cursor:pointer}
+.weg:hover{color:#a33}
 .sync-status{font-size:12px;color:var(--leise);margin-right:6px;white-space:nowrap}
 @media (max-width:760px){ .sync-status{display:none} }
 .spin-icon{background:none;border:0}
@@ -237,7 +266,7 @@ table.team td,table.team th{padding:8px 10px;border-bottom:1px solid var(--linie
     <button data-view="erinnerungen">🔔 Erinnerungen <span class="badge" id="badge"></span></button>
     <button data-view="einstellungen" id="tab-einst">⚙️ Team</button>
   </nav>
-  <div class="ich"><span id="sync-status" class="sync-status"></span><span class="rolle" id="ich-rolle"></span><strong id="ich-name"></strong>
+  <div class="ich"><span id="sync-status" class="sync-status"></span><button class="hilfe-knopf" id="hilfe-knopf" title="Kurzer Rundgang" aria-label="Kurzer Rundgang">?</button><span class="rolle" id="ich-rolle"></span><strong id="ich-name"></strong>
     <button class="knopf leise klein" id="abmelden">Abmelden</button></div>
 </header>
 
@@ -267,6 +296,18 @@ table.team td,table.team th{padding:8px 10px;border-bottom:1px solid var(--linie
 </main>
 
 <div id="toast"></div>
+<div id="rundgang" class="versteckt" role="dialog" aria-modal="true" aria-labelledby="rg-titel">
+  <div class="rg-karte">
+    <div class="rg-kopf"><span id="rg-schritt" class="leise"></span><button class="rg-zu" data-rg="zu" aria-label="Rundgang schließen">×</button></div>
+    <h2 id="rg-titel"></h2>
+    <div id="rg-inhalt" class="rg-inhalt"></div>
+    <div class="rg-punkte" id="rg-punkte"></div>
+    <div class="rg-fuss">
+      <button class="knopf leise klein" data-rg="zurueck" id="rg-zurueck">Zurück</button>
+      <button class="knopf gold" data-rg="weiter" id="rg-weiter">Weiter</button>
+    </div>
+  </div>
+</div>
 <div id="fehler" class="versteckt" style="position:fixed;left:50%;top:120px;transform:translateX(-50%);z-index:3000;background:#fff;border:1px solid #e4c6c6;border-radius:14px;box-shadow:0 6px 24px rgba(0,0,0,.18);padding:14px 16px;width:min(560px,calc(100% - 32px));font-size:14px">
   <b id="fehler-titel"></b><pre id="fehler-text" style="white-space:pre-wrap;background:#faf6ef;border-radius:8px;padding:8px;font-size:12px;user-select:text;margin:8px 0"></pre>
   <button class="knopf klein" onclick="document.getElementById('fehler').classList.add('versteckt')">Schließen</button>
@@ -489,6 +530,7 @@ const F = { status:new Set(Object.keys(STATUS)), betreuung:'', art:'', meine:fal
 const person = id => D.team.find(p => p.id === id);
 const istLeitung = () => ich && ich.rolle === 'teamleitung';
 const darfBearbeiten = c => istLeitung() || !c.betreuung || c.betreuung === ich.id;
+const darfEintragLoeschen = e => istLeitung() || !e.person || e.person === ich.id;   // wie in der Datenbank
 
 /* ============ Toast & Fehlerfenster ============ */
 function fehlerZeigen(titel, text){
@@ -903,14 +945,19 @@ function panelZeichnen(c){
 
     <div class="abschnitt">
       <h4>Proben <span style="font-weight:400;font-size:12px;color:var(--leise)">${c.proben.length}</span></h4>
-      ${c.proben.map((p, i) => `<div class="eintrag"><div><b>${esc(p.sorte)}</b> · ${esc(p.menge)} <span class="meta">am ${datumDe(p.datum)}</span></div>
+      ${c.proben.map((p, i) => `<div class="eintrag"><div class="eintrag-kopf"><div><b>${esc(p.sorte)}</b>${p.menge ? ' · ' + esc(p.menge) : ''} <span class="meta">am ${datumDe(p.datum)}</span></div>
+          ${darfEintragLoeschen(p) ? `<button class="weg" data-akt="probe-weg" data-i="${i}" title="Probe löschen" aria-label="Probe löschen">×</button>` : ''}</div>
         <div class="inline" style="margin-top:4px;align-items:center"><span class="meta">Bestellung danach?</span>
         <select data-akt="probe-status" data-i="${i}" ${dis}>${opt([['offen','noch offen'],['ja','ja 🎉'],['nein','nein']], p.bestellung)}</select></div></div>`).join('') || '<div class="meta" style="font-size:13px;color:var(--leise)">Noch keine Probe.</div>'}
-      <div class="inline" style="margin-top:8px">
-        <select id="probe-sorte">${D.einstellungen.sorten.map(s => `<option>${esc(s)}</option>`).join('')}</select>
-        <input id="probe-menge" placeholder="Menge, z.B. 100 g / 5 Stück" style="width:160px">
-        <input id="probe-datum" type="date" value="${heute()}">
-        <button class="knopf leise klein" data-akt="probe">＋ Probe</button>
+      <div class="neu-box" style="margin-top:8px">
+        <label class="feld" style="margin-bottom:8px">Neue Probe – welches Produkt?
+          <input id="probe-sorte" list="produkt-liste" autocomplete="off" placeholder="eintippen oder aus der Liste wählen"></label>
+        <datalist id="produkt-liste">${D.einstellungen.sorten.map(s => `<option value="${esc(s)}">`).join('')}</datalist>
+        <div class="inline">
+          <input id="probe-menge" placeholder="Menge, z.B. 100 g / 5 Stück" style="flex:1;min-width:140px">
+          <input id="probe-datum" type="date" value="${heute()}">
+          <button class="knopf klein" data-akt="probe">Probe speichern</button>
+        </div>
       </div>
     </div>
 
@@ -922,7 +969,8 @@ function panelZeichnen(c){
         <div class="inline"><input id="besuch-datum" type="date" value="${heute()}"><button class="knopf klein" data-akt="besuch">Besuch speichern</button></div>
       </div>
       ${besuche.length ? '<div class="meta" style="font-size:12px;color:var(--leise);margin:10px 0 6px">Bisherige Besuche</div>' : ''}
-      ${besuche.map(b => `<div class="eintrag"><div class="meta">${datumDe(b.datum)} · ${esc(person(b.person)?.name || '?')}</div>${esc(b.notiz)}</div>`).join('')}
+      ${besuche.map(b => `<div class="eintrag"><div class="eintrag-kopf"><div class="meta">${datumDe(b.datum)} · ${esc(person(b.person)?.name || '?')}</div>
+          ${darfEintragLoeschen(b) ? `<button class="weg" data-akt="besuch-weg" data-id="${esc(b.id)}" title="Besuch löschen" aria-label="Besuch löschen">×</button>` : ''}</div>${esc(b.notiz)}</div>`).join('')}
     </div>
 
     <div class="abschnitt inline">
@@ -952,7 +1000,7 @@ panel.addEventListener('click', e => {
   if (akt === 'google-infos') {
     const box = document.getElementById('g-infos'); box.innerHTML = '<span class="leise">Lade Infos von Google …</span>';
     googleDetails(c.google).then(d => { if (document.getElementById('g-infos')) document.getElementById('g-infos').innerHTML = googleInfoHtml(d); })
-      .catch(err => { box.innerHTML = `<span class="leise">Gerade nicht ladbar (${esc(String(err.message || err).slice(0, 120))})</span>`; });
+      .catch(err => { box.innerHTML = `<span class="leise">${istLimit(err) ? 'Das Google-Tageslimit ist für heute erreicht – morgen klappt es wieder.' : 'Gerade nicht ladbar (' + esc(String(err.message || err).slice(0, 120)) + ')'}</span>`; });
     return;
   }
   if (akt === 'uebernehmen') { c.betreuung = ich.id; toast('Du betreust jetzt ' + c.name + '.'); }
@@ -964,10 +1012,23 @@ panel.addEventListener('click', e => {
     toast('„' + w + '“ steht jetzt allen im Team zur Auswahl.');
   }
   if (akt === 'probe') {
-    c.proben.push({id:uid(), datum:document.getElementById('probe-datum').value || heute(), sorte:document.getElementById('probe-sorte').value,
+    const feld = document.getElementById('probe-sorte'), produkt = feld.value.trim();
+    if (!produkt) { feld.focus(); feld.classList.add('leer-hinweis'); return toast('Magst du eintragen, welches Produkt du da gelassen hast?'); }
+    // Groß-/Kleinschreibung wie in der Liste übernehmen; Neues kommt in die Produktliste
+    const bekannt = D.einstellungen.sorten.find(s => s.toLowerCase() === produkt.toLowerCase());
+    if (!bekannt) D.einstellungen.sorten.push(produkt);
+    c.proben.push({id:uid(), datum:document.getElementById('probe-datum').value || heute(), sorte:bekannt || produkt,
       menge:document.getElementById('probe-menge').value.trim(), bestellung:'offen', person:ich.id});
     if (['potenziell','angesprochen'].includes(c.status)) c.status = 'probe';
-    toast('Probe eingetragen. Ich erinnere in 14 Tagen daran.');
+    toast(bekannt ? 'Probe gespeichert. Ich erinnere in 14 Tagen daran.' : `Probe gespeichert – „${produkt}“ steht jetzt allen in der Produktliste zur Auswahl.`);
+  }
+  if (akt === 'probe-weg') {
+    const pr = c.proben[+b.dataset.i]; if (!pr || !confirm(`Probe „${pr.sorte}“ vom ${datumDe(pr.datum)} löschen?`)) return;
+    c.proben.splice(+b.dataset.i, 1); toast('Probe gelöscht.');
+  }
+  if (akt === 'besuch-weg') {
+    const be = c.besuche.find(x => x.id === b.dataset.id); if (!be || !confirm(`Besuch vom ${datumDe(be.datum)} löschen?`)) return;
+    c.besuche = c.besuche.filter(x => x.id !== be.id); toast('Besuch gelöscht.');
   }
   if (akt === 'besuch') {
     const notiz = document.getElementById('besuch-notiz').value.trim();
@@ -1021,6 +1082,9 @@ async function cafeAnlegen(lat, lng, vorlage = {}){
 }
 
 /* ============ Passende Orte finden ============ */
+// Google meldet ein erreichtes Tageslimit mit diesen Begriffen
+const istLimit = e => /RESOURCE_EXHAUSTED|OVER_QUERY_LIMIT|QUOTA|quota|429/i.test(String(e && (e.message || e)));
+const LIMIT_TEXT = 'Das Google-Tageslimit ist für heute erreicht – so bleibt die App kostenlos. Morgen geht die Suche weiter; alles andere läuft normal.';
 // Suchbegriff je Art (Google-Textsuche im aktuellen Kartenausschnitt)
 const SUCHBEGRIFF = {'Café':'Café', 'Yoga-Studio':'Yoga Studio', 'Event-Location':'Eventlocation', 'Hof':'Hofladen', 'Supermarkt':'Bio Supermarkt'};
 
@@ -1102,7 +1166,7 @@ async function ortKarteOeffnen(id){
   panel.classList.add('offen'); document.body.classList.add('panel-offen');
   if (k.google) {
     try { const d = await googleDetails(k.google); if (offeneKarte === id) zeichnen(d, null); }
-    catch(e){ console.error(e); if (offeneKarte === id) zeichnen(null, String(e.message || e).slice(0, 160)); }
+    catch(e){ console.error(e); if (offeneKarte === id) zeichnen(null, istLimit(e) ? 'Google-Tageslimit für heute erreicht' : String(e.message || e).slice(0, 160)); }
   }
 }
 
@@ -1126,6 +1190,7 @@ async function googleSuche(text, imBereich){
     return liste.length;
   } catch(e){
     console.error(e);
+    if (istLimit(e)) { toast(LIMIT_TEXT); return 0; }
     const text = String(e && (e.message || e)).slice(0, 300);
     googleFehler = 'Letzte Google-Suche: ' + text;
     fehlerZeigen('Die Google-Suche hat nicht geklappt. Googles Meldung:', text);
@@ -1211,31 +1276,94 @@ document.querySelector('main').addEventListener('click', async e => {
 });
 
 /* ============ Liste ============ */
+/* ============ Liste & Aktivitäten ============ */
+// Alle Kontakte (Besuche + Proben) eines Ortes, neueste zuerst
+function aktivitaeten(c){
+  return [...c.besuche.map(b => ({datum:b.datum, person:b.person, art:'Besuch', text:b.notiz, ort:c})),
+          ...c.proben.map(p => ({datum:p.datum, person:p.person, art:'Probe', text:p.sorte + (p.menge ? ' · ' + p.menge : ''), ort:c}))]
+    .sort((a, b) => b.datum.localeCompare(a.datum));
+}
+const letzteAktivitaet = c => aktivitaeten(c)[0] || null;
+const wannText = iso => { const n = tageSeit(iso); return n <= 0 ? 'heute' : n === 1 ? 'gestern' : `vor ${n} Tagen`; };
+
+let listeModus = 'orte', listeSort = 'aktiv', chronikPerson = '';
+try { listeModus = localStorage.getItem('mm-liste-modus') || 'orte'; listeSort = localStorage.getItem('mm-liste-sort') || 'aktiv'; } catch(e){}
+
 function listeZeichnen(){
-  const cafes = sichtbareCafes().sort((a,b) => (a.region + a.stadt + a.name).localeCompare(b.region + b.stadt + b.name));
+  const cafes = sichtbareCafes();
   const zahl = s => D.cafes.filter(c => c.status === s).length;
   const probenOffen = D.cafes.reduce((n, c) => n + c.proben.filter(p => p.bestellung === 'offen').length, 0);
-  let region = '';
-  document.getElementById('liste-inhalt').innerHTML = `
-    <h2>Alle Orte</h2>
+  const alle = D.cafes.flatMap(aktivitaeten);
+  const letzte30 = alle.filter(a => tageSeit(a.datum) <= 30).length;
+  const kopf = `
+    <div class="liste-kopf"><h2>Alle Orte</h2>${istLeitung() ? '<button class="knopf leise klein" data-excel>⬇︎ Excel</button>' : ''}</div>
     <div class="kennzahlen">
       <div class="kennzahl"><b>${zahl('kunde')}</b><span>Kunden</span></div>
       <div class="kennzahl"><b>${zahl('probe') + zahl('angesprochen')}</b><span>im Gespräch</span></div>
       <div class="kennzahl"><b>${zahl('potenziell')}</b><span>potenziell</span></div>
+      <div class="kennzahl"><b>${letzte30}</b><span>Kontakte in den letzten 30 Tagen</span></div>
       <div class="kennzahl"><b>${probenOffen}</b><span>Proben ohne Rückmeldung</span></div>
-      <div class="kennzahl"><b>${D.cafes.filter(c => c.zeremonie || c.event).length}</b><span>offen für Zeremonie/Event</span></div>
     </div>
-    <div class="karten-liste">${cafes.map(c => {
-      const kopf = c.region !== region ? `<h3>${esc(c.region || 'Ohne Region')}</h3>` : ''; region = c.region;
-      return kopf + cafeZeile(c);
-    }).join('') || '<div class="leer">Mit diesen Filtern zeigt sich gerade kein Ort.</div>'}</div>`;
+    <div class="reiter">
+      <button class="${listeModus === 'orte' ? 'aktiv' : ''}" data-liste-modus="orte">📋 Orte</button>
+      <button class="${listeModus === 'chronik' ? 'aktiv' : ''}" data-liste-modus="chronik">🌱 Neueste Aktivitäten</button>
+    </div>`;
+  let inhalt = '';
+  if (listeModus === 'chronik') {
+    // Chronik: wer hat wann was gemacht – über alle (gefilterten) Orte
+    const eintraege = cafes.flatMap(aktivitaeten).filter(a => !chronikPerson || a.person === chronikPerson)
+      .sort((a, b) => b.datum.localeCompare(a.datum)).slice(0, 80);
+    let tagKopf = '';
+    inhalt = `<div class="inline" style="margin:0 0 10px"><select data-chronik-person>
+        <option value="">Alle Personen</option>${D.team.map(p => `<option value="${p.id}" ${chronikPerson === p.id ? 'selected' : ''}>${esc(p.name)}</option>`).join('')}</select></div>
+      <div class="chronik">${eintraege.map(a => {
+        const k = a.datum !== tagKopf ? `<h3>${datumDe(a.datum)} <span class="leise" style="font-weight:400;font-size:13px">· ${wannText(a.datum)}</span></h3>` : ''; tagKopf = a.datum;
+        return k + `<div class="chronik-zeile" data-cafe="${a.ort.id}">
+          <span class="chronik-sym">${a.art === 'Besuch' ? '👣' : '🍫'}</span>
+          <div class="info"><div><b>${esc(person(a.person)?.name || '?')}</b> · ${a.art} · <b>${esc(a.ort.name)}</b> <span class="leise">${esc(a.ort.stadt)}</span></div>
+            <div class="klein">${esc(a.text)}</div></div></div>`;
+      }).join('') || '<div class="leer">Noch keine Besuche oder Proben eingetragen.</div>'}</div>`;
+  } else {
+    const nachAktiv = (a, b) => (letzteAktivitaet(b)?.datum || '').localeCompare(letzteAktivitaet(a)?.datum || '');
+    const sortierer = {
+      aktiv:  nachAktiv,
+      still:  (a, b) => -nachAktiv(a, b),
+      region: (a, b) => (a.region + a.stadt + a.name).localeCompare(b.region + b.stadt + b.name),
+      name:   (a, b) => a.name.localeCompare(b.name),
+    }[listeSort] || nachAktiv;
+    const liste = [...cafes].sort(sortierer);
+    let region = '';
+    inhalt = `<div class="inline" style="margin:0 0 10px;align-items:center"><span class="leise" style="font-size:13px">Sortieren:</span>
+        <select data-liste-sort>
+          <option value="aktiv" ${listeSort === 'aktiv' ? 'selected' : ''}>Neuester Kontakt zuerst</option>
+          <option value="still" ${listeSort === 'still' ? 'selected' : ''}>Am längsten ohne Kontakt zuerst</option>
+          <option value="region" ${listeSort === 'region' ? 'selected' : ''}>Nach Bundesland / Region</option>
+          <option value="name" ${listeSort === 'name' ? 'selected' : ''}>Name A–Z</option>
+        </select></div>
+      <div class="karten-liste">${liste.map(c => {
+        const k = listeSort === 'region' && c.region !== region ? `<h3>${esc(c.region || 'Ohne Region')}</h3>` : ''; region = c.region;
+        return k + cafeZeile(c);
+      }).join('') || '<div class="leer">Mit diesen Filtern zeigt sich gerade kein Ort.</div>'}</div>`;
+  }
+  document.getElementById('liste-inhalt').innerHTML = kopf + inhalt;
 }
+document.getElementById('seite-liste').addEventListener('click', e => {
+  const m = e.target.closest('[data-liste-modus]'); if (!m) return;
+  listeModus = m.dataset.listeModus; try { localStorage.setItem('mm-liste-modus', listeModus); } catch(err){}
+  listeZeichnen();
+});
+document.getElementById('seite-liste').addEventListener('change', e => {
+  if (e.target.matches('[data-liste-sort]')) { listeSort = e.target.value; try { localStorage.setItem('mm-liste-sort', listeSort); } catch(err){} listeZeichnen(); }
+  if (e.target.matches('[data-chronik-person]')) { chronikPerson = e.target.value; listeZeichnen(); }
+});
 function cafeZeile(c, zusatz = ''){
-  const lb = letzterBesuch(c);
+  const la = letzteAktivitaet(c);
+  const zuletzt = la ? `zuletzt ${wannText(la.datum)} (${datumDe(la.datum)}) · ${la.art} von ${esc(person(la.person)?.name || '?')}` : 'noch kein Kontakt';
   return `<div class="cafe-karte" data-cafe="${c.id}">
     <span class="status-pille" style="background:${STATUS[c.status].farbe}">${STATUS[c.status].name}</span>
     <div class="info"><div class="name">${esc(c.name)} ${c.zeremonie || c.event ? '<span title="offen für Zeremonie/Event">✨</span>' : ''}</div>
-      <div class="klein">${esc(c.stadt)} · Betreuung: ${esc(person(c.betreuung)?.name || 'noch frei')} · letzter Besuch: ${datumDe(lb)}</div>${zusatz}</div>
+      <div class="klein">${esc(c.stadt)} · Betreuung: ${esc(person(c.betreuung)?.name || 'noch frei')}</div>
+      <div class="klein zuletzt">${zuletzt}</div>${zusatz}</div>
   </div>`;
 }
 document.querySelector('main').addEventListener('click', e => {
@@ -1291,7 +1419,7 @@ function einstellungenZeichnen(){
       <input id="p-region" placeholder="Region" list="regionen"><button class="knopf klein" id="p-dazu">Person anlegen</button></div>` : ''}
     ${leitung && !DEMO ? `<div class="hinweis" style="text-align:left;margin-top:8px">Neue Person einladen: 1. hier mit E-Mail-Adresse eintragen · 2. in Supabase unter <b>Authentication → Users → Add user → Send invitation</b> dieselbe Adresse einladen. Beim ersten Anmelden wird beides automatisch verbunden.</div>` : ''}
     <h3>Arten (Auswahlliste)</h3>${liste('arten')}
-    <h3>Produkte für Proben</h3>${liste('sorten')}
+    <h3>Produkte für Proben</h3><div class="hinweis" style="text-align:left;margin:-4px 0 8px">Neue Produkte entstehen auch automatisch, wenn jemand bei einer Probe etwas Neues eintippt.</div>${liste('sorten')}
     <h3>Erinnerung</h3>
     <div class="inline" style="align-items:center">Erinnern, wenn ein Ort länger als
       <input type="number" id="wochen" min="1" max="52" value="${E.wochen}" style="width:70px" ${leitung ? '' : 'disabled'}> Wochen keinen Besuch hatte.</div>
@@ -1302,11 +1430,12 @@ function einstellungenZeichnen(){
       <button class="knopf klein" id="g-sichern">Sichern & neu laden</button>
       ${googleSchluessel() ? '<button class="knopf rot klein" id="g-weg">Schlüssel entfernen</button>' : ''}</div>
     <div class="hinweis" style="text-align:left">${DEMO ? 'Demo: Der Schlüssel bleibt nur in diesem Browser.' : 'Der Schlüssel gilt für das ganze Team und ist nur für angemeldete Personen lesbar.'} Anleitung: google-einrichten.md im Projektordner.</div>` : ''}
-    <h3>Daten</h3>
+    ${leitung ? `<h3>Daten</h3>
     <div class="inline">
-      <button class="knopf leise klein" id="export">⬇︎ Als CSV exportieren (Excel / später Odoo)</button>
-      ${leitung && DEMO ? '<button class="knopf rot klein" id="demo">Demo-Daten neu laden</button>' : ''}
-    </div>`;
+      <button class="knopf klein" data-excel>⬇︎ Excel-Tabelle herunterladen</button>
+      ${DEMO ? '<button class="knopf rot klein" id="demo">Demo-Daten neu laden</button>' : ''}
+    </div>
+    <div class="hinweis" style="text-align:left">Nur für die Teamleitung: alle Orte, Besuche und Proben als .xlsx – z.B. für Auswertungen oder später für Odoo.</div>` : ''}`;
 }
 document.getElementById('seite-einstellungen').addEventListener('click', e => {
   const E = D.einstellungen;
@@ -1326,7 +1455,6 @@ document.getElementById('seite-einstellungen').addEventListener('click', e => {
     D.team.push({id:uid(), name, email, rolle:document.getElementById('p-rolle').value, region:document.getElementById('p-region').value.trim()});
     toast(DEMO ? name + ' ist jetzt im Team.' : `${name} ist eingetragen. Jetzt noch in Supabase einladen (siehe Hinweis).`);
   }
-  else if (e.target.id === 'export') return csvExport();
   else if (e.target.id === 'g-sichern' || e.target.id === 'g-weg') {
     const v = e.target.id === 'g-weg' ? '' : document.getElementById('g-schluessel').value.trim();
     if (e.target.id === 'g-sichern' && !v) return toast('Magst du den Schlüssel zuerst einfügen?');
@@ -1358,15 +1486,116 @@ document.getElementById('seite-einstellungen').addEventListener('change', e => {
   }
 });
 
-function csvExport(){
-  const spalten = ['name','adresse','stadt','region','land','lat','lng','status','betreuung','ansprechperson','kontakt','art','zeremonie','event','naechster_kontakt','letzter_besuch','proben','proben_mit_bestellung','notiz','google_place_id'];
-  const zelle = v => `"${String(v ?? '').replace(/"/g, '""')}"`;
-  const zeilen = D.cafes.map(c => [c.name, c.adresse, c.stadt, c.region, c.land, c.lat, c.lng, STATUS[c.status].name, person(c.betreuung)?.name || '',
-    c.ansprechperson, c.kontakt, c.art.join(', '), c.zeremonie ? 'ja' : 'nein', c.event ? 'ja' : 'nein', c.naechsterKontakt, letzterBesuch(c) || '',
-    c.proben.length, c.proben.filter(p => p.bestellung === 'ja').length, c.notiz, c.google || ''].map(zelle).join(';'));
-  const blob = new Blob(['﻿' + [spalten.join(';'), ...zeilen].join('\n')], {type:'text/csv;charset=utf-8'});
-  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `mayamunay-cafes-${heute()}.csv`; a.click();
+/* ============ Excel-Export (nur Teamleitung) ============ */
+function skriptLaden(src){
+  return new Promise((ok, fehler) => { const s = document.createElement('script'); s.src = src; s.onload = ok; s.onerror = () => fehler(new Error('Excel-Baustein ließ sich nicht laden')); document.head.append(s); });
 }
+async function excelExport(){
+  if (!istLeitung()) return toast('Der Export ist der Teamleitung vorbehalten.');
+  toast('Excel-Tabelle wird erstellt …');
+  try {
+    if (!window.XLSX) await skriptLaden('https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js');
+    const name = id => person(id)?.name || '';
+    const datum = iso => iso ? new Date(iso + 'T12:00') : '';
+    const orte = D.cafes.map(c => { const la = letzteAktivitaet(c); return {
+      'Name':c.name, 'Art':c.art.join(', '), 'Status':STATUS[c.status].name, 'Betreuung':name(c.betreuung) || 'noch frei',
+      'Adresse':c.adresse, 'Stadt':c.stadt, 'Bundesland / Region':c.region, 'Land':c.land,
+      'Ansprechperson':c.ansprechperson, 'Telefon / Mail / Insta':c.kontakt,
+      'Offen für Zeremonie':c.zeremonie ? 'ja' : 'nein', 'Offen für Events':c.event ? 'ja' : 'nein',
+      'Nächster Kontakt':datum(c.naechsterKontakt), 'Letzter Kontakt':la ? datum(la.datum) : '', 'Letzter Kontakt von':la ? name(la.person) : '',
+      'Besuche':c.besuche.length, 'Proben':c.proben.length, 'Proben mit Bestellung':c.proben.filter(p => p.bestellung === 'ja').length,
+      'Notiz':c.notiz, 'Breitengrad':c.lat, 'Längengrad':c.lng, 'Google Place ID':c.google || ''}; });
+    const besuche = D.cafes.flatMap(c => c.besuche.map(b => ({'Datum':datum(b.datum), 'Ort':c.name, 'Stadt':c.stadt, 'Von':name(b.person), 'Notiz':b.notiz})))
+      .sort((a, b) => b['Datum'] - a['Datum']);
+    const proben = D.cafes.flatMap(c => c.proben.map(p => ({'Datum':datum(p.datum), 'Ort':c.name, 'Stadt':c.stadt, 'Produkt':p.sorte, 'Menge':p.menge,
+      'Bestellung danach':{offen:'noch offen', ja:'ja', nein:'nein'}[p.bestellung], 'Von':name(p.person)})))
+      .sort((a, b) => b['Datum'] - a['Datum']);
+    const mappe = XLSX.utils.book_new();
+    const blatt = (zeilen, titel, breiten) => {
+      const ws = XLSX.utils.json_to_sheet(zeilen.length ? zeilen : [{'':'(noch keine Einträge)'}], {cellDates:true, dateNF:'dd.mm.yyyy'});
+      ws['!cols'] = breiten.map(w => ({wch:w}));
+      if (zeilen.length) ws['!autofilter'] = {ref:ws['!ref']};
+      XLSX.utils.book_append_sheet(mappe, ws, titel);
+    };
+    blatt(orte, 'Orte', [28,18,18,14,26,16,20,12,20,24,10,10,14,14,16,8,8,10,40,11,11,28]);
+    blatt(besuche, 'Besuche', [12,28,16,14,60]);
+    blatt(proben, 'Proben', [12,28,16,18,14,16,14]);
+    XLSX.writeFile(mappe, `maya-munay-botschafter-karte-${heute()}.xlsx`);
+    toast('Excel-Tabelle ist heruntergeladen ✓');
+  } catch(e){ fehlerZeigen('Der Excel-Export hat nicht geklappt:', String(e.message || e)); }
+}
+document.addEventListener('click', e => { if (e.target.closest('[data-excel]')) excelExport(); });
+
+/* ============ Rundgang beim ersten Login (höchstens 5 Fenster) ============ */
+const legZeile = (status, text) => `<div class="rg-leg"><span class="leg-sym" style="--farbe:${STATUS[status].farbe}">${statusSvg(status, 16)}</span><span>${text}</span></div>`;
+const RUNDGANG = [
+  {titel:'Aloha, schön, dass du da bist 🌱', html:() => `
+    <p>Die <b>Botschafter-Karte</b> ist unsere gemeinsame Karte für den Kakao von Maya Munay.</p>
+    <p>Hier sehen wir alle Orte, an denen der Kakao schon ist oder gut hinpassen könnte –
+       <b>Cafés, Yoga-Studios, Höfe, Supermärkte und Event-Locations</b>.</p>
+    <p>So weiß jede und jeder im Team, wer wo schon war, und niemand fragt doppelt an.</p>`},
+  {titel:'Die Legende – wie ein Ort wächst', html:() => `
+    <p>Jeder Ort wächst mit uns, vom Samen bis zum tragenden Baum:</p>
+    ${legZeile('potenziell', '<b>Samen</b> – könnte passen')}
+    ${legZeile('angesprochen', '<b>Pflänzchen</b> – schon angesprochen')}
+    ${legZeile('probe', '<b>Kakaofrucht</b> – eine Probe ist da')}
+    ${legZeile('kunde', '<b>Baum mit Früchten</b> – Kunde')}
+    ${legZeile('pause', '<b>verwelkt</b> – passt gerade nicht')}
+    <div class="rg-leg"><span class="leg-gold"></span><span>goldener Punkt – offen für eine Kakao-Zeremonie oder ein Event</span></div>
+    <p class="leise" style="font-size:13px">Die Legende findest du auch unten links auf der Karte.</p>`},
+  {titel:'Orte finden und anlegen', html:() => `
+    <p>🔎 <b>Suchen:</b> Oben den Namen mit Stadt eintippen, z.B. „Solebich Bad Kissingen“, und Enter drücken.
+       Es öffnet sich eine Ortskarte mit Öffnungszeiten, Telefon und Website.</p>
+    <p>➕ <b>Auf die Karte bringen:</b> In der Ortskarte auf „Als potenziell auf die Karte“ tippen –
+       oder mit <b>＋ Ort</b> einfach auf die Karte tippen.</p>
+    <p>✨ <b>Passende Orte finden</b> zeigt Vorschläge im aktuellen Kartenausschnitt, z.B. Yoga-Studios, wenn du oben diese Art wählst.</p>
+    <p class="rg-limit">🌿 <b>Damit die App kostenlos bleibt,</b> gibt es bei Google ein Tageslimit für das ganze Team:
+       etwa <b>150 Suchen</b> und <b>30 Ortskarten</b> pro Tag. Ist es erreicht, geht die Suche am nächsten Tag weiter –
+       alles andere (Karte, Besuche, Proben) läuft ganz normal.</p>`},
+  {titel:'Besuche, Proben und Erinnerungen', html:() => `
+    <p>Tippe einen Ort an, dann kannst du:</p>
+    <p>👣 einen <b>Besuch</b> notieren · 🍫 eine <b>Probe</b> eintragen (Produkt einfach eintippen) ·
+       den <b>Status</b> anpassen – und unten auf <b>„Speichern & schließen“</b>.</p>
+    <p>🔔 <b>Erinnerungen</b> zeigen dir, wo ein Kontakt ansteht oder eine Probe auf Rückmeldung wartet.</p>
+    <p>📋 Unter <b>Liste → Neueste Aktivitäten</b> siehst du, wo im Team gerade Bewegung ist.</p>`},
+  {titel:'Achtsam mit Daten 🤍', html:() => `
+    <p>Uns ist wichtig, dass sich alle hier sicher fühlen:</p>
+    <p>🔐 <b>Nur eingeladene Personen</b> aus dem Team sehen die Karte. Die Anmeldung läuft ohne Passwort über einen Link per Mail.</p>
+    <p>🇪🇺 Die Daten liegen auf <b>Servern in der EU</b> (Frankfurt). Jede Person bearbeitet ihre eigenen Orte, die Teamleitung koordiniert.</p>
+    <p>🗺️ Die Karte kommt von <b>Google Maps</b> – beim Laden erhält Google deine IP-Adresse.</p>
+    <p>🙏 Bei Ansprechpersonen bitte nur das Nötigste eintragen, z.B. „Anna (Inhaberin)“.</p>
+    <p class="leise" style="font-size:13px">Diesen Rundgang findest du jederzeit wieder über das <b>?</b> oben rechts.</p>`},
+];
+let rgSchritt = 0;
+const rgSchluessel = () => 'mm-rundgang-v1-' + (ich?.id || '');
+function rundgangZeigen(i = 0){
+  rgSchritt = Math.max(0, Math.min(RUNDGANG.length - 1, i));
+  const s = RUNDGANG[rgSchritt];
+  document.getElementById('rg-titel').textContent = s.titel;
+  document.getElementById('rg-inhalt').innerHTML = s.html();
+  document.getElementById('rg-schritt').textContent = `${rgSchritt + 1} von ${RUNDGANG.length}`;
+  document.getElementById('rg-punkte').innerHTML = RUNDGANG.map((_, j) => `<span class="${j === rgSchritt ? 'an' : ''}"></span>`).join('');
+  document.getElementById('rg-zurueck').style.visibility = rgSchritt ? 'visible' : 'hidden';
+  document.getElementById('rg-weiter').textContent = rgSchritt === RUNDGANG.length - 1 ? 'Los geht’s 🌱' : 'Weiter';
+  document.getElementById('rundgang').classList.remove('versteckt');
+}
+function rundgangSchliessen(){
+  document.getElementById('rundgang').classList.add('versteckt');
+  try { localStorage.setItem(rgSchluessel(), 'gesehen'); } catch(e){}
+}
+document.getElementById('rundgang').addEventListener('click', e => {
+  const a = e.target.closest('[data-rg]')?.dataset.rg;
+  if (e.target.id === 'rundgang' || a === 'zu') return rundgangSchliessen();
+  if (a === 'zurueck') return rundgangZeigen(rgSchritt - 1);
+  if (a === 'weiter') return rgSchritt === RUNDGANG.length - 1 ? rundgangSchliessen() : rundgangZeigen(rgSchritt + 1);
+});
+document.addEventListener('keydown', e => {
+  if (document.getElementById('rundgang').classList.contains('versteckt')) return;
+  if (e.key === 'Escape') rundgangSchliessen();
+  if (e.key === 'ArrowRight') rundgangZeigen(rgSchritt + 1);
+  if (e.key === 'ArrowLeft') rundgangZeigen(rgSchritt - 1);
+});
+document.getElementById('hilfe-knopf').onclick = () => rundgangZeigen(0);
 
 /* ============ Start ============ */
 function allesZeichnen(){
@@ -1380,6 +1609,8 @@ async function start(){
   document.getElementById('ich-name').textContent = ich.name;
   document.getElementById('ich-rolle').textContent = istLeitung() ? 'Teamleitung ·' : 'Betreuung ·';
   legendeZeichnen(); allesZeichnen(); ansichtWechseln('karte');
+  let gesehen = false; try { gesehen = !!localStorage.getItem(rgSchluessel()); } catch(e){}
+  if (!gesehen) setTimeout(() => rundgangZeigen(0), 400);
   if (!istLeitung()) {
     const eigene = D.cafes.filter(c => c.betreuung === ich.id);
     if (eigene.length) K.fitPoints(eigene.map(c => [c.lat, c.lng]), 13);
