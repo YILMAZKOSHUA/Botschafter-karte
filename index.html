@@ -659,7 +659,7 @@ function kakaoSvg(b = KAKAO_B, h = KAKAO_H){
     <path d="M15 4.5 C15 2.5 16.5 1 18.5 1" fill="none" stroke="#3b2a22" stroke-width="2.2" stroke-linecap="round"/>
   </svg>`;
 }
-const KAND = new Map();     // Vorschläge aus der Suche: id → Daten
+const KAND = new Map();     // Suchtreffer (noch nicht eingetragen): id → Daten
 
 function osmKarte(){
   const m = L.map('karte', {zoomControl:false, worldCopyJump:true}).setView([51.0, 9.5], 6);
@@ -731,7 +731,7 @@ async function googleKarte(key){
       orte.forEach(x => x.map = null);
       orte = liste.map(o => {
         const d = document.createElement('div'); d.className = 'spin-icon spin-google'; d.innerHTML = pinHtml(o);
-        const mk = new AdvancedMarkerElement({map:m, position:{lat:o.lat, lng:o.lng}, content:d, title:o.titel, zIndex:o.gross ? 500 : 0});
+        const mk = new AdvancedMarkerElement({map:m, position:{lat:o.lat, lng:o.lng}, content:d, title:o.titel, zIndex:o.gross ? 500 : 0, gmpClickable:true});
         mk.addEventListener('gmp-click', () => klick(o.id)); return mk;
       });
     },
@@ -739,7 +739,7 @@ async function googleKarte(key){
       Object.values(kand).forEach(x => x.map = null); kand = {};
       liste.forEach(k => {
         const d = document.createElement('div'); d.className = 'kakao-icon'; d.innerHTML = kakaoSvg();
-        const mk = new AdvancedMarkerElement({map:m, position:{lat:k.lat, lng:k.lng}, content:d, title:k.titel, zIndex:1000});
+        const mk = new AdvancedMarkerElement({map:m, position:{lat:k.lat, lng:k.lng}, content:d, title:k.titel, zIndex:1000, gmpClickable:true});
         mk.addEventListener('gmp-click', () => klick(k.id));
         kand[k.id] = mk;
       });
@@ -1149,7 +1149,7 @@ async function ortKarteOeffnen(id){
   const zeichnen = (d, fehler) => {
     panel.innerHTML = `
       <div class="panel-kopf"><div style="flex:1"><h2>${esc(d?.displayName || k.name)}</h2>
-        <span class="status-pille" style="background:#b8901e">Vorschlag</span>
+        <span class="status-pille" style="background:#b8901e">Neu entdeckt</span>
         <span style="font-size:12px;color:var(--leise);margin-left:6px">noch nicht auf eurer Karte</span></div>
         <button class="zu" data-karte-zu aria-label="Schließen">×</button></div>
       <div class="panel-rumpf">
@@ -1548,7 +1548,7 @@ const RUNDGANG = [
        Es öffnet sich eine Ortskarte mit Öffnungszeiten, Telefon und Website.</p>
     <p>➕ <b>Auf die Karte bringen:</b> In der Ortskarte auf „Als potenziell auf die Karte“ tippen –
        oder mit <b>＋ Ort</b> einfach auf die Karte tippen.</p>
-    <p>✨ <b>Passende Orte finden</b> zeigt Vorschläge im aktuellen Kartenausschnitt, z.B. Yoga-Studios, wenn du oben diese Art wählst.</p>
+    <p>✨ <b>Passende Orte finden</b> zeigt passende Orte im aktuellen Kartenausschnitt, z.B. Yoga-Studios, wenn du oben diese Art wählst.</p>
     <p class="rg-limit">🌿 <b>Damit die App kostenlos bleibt,</b> gibt es bei Google ein Tageslimit für das ganze Team:
        etwa <b>150 Suchen</b> und <b>30 Ortskarten</b> pro Tag. Ist es erreicht, geht die Suche am nächsten Tag weiter –
        alles andere (Karte, Besuche, Proben) läuft ganz normal.</p>`},
