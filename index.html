@@ -1338,14 +1338,15 @@ async function googleZaehlen(art){
 function zaehlerZeichnen(){
   const el = document.getElementById('google-zaehler'); if (!el) return;
   if (!K || K.art !== 'google') return el.classList.add('versteckt');
-  const reset = naechsterReset(), min = Math.max(0, Math.round((reset - new Date()) / 60000));
-  const bis = min >= 60 ? `${Math.floor(min / 60)} Std. ${min % 60} Min.` : `${min} Min.`;
   const knapp = uebrig('suche') <= 15 || uebrig('ortskarte') <= 5;
   el.className = 'google-zaehler' + (knapp ? ' knapp' : '');
-  el.innerHTML = `🌿 Heute noch <b>${uebrig('suche')}</b> Suchen · <b>${uebrig('ortskarte')}</b> Ortskarten
-    <span class="leise">· neu um ${reset.toLocaleTimeString('de-DE', {hour:'2-digit', minute:'2-digit'})} (in ${bis})</span>`;
+  el.innerHTML = `🌿 Heute noch <b>${uebrig('suche')}</b> Suchen · <b>${uebrig('ortskarte')}</b> Ortskarten`;
 }
-setInterval(zaehlerZeichnen, 60000);                                    // Countdown jede Minute
+// Beim Tageswechsel (Google: Mitternacht Pacific Time) den neuen Stand holen – ohne Uhrzeit-Anzeige
+let letzterPtTag = ptTag();
+setInterval(() => {
+  if (ptTag() !== letzterPtTag) { letzterPtTag = ptTag(); googleStand = {suche:0, ortskarte:0, karte:0}; if (ich) googleStandLaden(); zaehlerZeichnen(); }
+}, 60000);
 setInterval(() => { if (ich && K && K.art === 'google') googleStandLaden(); }, 5 * 60000);   // Stand der anderen
 
 // Google-Details (Bewertung, Öffnungszeiten, Telefon …) – pro Ort nur einmal laden (Tageslimit!)
