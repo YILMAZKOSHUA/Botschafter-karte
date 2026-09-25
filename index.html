@@ -97,6 +97,9 @@ main{position:fixed;top:var(--oben,110px);left:0;right:0;bottom:0}
 .leer-hinweis{border-color:#c0392b!important;box-shadow:0 0 0 3px rgba(192,57,43,.15)}
 .feld small{color:var(--leise);font-weight:400}
 .leise{color:var(--leise)}
+.google-zaehler{font-size:12px;color:var(--kakao);background:var(--gold-hell);border:1px solid #e6d49a;border-radius:999px;padding:5px 11px;white-space:nowrap;margin-left:auto}
+.google-zaehler.knapp{background:#fdecea;border-color:#f0c4bd;color:#8a2d22}
+@media (max-width:760px){ .google-zaehler{margin-left:0} }
 .liste-kopf{display:flex;justify-content:space-between;align-items:center;gap:10px}
 .liste-kopf h2{margin-bottom:14px}
 .hilfe-knopf{width:30px;height:30px;border-radius:50%;border:1px solid var(--linie);background:#fff;color:var(--kakao);font-weight:700;margin-right:4px}
@@ -237,6 +240,128 @@ table.team td,table.team th{padding:8px 10px;border-bottom:1px solid var(--linie
   .zeile{grid-template-columns:1fr}
   body.panel-offen .karten-knoepfe, body.panel-offen .legende{display:none}
 }
+
+/* ================= Feinschliff: ruhiger, klarer, professioneller ================= */
+:root{
+  --serif:"Iowan Old Style","Palatino Linotype",Palatino,"Book Antiqua",Georgia,serif;
+  --schatten-klein:0 1px 2px rgba(59,42,34,.06),0 2px 8px rgba(59,42,34,.05);
+  --schatten-mittel:0 8px 24px rgba(59,42,34,.12);
+  --fokus:0 0 0 3px rgba(184,144,30,.32);
+}
+body{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+.seite h2,.panel-kopf h2,.rg-karte h2,.login-karte h1,.kennzahl b,.cafe-karte .name,.liste-kopf h2{font-family:var(--serif);letter-spacing:.2px}
+:focus-visible{outline:none;box-shadow:var(--fokus)!important}
+
+/* Kopfzeile */
+header{height:62px;border-bottom:0;box-shadow:0 1px 0 var(--linie),0 4px 14px rgba(59,42,34,.04);gap:18px;padding:0 18px}
+header img{height:34px}
+nav.tabs{gap:2px}
+nav.tabs button{display:inline-flex;align-items:center;gap:8px;padding:9px 13px;border-radius:10px;font-size:14px;transition:background .15s,color .15s}
+nav.tabs button svg{width:18px;height:18px;flex:none}
+nav.tabs button:hover{background:var(--creme);color:var(--kakao)}
+nav.tabs button.aktiv{background:var(--gold-hell);color:var(--kakao);box-shadow:inset 0 0 0 1px #ead9a6}
+.tab-sym{position:relative;display:inline-grid;place-items:center}
+.tab-sym .badge{position:absolute;top:-7px;right:-9px;margin:0;min-width:16px;line-height:16px;font-size:10px;border:2px solid var(--papier)}
+.ich{gap:10px}
+.avatar{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#5a4337,#3b2a22);color:#f3e7c4;display:grid;place-items:center;font-weight:700;font-size:13px;letter-spacing:.5px;flex:none}
+.ich-text{display:flex;flex-direction:column;line-height:1.15;min-width:0}
+.ich-text strong{font-size:14px;color:var(--kakao)}
+.ich-text .rolle{font-size:11px;color:var(--leise)}
+.icon-knopf{width:36px;height:36px;border-radius:10px;border:1px solid var(--linie);background:#fff;color:var(--kakao);display:grid;place-items:center;font-weight:700;cursor:pointer;transition:background .15s,border-color .15s}
+.icon-knopf:hover{background:var(--creme);border-color:#d9c9a8}
+.icon-knopf svg{width:18px;height:18px}
+
+/* Filterleiste */
+#leiste{border-bottom:0;box-shadow:0 1px 0 var(--linie);padding:10px 18px;gap:8px}
+.suche-feld{position:relative;flex:1;min-width:220px;max-width:360px;display:block}
+.suche-feld svg{position:absolute;left:11px;top:50%;transform:translateY(-50%);width:17px;height:17px;color:var(--leise);pointer-events:none}
+#leiste .suche-feld input[type=search]{width:100%;max-width:none;min-width:0;padding-left:36px}
+#leiste input[type=search],#leiste select,.inline select,.feld select{height:38px;border-radius:10px;font-size:14px}
+select{-webkit-appearance:none;appearance:none;padding-right:32px!important;background-color:#fff;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%237a6a5d' stroke-width='2.5' stroke-linecap='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 11px center}
+.chip{height:34px;padding:0 12px;font-size:13px;transition:border-color .15s,background .15s,opacity .15s}
+.chip:hover{border-color:#d9c9a8}
+.chip small{background:var(--creme);border-radius:999px;padding:1px 7px;font-size:11px;color:var(--leise)}
+.chip.aus{opacity:.45}
+
+/* Knöpfe & Felder */
+.knopf{transition:filter .15s,transform .08s,box-shadow .15s;box-shadow:var(--schatten-klein);letter-spacing:.1px}
+.knopf:hover{filter:brightness(1.08)}
+.knopf:active{transform:translateY(1px)}
+.knopf.leise{box-shadow:none;background:#fff}
+.knopf.leise:hover{background:var(--creme);filter:none}
+.knopf.rot{box-shadow:none;background:#fff}
+.feld{font-size:12px;letter-spacing:.02em;font-weight:500}
+.feld input,.feld select,.feld textarea{transition:border-color .15s,box-shadow .15s}
+.feld input:focus,.feld select:focus,.feld textarea:focus,.inline input:focus,.inline select:focus,#leiste input:focus,#leiste select:focus{border-color:var(--gold);box-shadow:var(--fokus);outline:none}
+
+/* Karte */
+.karten-knoepfe{gap:10px}
+.karten-knoepfe .knopf{border-radius:12px;padding:11px 16px;box-shadow:var(--schatten-mittel)}
+#finden-knopf{background:#fff;color:var(--kakao);border:1px solid var(--gold)}
+#finden-knopf:hover{background:var(--gold-hell);filter:none}
+.leaflet-bar{border:0!important;box-shadow:var(--schatten-mittel)!important;border-radius:12px!important;overflow:hidden}
+.leaflet-bar a{width:36px!important;height:36px!important;line-height:36px!important;color:var(--kakao)!important;border-color:var(--linie)!important}
+.legende{padding:8px 12px 10px;border-radius:14px;box-shadow:var(--schatten-mittel);border:1px solid rgba(230,220,205,.8);background:rgba(255,255,255,.96);backdrop-filter:blur(6px)}
+.leg-kopf{border:0;background:none;padding:2px 0 6px;font-weight:700;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--leise);display:flex;justify-content:space-between;width:100%;gap:18px;cursor:pointer}
+.leg-pfeil{transition:transform .2s}
+.legende.zu{padding-bottom:6px}
+.legende.zu .leg-liste{display:none}
+.legende.zu .leg-pfeil{transform:rotate(-90deg)}
+.google-zaehler{height:34px;display:inline-flex;align-items:center;gap:4px}
+
+/* Detail-Fenster */
+#panel{box-shadow:-10px 0 32px rgba(59,42,34,.12);border-left:1px solid var(--linie)}
+.panel-kopf{padding:16px 18px 12px}
+.panel-kopf h2{font-size:22px;line-height:1.2;margin-bottom:4px}
+.panel-rumpf{padding:16px 18px 20px}
+.panel-fuss{padding:12px 18px calc(12px + env(safe-area-inset-bottom));box-shadow:0 -6px 16px rgba(59,42,34,.05)}
+.abschnitt{margin-top:18px;padding-top:14px}
+.abschnitt h4{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--leise);font-weight:700}
+.eintrag{background:#fbf8f3;border:1px solid var(--linie);border-radius:12px;padding:9px 12px}
+.neu-box{border-radius:14px;padding:12px}
+.status-pille{padding:3px 10px;letter-spacing:.2px}
+
+/* Seiten, Listen, Karten */
+.seite{padding:26px 20px 96px}
+.seite h2{font-size:28px;margin:0 0 16px}
+.seite h3{font-family:var(--serif);font-size:18px}
+.kennzahlen{gap:12px;margin-bottom:18px}
+.kennzahl{box-shadow:var(--schatten-klein);border-radius:14px;padding:14px 16px}
+.kennzahl b{font-size:28px;font-weight:600;line-height:1.1}
+.kennzahl span{font-size:12px;letter-spacing:.02em}
+.cafe-karte,.chronik-zeile{box-shadow:var(--schatten-klein);border-radius:14px;transition:transform .12s,box-shadow .15s,border-color .15s}
+.cafe-karte:hover,.chronik-zeile:hover{transform:translateY(-1px);box-shadow:0 8px 20px rgba(59,42,34,.1)}
+.cafe-karte .name{font-size:17px;font-weight:600}
+.reiter button{height:36px;transition:background .15s,border-color .15s}
+.cafe-karte .status-pille{min-width:104px;text-align:center;flex:none}
+#leiste{scrollbar-width:none}
+#leiste::-webkit-scrollbar{display:none}
+table.team{box-shadow:var(--schatten-klein);border-radius:14px}
+table.team th{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--leise);background:#fbf8f3}
+
+/* Anmeldung */
+.login-karte{border-radius:22px;padding:34px 28px;box-shadow:0 20px 50px rgba(59,42,34,.14)}
+.login-karte h1{font-size:24px;margin-top:18px}
+.login-karte .knopf{height:46px;font-size:15px}
+
+/* Handy */
+@media (max-width:760px){
+  header{height:56px;padding:0 12px}
+  header img{height:26px}
+  .ich-text{display:none}
+  .avatar{width:32px;height:32px}
+  nav.tabs{padding:6px 6px calc(6px + env(safe-area-inset-bottom));box-shadow:0 -4px 16px rgba(59,42,34,.06);border-top:1px solid var(--linie)}
+  nav.tabs button{flex-direction:column;gap:3px;font-size:11px;padding:6px 2px;border-radius:12px}
+  nav.tabs button svg{width:22px;height:22px}
+  nav.tabs button.aktiv{box-shadow:none}
+  #leiste{top:56px;padding:8px 12px}
+  .suche-feld{min-width:190px}
+  .seite{padding:20px 14px 96px}
+  .seite h2{font-size:24px}
+  .kennzahl b{font-size:24px}
+}
 </style>
 </head>
 <body>
@@ -270,21 +395,25 @@ table.team td,table.team th{padding:8px 10px;border-bottom:1px solid var(--linie
 <header>
   <img src="" data-logo alt="Mayamunay">
   <nav class="tabs" id="tabs">
-    <button data-view="karte" class="aktiv">🗺️ Karte</button>
-    <button data-view="liste">📋 Liste</button>
-    <button data-view="erinnerungen">🔔 Erinnerungen <span class="badge" id="badge"></span></button>
-    <button data-view="einstellungen" id="tab-einst">⚙️ Team</button>
+    <button data-view="karte" class="aktiv"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2z"/><path d="M9 4v14M15 6v14"/></svg><span>Karte</span></button>
+    <button data-view="liste"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6h12M9 12h12M9 18h12"/><circle cx="4" cy="6" r="1.2"/><circle cx="4" cy="12" r="1.2"/><circle cx="4" cy="18" r="1.2"/></svg><span>Liste</span></button>
+    <button data-view="erinnerungen"><span class="tab-sym"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 8-3 8h18s-3-1-3-8"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg><span class="badge" id="badge"></span></span><span>Erinnerungen</span></button>
+    <button data-view="einstellungen" id="tab-einst"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8"/></svg><span>Team</span></button>
   </nav>
-  <div class="ich"><span id="sync-status" class="sync-status"></span><button class="hilfe-knopf" id="hilfe-knopf" title="Kurzer Rundgang" aria-label="Kurzer Rundgang">?</button><span class="rolle" id="ich-rolle"></span><strong id="ich-name"></strong>
-    <button class="knopf leise klein" id="abmelden">Abmelden</button></div>
+  <div class="ich"><span id="sync-status" class="sync-status"></span>
+    <button class="icon-knopf" id="hilfe-knopf" title="Kurzer Rundgang" aria-label="Kurzer Rundgang">?</button>
+    <span class="avatar" id="ich-avatar" aria-hidden="true"></span>
+    <span class="ich-text"><strong id="ich-name"></strong><span class="rolle" id="ich-rolle"></span></span>
+    <button class="icon-knopf" id="abmelden" title="Abmelden" aria-label="Abmelden"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/></svg></button></div>
 </header>
 
 <div id="leiste">
-  <input type="search" id="suche" placeholder="Ort, Stadt oder Adresse suchen …">
+  <label class="suche-feld"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg><input type="search" id="suche" placeholder="Ort, Stadt oder Adresse suchen …" aria-label="Suchen"></label>
   <div class="chips" id="status-chips"></div>
   <select id="f-betreuung"></select>
   <select id="f-art"></select>
   <button class="chip" id="f-meine">Nur meine</button>
+  <span id="google-zaehler" class="google-zaehler versteckt" title="Google-Tageslimit – damit die App kostenlos bleibt"></span>
 </div>
 
 <main>
@@ -840,7 +969,7 @@ function kartenWechsel(fabrik){
 async function karteStarten(){
   const key = googleSchluessel();
   if (key) {
-    try { K = await googleKarte(key); }
+    try { K = await googleKarte(key); googleZaehlen('karte'); }
     catch(e) { googleFehler = 'Google Maps ließ sich nicht laden (' + e.message + ').'; K = null; document.getElementById('karte').innerHTML = ''; }
   }
   if (!K) K = osmKarte();
@@ -865,11 +994,21 @@ function markerZeichnen(){
 }
 
 function legendeZeichnen(){
-  document.getElementById('legende').innerHTML =
+  const el = document.getElementById('legende');
+  let zu = window.innerWidth <= 760;
+  try { const s = localStorage.getItem('mm-legende'); if (s) zu = s === 'zu'; } catch(e){}
+  el.classList.toggle('zu', zu);
+  el.innerHTML = `<button class="leg-kopf" data-leg-toggle aria-expanded="${!zu}">Legende <span class="leg-pfeil">▾</span></button><div class="leg-liste">` +
     Object.entries(STATUS).map(([k, s]) => `<div><span class="leg-sym" style="--farbe:${s.farbe}">${statusSvg(k, 16)}</span>${s.name}</div>`).join('') +
     `<div><span class="leg-gold"></span>offen für Zeremonie/Event</div>` +
-    `<div><span class="kakao-mini">${kakaoSvg(11, 16)}</span>gesuchter Ort (noch nicht eingetragen)</div>`;
+    `<div><span class="kakao-mini">${kakaoSvg(11, 16)}</span>gesuchter Ort</div></div>`;
 }
+document.getElementById('legende').addEventListener('click', e => {
+  if (!e.target.closest('[data-leg-toggle]')) return;
+  const el = document.getElementById('legende'), zu = !el.classList.contains('zu');
+  el.classList.toggle('zu', zu); e.target.closest('[data-leg-toggle]').setAttribute('aria-expanded', !zu);
+  try { localStorage.setItem('mm-legende', zu ? 'zu' : 'auf'); } catch(err){}
+});
 
 /* ============ Filterleiste ============ */
 function leisteZeichnen(){
@@ -1063,7 +1202,7 @@ panel.addEventListener('click', e => {
   if (akt === 'google-infos') {
     const box = document.getElementById('g-infos'); box.innerHTML = '<span class="leise">Lade Infos von Google …</span>';
     googleDetails(c.google).then(d => { if (document.getElementById('g-infos')) document.getElementById('g-infos').innerHTML = googleInfoHtml(d); })
-      .catch(err => { box.innerHTML = `<span class="leise">${istLimit(err) ? 'Das Google-Tageslimit ist für heute erreicht – morgen klappt es wieder.' : 'Gerade nicht ladbar (' + esc(String(err.message || err).slice(0, 120)) + ')'}</span>`; });
+      .catch(err => { box.innerHTML = `<span class="leise">${istLimit(err) ? 'Das Google-Tageslimit ist erreicht – ab 9 Uhr klappt es wieder.' : 'Gerade nicht ladbar (' + esc(String(err.message || err).slice(0, 120)) + ')'}</span>`; });
     return;
   }
   if (akt === 'uebernehmen') { c.betreuung = ich.id; toast('Du betreust jetzt ' + c.name + '.'); }
@@ -1147,7 +1286,8 @@ async function cafeAnlegen(lat, lng, vorlage = {}){
 /* ============ Passende Orte finden ============ */
 // Google meldet ein erreichtes Tageslimit mit diesen Begriffen
 const istLimit = e => /RESOURCE_EXHAUSTED|OVER_QUERY_LIMIT|QUOTA|quota|429/i.test(String(e && (e.message || e)));
-const LIMIT_TEXT = 'Das Google-Tageslimit ist für heute erreicht – so bleibt die App kostenlos. Morgen geht die Suche weiter; alles andere läuft normal.';
+const LIMIT_TEXT_FEST = 'Das Google-Tageslimit ist erreicht – so bleibt die App kostenlos.';
+Object.defineProperty(window, 'LIMIT_TEXT', {get:() => `${LIMIT_TEXT_FEST} Ab ${naechsterReset().toLocaleTimeString('de-DE', {hour:'2-digit', minute:'2-digit'})} Uhr geht die Suche weiter; alles andere läuft normal.`});
 // Suchbegriff je Art (Google-Textsuche im aktuellen Kartenausschnitt)
 const SUCHBEGRIFF = {'Café':'Café', 'Yoga-Studio':'Yoga Studio', 'Event-Location':'Eventlocation', 'Hof':'Hofladen', 'Supermarkt':'Bio Supermarkt'};
 
@@ -1170,10 +1310,50 @@ function trefferListe(liste){
   box.classList.remove('versteckt');
 }
 
+/* ---------- Google-Zähler: wie viel vom Tageslimit ist heute noch übrig? ---------- */
+// Grenzen wie in der Google Cloud Console eingestellt (Kontingente pro Tag)
+const GOOGLE_LIMIT = {suche:150, ortskarte:30, karte:300};
+let googleStand = {suche:0, ortskarte:0, karte:0};
+// Google setzt um Mitternacht Pacific Time zurück (bei uns meist 9:00 Uhr)
+function ptTag(){ return new Date().toLocaleDateString('en-CA', {timeZone:'America/Los_Angeles'}); }
+function naechsterReset(){
+  const jetzt = new Date(), pt = new Date(jetzt.toLocaleString('en-US', {timeZone:'America/Los_Angeles'}));
+  const mitternacht = new Date(pt); mitternacht.setHours(24, 0, 0, 0);
+  return new Date(jetzt.getTime() + (mitternacht - pt));
+}
+const uebrig = art => Math.max(0, GOOGLE_LIMIT[art] - (googleStand[art] || 0));
+function standUebernehmen(zeilen){
+  googleStand = {suche:0, ortskarte:0, karte:0};
+  (zeilen || []).forEach(z => { googleStand[z.art] = z.anzahl; });
+  zaehlerZeichnen();
+}
+async function googleStandLaden(){
+  if (DEMO) { try { const s = JSON.parse(localStorage.getItem('mm-google-' + ptTag()) || '{}'); googleStand = {suche:0, ortskarte:0, karte:0, ...s}; } catch(e){} return zaehlerZeichnen(); }
+  const {data, error} = await sb.rpc('google_stand'); if (!error) standUebernehmen(data);
+}
+async function googleZaehlen(art){
+  if (DEMO) { googleStand[art] = (googleStand[art] || 0) + 1; try { localStorage.setItem('mm-google-' + ptTag(), JSON.stringify(googleStand)); } catch(e){} return zaehlerZeichnen(); }
+  const {data, error} = await sb.rpc('google_zaehlen', {p_art:art}); if (!error) standUebernehmen(data);
+}
+function zaehlerZeichnen(){
+  const el = document.getElementById('google-zaehler'); if (!el) return;
+  if (!K || K.art !== 'google') return el.classList.add('versteckt');
+  const reset = naechsterReset(), min = Math.max(0, Math.round((reset - new Date()) / 60000));
+  const bis = min >= 60 ? `${Math.floor(min / 60)} Std. ${min % 60} Min.` : `${min} Min.`;
+  const knapp = uebrig('suche') <= 15 || uebrig('ortskarte') <= 5;
+  el.className = 'google-zaehler' + (knapp ? ' knapp' : '');
+  el.innerHTML = `🌿 Heute noch <b>${uebrig('suche')}</b> Suchen · <b>${uebrig('ortskarte')}</b> Ortskarten
+    <span class="leise">· neu um ${reset.toLocaleTimeString('de-DE', {hour:'2-digit', minute:'2-digit'})} (in ${bis})</span>`;
+}
+setInterval(zaehlerZeichnen, 60000);                                    // Countdown jede Minute
+setInterval(() => { if (ich && K && K.art === 'google') googleStandLaden(); }, 5 * 60000);   // Stand der anderen
+
 // Google-Details (Bewertung, Öffnungszeiten, Telefon …) – pro Ort nur einmal laden (Tageslimit!)
 const GDETAILS = new Map();
 async function googleDetails(id){
   if (GDETAILS.has(id)) return GDETAILS.get(id);
+  if (uebrig('ortskarte') <= 0) throw new Error('QUOTA: Tageslimit Ortskarten erreicht');
+  await googleZaehlen('ortskarte');
   const {Place} = await google.maps.importLibrary('places');
   const p = new Place({id, requestedLanguage:'de'});
   await p.fetchFields({fields:['displayName','formattedAddress','addressComponents','rating','userRatingCount',
@@ -1233,13 +1413,15 @@ async function ortKarteOeffnen(id){
       k.name = k.name || d.displayName || ''; k.adresse = k.adresse || d.formattedAddress || '';
       if (offeneKarte === id) zeichnen(d, null);
     }
-    catch(e){ console.error(e); if (offeneKarte === id) zeichnen(null, istLimit(e) ? 'Google-Tageslimit für heute erreicht' : String(e.message || e).slice(0, 160)); }
+    catch(e){ console.error(e); if (offeneKarte === id) zeichnen(null, istLimit(e) ? 'Google-Tageslimit erreicht, ab 9 Uhr wieder frei' : String(e.message || e).slice(0, 160)); }
   }
 }
 
 // Google Places (New): Textsuche. imBereich=true → nur im Kartenausschnitt, sonst Ausschnitt nur als Hinweis
 async function googleSuche(text, imBereich){
+  if (uebrig('suche') <= 0) { toast(LIMIT_TEXT); return 0; }
   toast('Suche bei Google …');
+  googleZaehlen('suche');
   const {Place} = await google.maps.importLibrary('places');
   const b = K.map.getBounds();
   const anfrage = {textQuery:text, fields:['id','displayName','location','formattedAddress'], maxResultCount:20};
@@ -1491,12 +1673,13 @@ function einstellungenZeichnen(){
     <div class="inline" style="align-items:center">Erinnern, wenn ein Ort länger als
       <input type="number" id="wochen" min="1" max="52" value="${E.wochen}" style="width:70px" ${leitung ? '' : 'disabled'}> Wochen keinen Besuch hatte.</div>
     ${leitung ? `<h3>Google Maps</h3>
-    <div class="lesen" style="background:#fff">${K && K.art === 'google' ? '✅ Aktiv: Die Karte und die Ortssuche laufen über Google.' : 'Gerade aktiv: OpenStreetMap.'}
+    <div class="lesen" style="background:#fff">${K && K.art === 'google' ? `✅ Aktiv: Die Karte und die Ortssuche laufen über Google.<br>
+      Heute genutzt: ${googleStand.suche}/${GOOGLE_LIMIT.suche} Suchen · ${googleStand.ortskarte}/${GOOGLE_LIMIT.ortskarte} Ortskarten · ${googleStand.karte}/${GOOGLE_LIMIT.karte} Kartenaufrufe` : 'Gerade aktiv: OpenStreetMap.'}
       ${googleFehler ? '<br><b>Hinweis:</b> ' + esc(googleFehler) : ''}</div>
     <div class="inline"><input id="g-schluessel" type="password" autocomplete="off" placeholder="${googleSchluessel() ? 'Schlüssel ist hinterlegt' : 'Google-API-Schlüssel einfügen'}" style="flex:1;min-width:220px">
       <button class="knopf klein" id="g-sichern">Sichern & neu laden</button>
       ${googleSchluessel() ? '<button class="knopf rot klein" id="g-weg">Schlüssel entfernen</button>' : ''}</div>
-    <div class="hinweis" style="text-align:left">${DEMO ? 'Demo: Der Schlüssel bleibt nur in diesem Browser.' : 'Der Schlüssel gilt für das ganze Team und ist nur für angemeldete Personen lesbar.'} Anleitung: google-einrichten.md im Projektordner.</div>` : ''}
+    <div class="hinweis" style="text-align:left">${DEMO ? 'Demo: Der Schlüssel bleibt nur in diesem Browser.' : 'Der Schlüssel gilt für das ganze Team und ist nur für angemeldete Personen lesbar.'}</div>` : ''}
     <p class="hinweis" style="text-align:left;margin-top:18px"><a href="#" data-datenschutz style="color:var(--kakao)">Datenschutzhinweis</a></p>
     ${leitung ? `<h3>Daten</h3>
     <div class="inline">
@@ -1549,7 +1732,7 @@ document.getElementById('seite-einstellungen').addEventListener('change', e => {
     }
     p.rolle = neu; sichern();
     toast(`${p.name} hat jetzt die Rolle „${neu === 'teamleitung' ? 'Teamleitung' : 'Betreuung'}“.`);
-    if (p.id === ich.id) { document.getElementById('ich-rolle').textContent = istLeitung() ? 'Teamleitung ·' : 'Betreuung ·'; }
+    if (p.id === ich.id) { document.getElementById('ich-rolle').textContent = istLeitung() ? 'Teamleitung' : 'Betreuung'; }
     einstellungenZeichnen();
   }
 });
@@ -1618,8 +1801,8 @@ const RUNDGANG = [
        oder mit <b>＋ Ort</b> einfach auf die Karte tippen.</p>
     <p>✨ <b>Passende Orte finden</b> zeigt passende Orte im aktuellen Kartenausschnitt, z.B. Yoga-Studios, wenn du oben diese Art wählst.</p>
     <p class="rg-limit">🌿 <b>Damit die App kostenlos bleibt,</b> gibt es bei Google ein Tageslimit für das ganze Team:
-       etwa <b>150 Suchen</b> und <b>30 Ortskarten</b> pro Tag. Ist es erreicht, geht die Suche am nächsten Tag weiter –
-       alles andere (Karte, Besuche, Proben) läuft ganz normal.</p>`},
+       etwa <b>150 Suchen</b> und <b>30 Ortskarten</b> pro Tag. Google setzt es jeden Morgen um 9 Uhr zurück –
+       alles andere (Karte, Besuche, Proben) läuft ganz normal. Oben in der Leiste siehst du, wie viel heute noch übrig ist.</p>`},
   {titel:'Besuche, Proben und Erinnerungen', html:() => `
     <p>Tippe einen Ort an, dann kannst du:</p>
     <p>👣 einen <b>Besuch</b> notieren · 🍫 eine <b>Probe</b> eintragen (Produkt einfach eintippen) ·
@@ -1682,8 +1865,10 @@ async function start(){
   document.getElementById('login').classList.add('versteckt');
   if (!K) await karteStarten();
   document.getElementById('ich-name').textContent = ich.name;
-  document.getElementById('ich-rolle').textContent = istLeitung() ? 'Teamleitung ·' : 'Betreuung ·';
+  document.getElementById('ich-avatar').textContent = ich.name.split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase();
+  document.getElementById('ich-rolle').textContent = istLeitung() ? 'Teamleitung' : 'Betreuung';
   legendeZeichnen(); allesZeichnen(); ansichtWechseln('karte');
+  googleStandLaden();
   let gesehen = false; try { gesehen = !!localStorage.getItem(rgSchluessel()); } catch(e){}
   if (!gesehen) setTimeout(() => rundgangZeigen(0), 400);
   if (!istLeitung()) {
