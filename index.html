@@ -1340,7 +1340,8 @@ function zaehlerZeichnen(){
   if (!K || K.art !== 'google') return el.classList.add('versteckt');
   const knapp = uebrig('suche') <= 15 || uebrig('ortskarte') <= 5;
   el.className = 'google-zaehler' + (knapp ? ' knapp' : '');
-  el.innerHTML = `🌿 Heute noch <b>${uebrig('suche')}</b> Suchen · <b>${uebrig('ortskarte')}</b> Ortskarten`;
+  // Die 30 Ortskarten sind fast immer zuerst aufgebraucht → nur sie zeigen; Suchen erst, wenn sie knapp werden
+  el.innerHTML = `🌿 Heute noch <b>${uebrig('ortskarte')}</b> Ortskarten` + (uebrig('suche') < 30 ? ` · <b>${uebrig('suche')}</b> Suchen` : '');
 }
 // Beim Tageswechsel (Google: Mitternacht Pacific Time) den neuen Stand holen – ohne Uhrzeit-Anzeige
 let letzterPtTag = ptTag();
