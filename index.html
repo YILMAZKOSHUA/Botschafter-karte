@@ -408,9 +408,17 @@ table.team th{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color
       <label class="feld">Deine E-Mail-Adresse
         <input type="email" id="login-mail" autocomplete="email" placeholder="name@beispiel.de">
       </label>
-      <button class="knopf" id="link-knopf" style="width:100%">Anmelde-Link schicken</button>
+      <button class="knopf" id="link-knopf" style="width:100%">Code per Mail schicken</button>
+      <div id="code-bereich" class="versteckt" style="margin-top:14px">
+        <label class="feld">Code aus der Mail
+          <input id="login-code" inputmode="numeric" autocomplete="one-time-code" maxlength="10" placeholder="6-stelliger Code"
+            style="font-size:22px;letter-spacing:4px;text-align:center">
+        </label>
+        <button class="knopf gold" id="code-knopf" style="width:100%">Anmelden</button>
+      </div>
       <div id="login-nachricht" class="hinweis"></div>
-      <div class="hinweis">Du bekommst einen Link per Mail – ein Klick darauf, und du bist angemeldet. Kein Passwort nötig.</div>
+      <div class="hinweis">Du bekommst eine Mail mit einem Code – eintippen, und du bist angemeldet. Kein Passwort nötig.
+        Der Link in der Mail funktioniert auch.</div>
       <div class="hinweis"><a href="#" data-datenschutz style="color:var(--kakao)">Datenschutzhinweis</a></div>
     </div>
     <div id="login-demo" class="versteckt">
@@ -828,9 +836,9 @@ const loginNachricht = (text, gut) => { const el = document.getElementById('logi
 document.getElementById('link-knopf').onclick = async () => {
   const mail = document.getElementById('login-mail').value.trim();
   if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(mail)) return loginNachricht('Magst du deine E-Mail-Adresse vollständig eintragen?');
-  const knopf = document.getElementById('link-knopf'); knopf.disabled = true; knopf.textContent = 'Schicke Link …';
+  const knopf = document.getElementById('link-knopf'); knopf.disabled = true; knopf.textContent = 'Schicke Code …';
   const {error} = await sb.auth.signInWithOtp({email:mail, options:{shouldCreateUser:false, emailRedirectTo:location.origin + location.pathname}});
-  knopf.disabled = false; knopf.textContent = 'Anmelde-Link schicken';
+  knopf.disabled = false; knopf.textContent = 'Neuen Code schicken';
   if (error) {
     const m = error.message || '';
     return loginNachricht(/signup|not allowed|not found/i.test(m)
@@ -838,8 +846,39 @@ document.getElementById('link-knopf').onclick = async () => {
       : /rate|seconds|too many/i.test(m) ? 'Gerade wurden viele Links verschickt. Magst du es in einer Minute noch einmal probieren?'
       : 'Das hat nicht geklappt: ' + m);
   }
-  loginNachricht(`Der Link ist unterwegs an ${mail}. Schau in dein Postfach (auch im Spam-Ordner) und tippe auf den Link.`, true);
+  try { sessionStorage.setItem('mm-login-mail', mail); } catch(e){}
+  codeFeldZeigen();
+  loginNachricht(`Die Mail ist unterwegs an ${mail}. Schau in dein Postfach (auch im Spam-Ordner) und tippe den Code hier ein.
+    Bitte nur den Code aus der neuesten Mail nehmen – ein neuer Code ersetzt den alten.`, true);
 };
+function codeFeldZeigen(){
+  document.getElementById('code-bereich').classList.remove('versteckt');
+  setTimeout(() => document.getElementById('login-code').focus(), 50);
+}
+// ---------- Code prüfen ----------
+document.getElementById('code-knopf').onclick = async () => {
+  const mail = document.getElementById('login-mail').value.trim();
+  const code = document.getElementById('login-code').value.replace(/\D/g, '');
+  if (!mail) return loginNachricht('Magst du oben deine E-Mail-Adresse eintragen?');
+  if (code.length < 6) return loginNachricht('Der Code hat 6 Ziffern – magst du ihn vollständig eintippen?');
+  const knopf = document.getElementById('code-knopf'); knopf.disabled = true; knopf.textContent = 'Prüfe Code …';
+  const {error} = await sb.auth.verifyOtp({email:mail, token:code, type:'email'});
+  knopf.disabled = false; knopf.textContent = 'Anmelden';
+  if (error) {
+    const m = error.message || '';
+    return loginNachricht(/expired|invalid/i.test(m)
+      ? 'Der Code passt nicht oder ist abgelaufen. Magst du den Code aus der neuesten Mail nehmen – oder dir einen neuen schicken?'
+      : /rate|too many/i.test(m) ? 'Gerade gab es viele Versuche. Magst du es in einer Minute noch einmal probieren?'
+      : 'Das hat nicht geklappt: ' + m);
+  }
+  try { sessionStorage.removeItem('mm-login-mail'); } catch(e){}
+  // Die Anmeldung meldet sich über onAuthStateChange (SIGNED_IN) → nachAnmeldung()
+};
+document.getElementById('login-code').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('code-knopf').click(); });
+document.getElementById('login-code').addEventListener('input', e => {
+  const z = e.target.value.replace(/\D/g, ''); if (z !== e.target.value) e.target.value = z;
+  if (z.length === 6) document.getElementById('code-knopf').click();   // Code vollständig → gleich anmelden
+});
 document.getElementById('login-mail').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('link-knopf').click(); });
 
 let anmeldungLaeuft = false;
@@ -870,7 +909,8 @@ async function anmeldungPruefen(){
   }
   if (!sb) return loginNachricht('Die Anmeldung konnte nicht geladen werden. Magst du die Seite neu laden?');
   const fehlerInAdresse = new URLSearchParams(location.hash.slice(1)).get('error_description');
-  if (fehlerInAdresse) loginNachricht('Der Link ist abgelaufen oder wurde schon benutzt. Magst du dir einen neuen schicken?');
+  try { const m = sessionStorage.getItem('mm-login-mail'); if (m) { document.getElementById('login-mail').value = m; codeFeldZeigen(); } } catch(e){}
+  if (fehlerInAdresse) loginNachricht('Der Link ist abgelaufen oder wurde schon benutzt. Tipp: Der Code aus der Mail klappt meist zuverlässiger – trag oben deine E-Mail ein und lass dir einen neuen schicken.');
   sb.auth.onAuthStateChange((ereignis, sitzung) => { if (sitzung && ereignis === 'SIGNED_IN') setTimeout(nachAnmeldung, 0); });
   const {data:{session}} = await sb.auth.getSession();
   if (session) nachAnmeldung();
