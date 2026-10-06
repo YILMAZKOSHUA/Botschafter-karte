@@ -387,6 +387,13 @@ table.team th{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color
 .odoo-status.fehler .os-punkt{background:#c0392b}
 @media (max-width:760px){ .odoo-status .os-text{display:none} .odoo-status{padding:3px} }
 .antrag-box{background:#fdecea;border:1px solid #f0c4bd;border-radius:12px;padding:10px 12px;font-size:13px;margin-bottom:12px}
+
+/* Kartenpunkte vorschlagen */
+.vs-box{background:var(--gold-hell);border:1px solid #e6d49a;border-radius:12px;padding:12px 14px;font-size:13px;margin:0 0 14px}
+.vs-zeile{display:flex;gap:10px;justify-content:space-between;align-items:center;background:#fff;border:1px solid var(--linie);border-radius:10px;padding:8px 10px;margin-top:8px;flex-wrap:wrap}
+.vs-info{flex:1;min-width:200px}
+.vs-knoepfe{display:flex;gap:6px;flex-wrap:wrap}
+.vs-warn{color:#8a5a1a;font-size:12px}
 </style>
 </head>
 <body>
@@ -1764,7 +1771,7 @@ function listeZeichnen(){
     <div class="reiter">
       <button class="${listeModus === 'orte' ? 'aktiv' : ''}" data-liste-modus="orte">📋 Orte</button>
       <button class="${listeModus === 'chronik' ? 'aktiv' : ''}" data-liste-modus="chronik">🌱 Neueste Aktivitäten</button>
-    </div>`;
+    </div>${listeModus === 'orte' ? vorschlagBox() : ''}`;
   let inhalt = '';
   if (listeModus === 'chronik') {
     // Chronik: wer hat wann was gemacht – über alle (gefilterten) Orte
@@ -1804,6 +1811,106 @@ function listeZeichnen(){
   }
   document.getElementById('liste-inhalt').innerHTML = kopf + inhalt;
 }
+/* ---------- Kartenpunkte vorschlagen (Teamleitung): Orte ohne Punkt bei Google suchen, dann bestätigen ---------- */
+let vorschlaege = null, vorschlagLaeuft = false;
+const LAND_VORWAHL = {'+49':'Deutschland', '+34':'Spanien', '+41':'Schweiz', '+43':'Österreich', '+31':'Niederlande', '+351':'Portugal',
+  '+39':'Italien', '+33':'Frankreich', '+45':'Dänemark', '+66':'Thailand', '+32':'Belgien', '+44':'Vereinigtes Königreich'};
+function landAusTelefon(t){
+  const n = String(t || '').replace(/[^+0-9]/g, '');
+  const v = Object.keys(LAND_VORWAHL).sort((a, b) => b.length - a.length).find(x => n.startsWith(x));
+  return v ? LAND_VORWAHL[v] : '';
+}
+const suchText = c => [c.name, c.adresse, c.stadt, c.region, c.land || landAusTelefon(c.telefon)].filter(Boolean).join(', ');
+// Teilen App-Name und Google-Name mindestens ein Wort? Sonst „bitte prüfen“
+function namenAehnlich(a, b){
+  const w = s => String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').split(/[^a-z0-9]+/).filter(x => x.length > 2);
+  const A = new Set(w(a)); return w(b).some(x => A.has(x));
+}
+function vorschlagBox(){
+  if (!istLeitung()) return '';
+  const ohne = D.cafes.filter(c => !hatPunkt(c));
+  if (!vorschlaege) {
+    if (!ohne.length) return '';
+    return `<div class="vs-box"><b>📍 ${ohne.length} ${ohne.length === 1 ? 'Ort hat' : 'Orte haben'} noch keinen Kartenpunkt.</b>
+      Die App kann sie bei Google suchen (Name, Adresse, Stadt) – du bestätigst jeden Vorschlag, bevor er gilt.
+      <div class="inline" style="margin-top:8px"><button class="knopf gold klein" data-vs-start>Kartenpunkte vorschlagen</button>
+      <span class="leise" style="font-size:12px">${K && K.art === 'google' ? `braucht bis zu ${ohne.length} der heute noch ${uebrig('suche')} freien Google-Suchen` : 'ohne Google: Suche über OpenStreetMap, nur für Orte mit Adresse'}</span></div></div>`;
+  }
+  const offen = vorschlaege.filter(v => !v.erledigt);
+  const sicher = offen.filter(v => v.gefunden && !v.unsicher).length;
+  return `<div class="vs-box"><div class="inline" style="justify-content:space-between;align-items:center">
+      <b>📍 Vorschläge für Kartenpunkte ${vorschlagLaeuft ? `<span class="leise">– suche … ${vorschlaege.length} von ${ohne.length + vorschlaege.filter(v => v.erledigt).length}</span>` : ''}</b>
+      <span>${sicher ? `<button class="knopf gold klein" data-vs-alle>✓ Alle ${sicher} passenden übernehmen</button>` : ''}
+        ${vorschlagLaeuft ? '' : '<button class="knopf leise klein" data-vs-zu>Fertig</button>'}</span></div>
+    ${offen.map(v => { const c = D.cafes.find(x => x.id === v.ortId); if (!c) return '';
+      return `<div class="vs-zeile"><div class="vs-info"><b>${esc(c.name)}</b> <span class="leise">${esc([c.stadt, c.land].filter(Boolean).join(', '))}</span><br>
+        ${v.gefunden ? `<span>→ ${esc(v.name || '')}${v.name ? ' · ' : ''}<span class="leise">${esc(v.adresse)}</span></span>${v.unsicher ? '<br><span class="vs-warn">⚠︎ Name weicht ab – bitte kurz prüfen</span>' : ''}`
+          : '<span class="leise">Nichts Passendes gefunden – bitte von Hand setzen.</span>'}</div>
+        <div class="vs-knoepfe">${v.gefunden ? `<button class="knopf klein" data-vs-ja="${v.ortId}">✓ Übernehmen</button>
+          <button class="knopf leise klein" data-vs-ansehen="${v.ortId}">Ansehen</button>` : ''}
+          <button class="knopf leise klein" data-vs-hand="${v.ortId}">Von Hand</button>
+          <button class="knopf leise klein" data-vs-nein="${v.ortId}" title="Vorschlag verwerfen">✕</button></div></div>`; }).join('')
+      || (vorschlagLaeuft ? '' : '<div class="leise">Alles erledigt ✓</div>')}</div>`;
+}
+async function kartenpunkteVorschlagen(){
+  const offen = D.cafes.filter(c => !hatPunkt(c) && c.name);
+  const mitGoogle = K && K.art === 'google';
+  if (mitGoogle && uebrig('suche') < offen.length &&
+      !confirm(`Für ${offen.length} Orte braucht es ${offen.length} Google-Suchen, heute sind noch ${uebrig('suche')} frei. Erst einmal so viele wie möglich suchen?`)) return;
+  vorschlagLaeuft = true; vorschlaege = []; listeZeichnen();
+  const Place = mitGoogle ? (await google.maps.importLibrary('places')).Place : null;
+  for (const c of offen) {
+    if (mitGoogle && uebrig('suche') <= 0) { toast(LIMIT_TEXT); break; }
+    let t = null;
+    try {
+      if (mitGoogle) {
+        await googleZaehlen('suche');
+        const {places} = await Place.searchByText({textQuery:suchText(c), fields:['id','displayName','location','formattedAddress'], maxResultCount:1});
+        const p = places?.[0];
+        if (p?.location) t = {name:p.displayName || '', adresse:p.formattedAddress || '', lat:p.location.lat(), lng:p.location.lng(), google:p.id};
+      } else if (c.adresse || c.stadt) {
+        const q = [c.adresse, c.stadt, c.land || landAusTelefon(c.telefon)].filter(Boolean).join(', ');
+        const r = await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=1&accept-language=de&q=${encodeURIComponent(q)}`);
+        const [o] = await r.json();
+        if (o) t = {name:'', adresse:o.display_name, lat:+o.lat, lng:+o.lon, google:null};
+        await new Promise(ok => setTimeout(ok, 1100));   // OpenStreetMap erlaubt höchstens 1 Anfrage pro Sekunde
+      }
+    } catch(e){ console.error(e); if (istLimit(e)) { toast(LIMIT_TEXT); break; } }
+    vorschlaege.push({ortId:c.id, ...(t || {}), gefunden:!!t,
+      unsicher: !!t && (mitGoogle ? !namenAehnlich(c.name, t.name) : !c.adresse)});
+    if (ansicht === 'liste') listeZeichnen();
+  }
+  vorschlagLaeuft = false;
+  if (ansicht === 'liste') listeZeichnen();
+}
+function vorschlagUebernehmen(id){
+  const v = vorschlaege?.find(x => x.ortId === id), c = D.cafes.find(x => x.id === id);
+  if (!v || !c || !v.gefunden) return;
+  c.lat = v.lat; c.lng = v.lng;
+  if (v.google && !c.google) c.google = v.google;
+  v.erledigt = true;
+}
+document.getElementById('seite-liste').addEventListener('click', e => {
+  const b = e.target.closest('[data-vs-start],[data-vs-alle],[data-vs-zu],[data-vs-ja],[data-vs-nein],[data-vs-ansehen],[data-vs-hand]');
+  if (!b) return;
+  const d = b.dataset;
+  if ('vsStart' in d) return kartenpunkteVorschlagen();
+  if ('vsZu' in d) { vorschlaege = null; return listeZeichnen(); }
+  if ('vsAlle' in d) {
+    const n = vorschlaege.filter(v => !v.erledigt && v.gefunden && !v.unsicher).map(v => (vorschlagUebernehmen(v.ortId), 1)).length;
+    sichern(); allesZeichnen(); return toast(`${n} ${n === 1 ? 'Kartenpunkt' : 'Kartenpunkte'} übernommen ✓ – sie gehen auch an Odoo.`);
+  }
+  if (d.vsJa) { vorschlagUebernehmen(d.vsJa); sichern(); allesZeichnen(); return toast('Kartenpunkt übernommen ✓'); }
+  if (d.vsNein) { const v = vorschlaege.find(x => x.ortId === d.vsNein); if (v) v.erledigt = true; return listeZeichnen(); }
+  if (d.vsAnsehen) {
+    const v = vorschlaege.find(x => x.ortId === d.vsAnsehen); if (!v) return;
+    ansichtWechseln('karte'); K.zentrieren(v.lat, v.lng, 16);
+    K.kandidaten([{id:'vs', lat:v.lat, lng:v.lng, titel:v.name || 'Vorschlag'}], () => {});
+    return toast('Die Kakaofrucht zeigt den Vorschlag. Unter „Liste“ kannst du ihn übernehmen.');
+  }
+  if (d.vsHand) { const c = D.cafes.find(x => x.id === d.vsHand); if (c) platzierenStarten(c); }
+});
+
 document.getElementById('seite-liste').addEventListener('click', e => {
   const m = e.target.closest('[data-liste-modus]'); if (!m) return;
   listeModus = m.dataset.listeModus; try { localStorage.setItem('mm-liste-modus', listeModus); } catch(err){}
