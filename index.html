@@ -362,6 +362,31 @@ table.team th{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color
   .seite h2{font-size:24px}
   .kennzahl b{font-size:24px}
 }
+
+/* Odoo + Orte ohne Kartenpunkt + Ansprechperson (2026-10-05) */
+.odoo-box{background:#f4eefa;border:1px solid #dccbea;border-radius:12px;padding:10px 12px;font-size:13px;margin-bottom:12px}
+.odoo-box a{color:var(--kakao)}
+.ohne-punkt{background:var(--gold-hell);border:1px solid #e6d49a;border-radius:12px;padding:10px 12px;font-size:13px;margin-bottom:12px;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.fehlt{background:#fdf3e7;border:1px solid #f0d9b5;color:#8a5a1a;border-radius:10px;padding:7px 10px;font-size:12px;margin-bottom:10px}
+.feld-link{float:right;color:var(--kakao);font-size:12px}
+.tag-klein{display:inline-block;font-size:11px;border-radius:999px;padding:1px 7px;margin-left:4px;background:var(--gold-hell);color:var(--kakao);vertical-align:middle}
+.tag-klein.odoo{background:#efe6f7;color:#5d3a7a}
+.produkte{width:100%;border-collapse:collapse;font-size:13px;background:#fff;border:1px solid var(--linie);border-radius:12px;overflow:hidden}
+.produkte th,.produkte td{padding:7px 9px;border-bottom:1px solid var(--linie);text-align:left}
+.produkte td.zahl,.produkte th.zahl{text-align:right;white-space:nowrap}
+.produkte tr.leer-bestand td{color:var(--leise)}
+.odoo-stand{background:#fff;border:1px solid var(--linie);border-radius:12px;padding:10px 12px;font-size:13px;margin-bottom:10px}
+
+/* Odoo-Häkchen in der Kopfzeile + Anträge (2026-10-05) */
+.odoo-status{border:1px solid var(--linie);background:#fff;border-radius:999px;padding:4px 10px 4px 6px;font-size:12px;font-weight:600;
+  display:inline-flex;align-items:center;gap:6px;color:var(--kakao);white-space:nowrap}
+.odoo-status .os-punkt{width:20px;height:20px;border-radius:50%;display:grid;place-items:center;color:#fff;font-size:12px;line-height:1}
+.odoo-status.ok .os-punkt{background:#3f7d4e}
+.odoo-status.wartet .os-punkt,.odoo-status.alt .os-punkt{background:#d08a2e}
+.odoo-status.fehler{border-color:#e4c6c6;background:#fdecea;color:#8a2d22}
+.odoo-status.fehler .os-punkt{background:#c0392b}
+@media (max-width:760px){ .odoo-status .os-text{display:none} .odoo-status{padding:3px} }
+.antrag-box{background:#fdecea;border:1px solid #f0c4bd;border-radius:12px;padding:10px 12px;font-size:13px;margin-bottom:12px}
 </style>
 </head>
 <body>
@@ -401,6 +426,7 @@ table.team th{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color
     <button data-view="einstellungen" id="tab-einst"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8"/></svg><span>Team</span></button>
   </nav>
   <div class="ich"><span id="sync-status" class="sync-status"></span>
+    <button class="odoo-status versteckt" id="odoo-status" aria-live="polite"></button>
     <button class="icon-knopf" id="hilfe-knopf" title="Kurzer Rundgang" aria-label="Kurzer Rundgang">?</button>
     <span class="avatar" id="ich-avatar" aria-hidden="true"></span>
     <span class="ich-text"><strong id="ich-name"></strong><span class="rolle" id="ich-rolle"></span></span>
@@ -413,12 +439,13 @@ table.team th{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color
   <select id="f-betreuung"></select>
   <select id="f-art"></select>
   <button class="chip" id="f-meine">Nur meine</button>
+  <button class="chip versteckt" id="f-ohne" title="Orte, die noch keinen Punkt auf der Karte haben – z.B. aus Odoo ohne Adresse"></button>
   <span id="google-zaehler" class="google-zaehler versteckt" title="Google-Tageslimit – damit die App kostenlos bleibt"></span>
 </div>
 
 <main>
   <div id="karte"></div>
-  <div id="modus" class="versteckt"><span>Tippe auf die Karte, wo der neue Ort liegt</span><button id="modus-ende">Abbrechen</button></div>
+  <div id="modus" class="versteckt"><span id="modus-text">Tippe auf die Karte, wo der neue Ort liegt</span><button id="modus-ohne">Ohne Kartenpunkt anlegen</button><button id="modus-ende">Abbrechen</button></div>
   <div class="karten-knoepfe" id="karten-knoepfe">
     <button class="knopf" id="neu-knopf">＋ Ort</button>
     <button class="knopf gold" id="finden-knopf">✨ Passende Cafés finden</button>
@@ -436,7 +463,7 @@ table.team th{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color
 <div id="toast"></div>
 <div id="datenschutz" class="versteckt" role="dialog" aria-modal="true" aria-labelledby="ds-titel">
   <div class="rg-karte ds-karte">
-    <div class="rg-kopf"><span class="leise">Stand: 24.09.2026</span><button class="rg-zu" data-ds-zu aria-label="Schließen">×</button></div>
+    <div class="rg-kopf"><span class="leise">Stand: 05.10.2026</span><button class="rg-zu" data-ds-zu aria-label="Schließen">×</button></div>
     <h2 id="ds-titel">Datenschutzhinweis</h2>
     <div class="ds-inhalt">
       <p>Die Botschafter-Karte ist eine interne Arbeitsplattform für Botschafterinnen und Botschafter,
@@ -449,8 +476,9 @@ table.team th{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color
       <h3>Welche Daten gespeichert werden</h3>
       <p><b>Über dich als Teammitglied:</b> Name, E-Mail-Adresse, Rolle (Betreuung oder Teamleitung), Region,
          der Zeitpunkt deiner Anmeldungen sowie deine Einträge (Besuche, Proben, Notizen) mit deinem Namen.</p>
-      <p><b>Über die Orte:</b> Geschäftsangaben wie Name, Adresse, Telefon, Website, Status, Art und Notizen –
-         und, falls eingetragen, der Name einer Ansprechperson (z.B. „Anna, Inhaberin“). Bitte hier nur das Nötigste eintragen.</p>
+      <p><b>Über die Orte (Geschäftskunden):</b> Geschäftsangaben wie Name, Adresse, Website, Status, Art und Notizen –
+         sowie die Ansprechperson mit Vor- und Nachname, Telefonnummer und E-Mail-Adresse. Diese Angaben braucht es,
+         um Bestellungen anzubahnen und auszuliefern. Bitte nur geschäftliche Angaben eintragen.</p>
       <p><b>Technisch:</b> Beim Aufruf der Seite erhalten die unten genannten Dienste deine IP-Adresse.
          Dein Browser speichert deine Anmeldung und kleine Einstellungen (z.B. Sortierung der Liste).
          Es gibt kein Tracking und keine Werbung.</p>
@@ -458,14 +486,18 @@ table.team th{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color
       <h3>Wofür und auf welcher Grundlage</h3>
       <p>Die Daten dienen der Zusammenarbeit im Team: sehen, wo der Kakao schon ist, wer welchen Ort betreut
          und wann der nächste Kontakt ansteht. Grundlage ist bei Teammitgliedern Art. 6 Abs. 1 lit. b DSGVO
-         (Zusammenarbeit), bei Ansprechpersonen und für den technischen Betrieb Art. 6 Abs. 1 lit. f DSGVO
-         (berechtigtes Interesse an geschäftlichem Kontakt und einer sicheren, funktionierenden App).</p>
+         (Zusammenarbeit), bei Ansprechpersonen Art. 6 Abs. 1 lit. b DSGVO (Anbahnung und Abwicklung von Bestellungen)
+         und Art. 6 Abs. 1 lit. f DSGVO (berechtigtes Interesse an geschäftlichem Kontakt), für den technischen Betrieb
+         ebenfalls Art. 6 Abs. 1 lit. f DSGVO (eine sichere, funktionierende App).</p>
 
       <h3>Wer Daten erhält (Dienstleister)</h3>
       <ul>
         <li><b>Supabase</b> – Datenbank und Anmeldung. Server in Frankfurt (EU). Supabase Inc. hat ihren Sitz in den USA;
             die Übermittlung ist über Standardvertragsklauseln abgesichert.</li>
         <li><b>Brevo</b> (Sendinblue SAS, Frankreich) – Versand der Anmelde- und Einladungs-Mails.</li>
+        <li><b>Odoo</b> (Odoo S.A., Belgien) – das Kundensystem (CRM) von Maya Munay und die Hauptschnittstelle:
+            Orte, Ansprechpersonen, Status, Besuche und Proben aus der App werden dort gespeichert; umgekehrt übernimmt
+            die App daraus Leads, Phasen und Produkte mit Lagerbestand.</li>
         <li><b>Google Maps Platform</b> (Google Ireland Ltd. / Google LLC) – Karte und Ortssuche. Dabei kann es zu einer
             Übermittlung in die USA kommen (EU-US Data Privacy Framework).</li>
         <li><b>GitHub Pages</b> (GitHub Inc., USA) – stellt die Seite bereit (Server-Protokolle mit IP-Adresse).</li>
@@ -540,10 +572,11 @@ function demoDaten(){
   ];
   const c = (name, stadt, region, land, lat, lng, status, betreuung, extra={}) => ({
     id:uid(), name, adresse:'', stadt, region, land, lat, lng, status, betreuung,
-    art:[], zeremonie:false, event:false, ansprechperson:'', kontakt:'', naechsterKontakt:'', notiz:'',
-    besuche:[], proben:[], ...extra });
+    art:[], zeremonie:false, event:false, ansprechperson:'', vorname:'', nachname:'', telefon:'', email:'', kontakt:'',
+    naechsterKontakt:'', notiz:'', besuche:[], proben:[], odooLead:null, odooPhase:'', odooDaten:null, ...extra });
   const cafes = [
-    c('Herzraum Café','Hannover','Niedersachsen','Deutschland',52.3665,9.7200,'kunde','u2',{art:['Café'],zeremonie:true,ansprechperson:'Anna (Inhaberin)',
+    c('Herzraum Café','Hannover','Niedersachsen','Deutschland',52.3665,9.7200,'kunde','u2',{art:['Café'],zeremonie:true,
+      vorname:'Anna', nachname:'Sommer', telefon:'0511 123456', email:'hallo@herzraum-cafe.de', adresse:'Lindener Marktplatz 3',
       besuche:[{datum:tag(-12),person:'u2',notiz:'Nachbestellung besprochen, lieben den Zeremonie-Kakao.'}],
       proben:[{datum:tag(-60),sorte:'Zeremonie-Kakao',menge:'250 g',bestellung:'ja'}], naechsterKontakt:tag(3)}),
     c('Kleine Lichtung','Hannover','Niedersachsen','Deutschland',52.3900,9.7480,'probe','u2',{art:['Café'],
@@ -566,9 +599,15 @@ function demoDaten(){
     c('Casa Cacao Gertrudis','Santa Gertrudis','Balearen','Spanien',38.9990,1.4290,'kunde','u1',{art:['Café','Event-Location'],zeremonie:true,event:true,
       besuche:[{datum:tag(-90),person:'u1',notiz:'Kakao-Zeremonie im Garten, sehr schöner Abend.'}]}),
     c('Luz de Mar','Ibiza','Balearen','Spanien',38.9090,1.4330,'potenziell','u1',{art:['Café']}),
+    // so sehen Orte aus, die aus dem Odoo-CRM kommen – einer davon noch ohne Kartenpunkt
+    c('savia ibiza','','Balearen','Spanien',null,null,'angesprochen','u1',{vorname:'Gema', telefon:'+34 636 70 16 38',
+      odooLead:61, odooPhase:'Angebotsphase', odooDaten:{verkaeufer:'David van der Zaan', prioritaet:3, stichwoerter:['B2B Tour 2026']}}),
+    c('Seminarhof Drawehn','Clenze','Niedersachsen','Deutschland',52.9370,10.9530,'angesprochen','u2',{vorname:'Sarah', nachname:'Beaumart',
+      telefon:'+49 172 4695132', email:'info@seminarhof-drawehn.de', adresse:'Im alten Rundling 13',
+      odooLead:42, odooPhase:'Angebotsphase', odooDaten:{verkaeufer:'David van der Zaan', prioritaet:0, stichwoerter:['B2B Tour 2026']}}),
   ];
   return {
-    team, cafes,
+    team, cafes, antraege:[],
     einstellungen:{
       arten:['Yoga-Studio','Event-Location','Café','Hof','Supermarkt'],
       sorten:['Aloha','Kukulkan','Postkarten','Mondkalender','Zeremonie-Kakao','Trinkschokolade','Kakaonibs','Kakaobutter'],
@@ -587,7 +626,11 @@ const sb = (!DEMO && window.supabase)
   ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {auth:{flowType:'implicit', persistSession:true, autoRefreshToken:true, detectSessionInUrl:true}})
   : null;
 
-let D = DEMO ? laden() : {team:[], cafes:[], einstellungen:{arten:[], sorten:[], wochen:6}};
+let D = DEMO ? laden() : {team:[], cafes:[], antraege:[], einstellungen:{arten:[], sorten:[], wochen:6}};
+if (!D.antraege) D.antraege = [];
+const ODOO = {produkte:[], nutzer:[], abgleich:null, wartet:[], laeuft:false, aufrufFehler:''};   // Daten aus Odoo (nur lesen)
+const ODOO_ADRESSE = 'https://mayamunay.odoo.com';
+const hatPunkt = c => c.lat != null && c.lng != null && !isNaN(c.lat) && !isNaN(c.lng);
 let googleSchluesselWert = '';   // kommt bei echter Anmeldung aus der Tabelle „konfig“
 function laden(){
   try {
@@ -598,6 +641,8 @@ function laden(){
         s.einstellungen.sorten = [...new Set(['Aloha','Kukulkan','Postkarten','Mondkalender', ...s.einstellungen.sorten])];
         s.einstellungen.produkteV2 = true;
       }
+      s.cafes.forEach(c => { ['vorname','nachname','telefon','email','odooPhase'].forEach(k => { if (c[k] === undefined) c[k] = ''; });
+        if (c.odooLead === undefined) { c.odooLead = null; c.odooDaten = null; } });
       return s;
     }
   } catch(e){}
@@ -611,11 +656,12 @@ function sichern(){
 // --- Umwandlung App-Daten ↔ Datenbank-Zeilen ---
 const ortZeile = c => ({id:c.id, name:c.name || '', adresse:c.adresse || '', stadt:c.stadt || '', region:c.region || '', land:c.land || '',
   lat:c.lat, lng:c.lng, status:c.status, betreuung:c.betreuung || null, art:c.art || [], zeremonie:!!c.zeremonie, event:!!c.event,
-  ansprechperson:c.ansprechperson || '', kontakt:c.kontakt || '', naechster_kontakt:c.naechsterKontakt || null, notiz:c.notiz || '',
+  ansprechperson:c.ansprechperson || '', vorname:c.vorname || '', nachname:c.nachname || '', telefon:c.telefon || '', email:c.email || '',
+  kontakt:c.kontakt || '', naechster_kontakt:c.naechsterKontakt || null, notiz:c.notiz || '',
   google:c.google || null, osm:c.osm || null, erstellt_von:c.erstelltVon || null});
 const besuchZeile = (b, ortId) => ({id:b.id, ort_id:ortId, datum:b.datum, person:b.person || null, notiz:b.notiz});
 const probeZeile = (p, ortId) => ({id:p.id, ort_id:ortId, datum:p.datum, sorte:p.sorte, menge:p.menge || '', bestellung:p.bestellung, person:p.person || null});
-const teamZeile = p => ({id:p.id, email:(p.email || '').trim(), name:p.name, rolle:p.rolle, region:p.region || ''});
+const teamZeile = p => ({id:p.id, email:(p.email || '').trim(), name:p.name, rolle:p.rolle, region:p.region || '', odoo_nutzer:p.odooNutzer || null});
 const einstZeile = () => ({arten:D.einstellungen.arten, sorten:D.einstellungen.sorten, wochen:D.einstellungen.wochen});
 
 // Stand der Datenbank (für den Vergleich: was hat sich geändert?)
@@ -643,16 +689,31 @@ async function datenLaden(){
   if (fehler) throw new Error(fehler.error.message);
   const gruppe = rows => rows.reduce((m, x) => ((m[x.ort_id] = m[x.ort_id] || []).push(x), m), {});
   const bNach = gruppe(b.data), pNach = gruppe(pr.data);
-  D.team = t.data.map(x => ({id:x.id, email:x.email, name:x.name, rolle:x.rolle, region:x.region, angemeldet:!!x.user_id}));
+  D.team = t.data.map(x => ({id:x.id, email:x.email, name:x.name, rolle:x.rolle, region:x.region, angemeldet:!!x.user_id, odooNutzer:x.odoo_nutzer || null}));
   D.cafes = o.data.map(x => ({id:x.id, name:x.name, adresse:x.adresse, stadt:x.stadt, region:x.region, land:x.land, lat:x.lat, lng:x.lng,
     status:x.status, betreuung:x.betreuung || '', art:x.art || [], zeremonie:x.zeremonie, event:x.event,
-    ansprechperson:x.ansprechperson, kontakt:x.kontakt, naechsterKontakt:x.naechster_kontakt || '', notiz:x.notiz,
+    ansprechperson:x.ansprechperson, vorname:x.vorname || '', nachname:x.nachname || '', telefon:x.telefon || '', email:x.email || '',
+    kontakt:x.kontakt, naechsterKontakt:x.naechster_kontakt || '', notiz:x.notiz,
     google:x.google || '', osm:x.osm || '', erstelltVon:x.erstellt_von || '',
+    odooLead:x.odoo_lead || null, odooPhase:x.odoo_phase || '', odooDaten:x.odoo_daten || null,
     besuche:(bNach[x.id] || []).map(y => ({id:y.id, datum:y.datum, person:y.person || '', notiz:y.notiz})),
     proben:(pNach[x.id] || []).map(y => ({id:y.id, datum:y.datum, sorte:y.sorte, menge:y.menge, bestellung:y.bestellung, person:y.person || ''}))}));
   if (e.data) D.einstellungen = {arten:e.data.arten, sorten:e.data.sorten, wochen:e.data.wochen};
   googleSchluesselWert = k.data?.google_schluessel || '';
   standMerken();
+  // Anträge zum Entfernen (Tabelle fehlt, solange schema.sql noch nicht neu ausgeführt ist)
+  const an = await sb.from('entfernen_antraege').select('*').order('erstellt');
+  D.antraege = an.error ? [] : an.data.map(x => ({id:x.id, ortId:x.ort_id, person:x.person || '', grund:x.grund, erstellt:x.erstellt}));
+  // Aus Odoo (schreibt nur die Brücke): Produkte, Odoo-Benutzer, letzter Abgleich
+  const [pr2, nu, ab] = await Promise.all([
+    sb.from('produkte').select('*').order('name'),
+    sb.from('odoo_nutzer').select('*').order('name'),
+    sb.from('odoo_abgleich').select('*').eq('id', 1).maybeSingle(),
+  ]);
+  ODOO.produkte = pr2.error ? [] : pr2.data;
+  ODOO.nutzer = nu.error ? [] : nu.data;
+  ODOO.abgleich = ab.error ? null : ab.data;
+  odooStandLaden().catch(() => {});
 }
 
 // --- Speichern: nur Geändertes an Supabase schicken (kurz gesammelt) ---
@@ -672,10 +733,12 @@ async function syncJetzt(){
     if (zaehlen && (!data || !data.length)) { fehler.push(`${was}: keine Berechtigung`); return false; }
     return true;
   };
+  let fuerOdoo = false;
   const abgleich = async (tabelle, merker, zeilen, name) => {
     for (const z of zeilen) {
       const j = JSON.stringify(z), alt = merker.get(z.id);
       if (alt === j) continue;
+      if (tabelle !== 'team') fuerOdoo = true;
       const ok = alt === undefined
         ? await schritt(sb.from(tabelle).insert(z), `${name} anlegen`)
         : await schritt(sb.from(tabelle).update(z).eq('id', z.id).select('id'), `${name} ändern`, true);
@@ -684,6 +747,7 @@ async function syncJetzt(){
   };
   const loeschen = async (tabelle, merker, ids, name) => {
     for (const id of [...merker.keys()]) if (!ids.has(id)) {
+      if (tabelle === 'orte') fuerOdoo = true;
       if (await schritt(sb.from(tabelle).delete().eq('id', id).select('id'), `${name} löschen`, true)) merker.delete(id);
     }
   };
@@ -707,6 +771,7 @@ async function syncJetzt(){
     fehlerZeigen('Nicht alles ließ sich speichern – ich lade den aktuellen Stand neu:', fehler.join('\n'));
     try { await datenLaden(); allesZeichnen(); if (auswahl) { const c = D.cafes.find(x => x.id === auswahl); c ? panelZeichnen(c) : panelSchliessen(); } } catch(e){}
   } else syncStatus('✓ gespeichert');
+  if (fuerOdoo) odooSendenPlanen();
   if (syncNochmal) { syncNochmal = false; syncPlanen(); }
 }
 // Vor dem Schließen noch offene Änderungen senden
@@ -718,7 +783,8 @@ document.addEventListener('visibilitychange', async () => {
 });
 
 let ich = null, ansicht = 'karte', auswahl = null, neuModus = false;
-const F = { status:new Set(Object.keys(STATUS)), betreuung:'', art:'', meine:false, text:'' };
+const F = { status:new Set(Object.keys(STATUS)), betreuung:'', art:'', meine:false, ohnePunkt:false, text:'' };
+let platzierenFuer = null;   // Ort ohne Kartenpunkt, dessen Position gerade gesetzt wird
 const person = id => D.team.find(p => p.id === id);
 const istLeitung = () => ich && ich.rolle === 'teamleitung';
 const darfBearbeiten = c => istLeitung() || !c.betreuung || c.betreuung === ich.id;
@@ -984,12 +1050,13 @@ function sichtbareCafes(){
     (!F.betreuung || (F.betreuung === 'frei' ? !c.betreuung : c.betreuung === F.betreuung)) &&
     (!F.art || c.art.includes(F.art)) &&
     (!F.meine || c.betreuung === ich.id) &&
-    (!t || [c.name, c.stadt, c.adresse, c.region, c.land].join(' ').toLowerCase().includes(t)));
+    (!F.ohnePunkt || !hatPunkt(c)) &&
+    (!t || [c.name, c.stadt, c.adresse, c.region, c.land, c.vorname, c.nachname, c.email].join(' ').toLowerCase().includes(t)));
 }
 
 function markerZeichnen(){
   if (!K) return;
-  K.orte(sichtbareCafes().map(c => ({id:c.id, lat:c.lat, lng:c.lng, status:c.status, farbe:STATUS[c.status].farbe,
+  K.orte(sichtbareCafes().filter(hatPunkt).map(c => ({id:c.id, lat:c.lat, lng:c.lng, status:c.status, farbe:STATUS[c.status].farbe,
     ring:c.zeremonie || c.event, gross:c.id === auswahl, titel:`${c.name} · ${STATUS[c.status].name}`})), cafeOeffnen);
 }
 
@@ -1021,6 +1088,9 @@ function leisteZeichnen(){
   document.getElementById('f-art').innerHTML = `<option value="">Alle Arten</option>` +
     D.einstellungen.arten.map(s => `<option ${F.art === s ? 'selected' : ''}>${esc(s)}</option>`).join('');
   document.getElementById('f-meine').classList.toggle('an', F.meine);
+  const ohne = D.cafes.filter(c => !hatPunkt(c)).length, chip = document.getElementById('f-ohne');
+  chip.classList.toggle('versteckt', !ohne && !F.ohnePunkt); chip.classList.toggle('an', F.ohnePunkt);
+  chip.innerHTML = `📍 Ohne Kartenpunkt <small>${ohne}</small>`;
 }
 document.getElementById('status-chips').onclick = e => {
   const b = e.target.closest('[data-status]'); if (!b) return;
@@ -1031,15 +1101,19 @@ document.getElementById('status-chips').onclick = e => {
 document.getElementById('f-betreuung').onchange = e => { F.betreuung = e.target.value; allesZeichnen(); };
 document.getElementById('f-art').onchange = e => { F.art = e.target.value; allesZeichnen(); };
 document.getElementById('f-meine').onclick = () => { F.meine = !F.meine; allesZeichnen(); };
+document.getElementById('f-ohne').onclick = () => { F.ohnePunkt = !F.ohnePunkt; if (F.ohnePunkt && ansicht === 'karte') ansichtWechseln('liste'); allesZeichnen(); };
 document.getElementById('suche').addEventListener('input', e => { F.text = e.target.value; markerZeichnen(); if (ansicht === 'liste') listeZeichnen(); });
 document.getElementById('suche').addEventListener('keydown', async e => {
   if (e.key !== 'Enter') return;
   const q = e.target.value.trim(); if (!q) return;
-  const treffer = sichtbareCafes();
+  const treffer = platzierenFuer ? [] : sichtbareCafes();
   if (treffer.length) {
     if (ansicht !== 'karte') ansichtWechseln('karte');
-    if (treffer.length === 1) { F.text = ''; e.target.value = ''; allesZeichnen(); K.zentrieren(treffer[0].lat, treffer[0].lng, 15); return cafeOeffnen(treffer[0].id); }
-    K.fitPoints(treffer.map(c => [c.lat, c.lng]), 15); return;
+    if (treffer.length === 1) { F.text = ''; e.target.value = ''; allesZeichnen(); if (hatPunkt(treffer[0])) K.zentrieren(treffer[0].lat, treffer[0].lng, 15); return cafeOeffnen(treffer[0].id); }
+    const mitPunkt = treffer.filter(hatPunkt);
+    if (mitPunkt.length) K.fitPoints(mitPunkt.map(c => [c.lat, c.lng]), 15);
+    if (mitPunkt.length < treffer.length) toast(`${treffer.length - mitPunkt.length} Treffer ohne Kartenpunkt – sie stehen in der Liste.`);
+    return;
   }
   // Kein eigener Ort gefunden → bei Google nach Orten suchen (z.B. „Solebich Bad Kissingen“)
   if (K.art === 'google') {
@@ -1055,7 +1129,8 @@ document.getElementById('suche').addEventListener('keydown', async e => {
     if (!ort) return toast('Dazu habe ich nichts gefunden. Ohne Google-Schlüssel findet die Suche nur Adressen und Städte, keine Café-Namen – den Schlüssel trägt die Teamleitung unter „Team“ ein.');
     F.text = ''; e.target.value = '';
     ansichtWechseln('karte'); K.setView(+ort.lat, +ort.lon, 14); allesZeichnen();
-    if (neuModus) cafeAnlegen(+ort.lat, +ort.lon);
+    if (platzierenFuer) toast('Jetzt genau auf die Stelle tippen, wo der Ort liegt.');
+    else if (neuModus) cafeAnlegen(+ort.lat, +ort.lon);
   } catch(err){ toast('Die Ortssuche ist gerade nicht erreichbar.'); }
 });
 
@@ -1087,7 +1162,7 @@ const panel = document.getElementById('panel');
 function cafeOeffnen(id){
   auswahl = id; const c = D.cafes.find(x => x.id === id); if (!c) return;
   panelZeichnen(c); panel.classList.add('offen'); document.body.classList.add('panel-offen'); markerZeichnen();
-  if (ansicht === 'karte') {
+  if (ansicht === 'karte' && hatPunkt(c)) {
     const handy = window.innerWidth <= 760;
     // Handy: Café ins freie obere Kartenstück schieben; Desktop: links neben das Panel
     const g = K.groesse();
@@ -1097,6 +1172,73 @@ function cafeOeffnen(id){
 function panelSchliessen(){ panel.classList.remove('offen'); document.body.classList.remove('panel-offen'); auswahl = null; markerZeichnen(); }
 
 function letzterBesuch(c){ return c.besuche.length ? c.besuche.map(b => b.datum).sort().at(-1) : null; }
+
+/* ---------- Orte entfernen: Botschafter beantragen, Teamleitung entscheidet ---------- */
+const antragFuer = ortId => D.antraege.find(a => a.ortId === ortId);
+function antragBox(c){
+  const a = antragFuer(c.id); if (!a) return '';
+  const wer = person(a.person)?.name || 'Jemand';
+  return `<div class="antrag-box">🗑️ <b>${esc(wer)}</b> möchte diesen Ort entfernen${a.grund ? `: „${esc(a.grund)}“` : '.'}
+    <div class="leise" style="font-size:12px">beantragt am ${datumDe(String(a.erstellt).slice(0, 10))}</div>
+    <div class="inline" style="margin-top:8px">${istLeitung()
+      ? `<button class="knopf rot klein" data-akt="antrag-ja" data-id="${a.id}">Entfernen bestätigen</button>
+         <button class="knopf leise klein" data-akt="antrag-nein" data-id="${a.id}">Ablehnen – Ort bleibt</button>`
+      : a.person === ich.id ? `<button class="knopf leise klein" data-akt="antrag-zurueck" data-id="${a.id}">Antrag zurückziehen</button>`
+      : '<span class="leise" style="font-size:12px">Die Teamleitung entscheidet.</span>'}</div></div>`;
+}
+async function antragStellen(c){
+  const grund = prompt(`Warum soll „${c.name || 'dieser Ort'}“ entfernt werden? (z.B. doppelt angelegt, geschlossen)\nDie Teamleitung bestätigt es dann.`, '');
+  if (grund === null) return;
+  const a = {id:uid(), ortId:c.id, person:ich.id, grund:grund.trim(), erstellt:new Date().toISOString()};
+  if (!DEMO) {
+    const {error} = await sb.from('entfernen_antraege').insert({id:a.id, ort_id:a.ortId, person:a.person, grund:a.grund});
+    if (error) { await antraegeNeuLaden(); return fehlerZeigen('Der Antrag ließ sich nicht speichern:', /duplicate|unique/i.test(error.message) ? 'Für diesen Ort gibt es schon einen Antrag.' : error.message); }
+  }
+  D.antraege.push(a); sichern(); panelZeichnen(c); badgeSetzen();
+  toast('Antrag gestellt – die Teamleitung bekommt einen Hinweis.');
+}
+// Ablehnen (Teamleitung) oder zurückziehen (wer ihn gestellt hat) – danach ist er für alle weg
+async function antragEntfernen(id, wie){
+  if (!DEMO) {
+    const {data, error} = await sb.from('entfernen_antraege').delete().eq('id', id).select('id');
+    if (error) return fehlerZeigen('Das hat nicht geklappt:', error.message);
+    if (!data?.length) { await antraegeNeuLaden(); return toast('Dieser Antrag ist schon erledigt.'); }
+  }
+  D.antraege = D.antraege.filter(a => a.id !== id); sichern();
+  toast(wie === 'abgelehnt' ? 'Abgelehnt – der Ort bleibt.' : 'Antrag zurückgezogen.');
+  nachAntrag();
+}
+async function antragBestaetigen(id){
+  const a = D.antraege.find(x => x.id === id), c = a && D.cafes.find(x => x.id === a.ortId);
+  if (!DEMO) {   // Hat schon jemand anderes entschieden?
+    const {data} = await sb.from('entfernen_antraege').select('id').eq('id', id);
+    if (!data?.length) { await antraegeNeuLaden(); return toast('Schon erledigt – eine andere Teamleitung hat bereits entschieden.'); }
+  }
+  if (!c || !confirm(`„${c.name}“ entfernen?` + (c.odooLead ? '\n\nIm Odoo-CRM wird der Lead archiviert (nicht gelöscht).' : ''))) return;
+  D.cafes = D.cafes.filter(x => x.id !== c.id); D.antraege = D.antraege.filter(x => x.id !== id);
+  sichern(); panelSchliessen(); toast(`„${c.name}“ ist entfernt.`); nachAntrag();
+}
+async function antraegeNeuLaden(){ if (!DEMO) { try { await datenLaden(); } catch(e){} } nachAntrag(); }
+function nachAntrag(){
+  allesZeichnen();
+  if (auswahl) { const c = D.cafes.find(x => x.id === auswahl); c ? panelZeichnen(c) : panelSchliessen(); }
+}
+
+// Was für eine B2B-Bestellung noch fehlt (nur ein Hinweis, kein Zwang)
+function fehlendeAngaben(c){
+  return [['vorname', 'Vorname'], ['nachname', 'Nachname'], ['adresse', 'Adresse'], ['telefon', 'Telefon'], ['email', 'E-Mail']]
+    .filter(([k]) => !String(c[k] || '').trim()).map(([, n]) => n);
+}
+// Kasten „aus dem Odoo-CRM“ (nur lesen – Änderungen gehen in Stufe 1 noch nicht zurück nach Odoo)
+function odooBox(c){
+  if (!c.odooLead) return DEMO ? '' : `<div class="odoo-box leise">🔗 Noch nicht im Odoo-CRM – wird beim Speichern dort angelegt, sobald der Ort einen Namen hat.</div>`;
+  const d = c.odooDaten || {};
+  const sterne = d.prioritaet ? ' · ' + '★'.repeat(d.prioritaet) : '';
+  return `<div class="odoo-box"><div><b>Aus dem Odoo-CRM</b> · Phase: <b>${esc(c.odooPhase || '–')}</b>${sterne}</div>
+    <div class="leise">${d.verkaeufer ? 'In Odoo zuständig: ' + esc(d.verkaeufer) : ''}${(d.stichwoerter || []).length ? ' · ' + d.stichwoerter.map(esc).join(', ') : ''}</div>
+    <div class="leise" style="margin-top:4px">Änderungen hier gehen automatisch ins Odoo-CRM – Besuche und Proben als Notiz im Verlauf.
+      <a href="${ODOO_ADRESSE}/odoo/crm/${encodeURIComponent(c.odooLead)}" target="_blank" rel="noopener">In Odoo öffnen ↗</a></div></div>`;
+}
 
 function panelZeichnen(c){
   const darf = darfBearbeiten(c), dis = darf ? '' : 'disabled';
@@ -1110,6 +1252,7 @@ function panelZeichnen(c){
     <button class="zu" data-akt="zu" aria-label="Schließen">×</button>
   </div>
   <div class="panel-rumpf">
+    ${antragBox(c)}
     ${darf ? '' : `<div class="lesen">Diesen Ort betreut ${esc(person(c.betreuung)?.name)}. Änderungen gern über ${esc(person(c.betreuung)?.name)} oder die Teamleitung. Besuche kannst du trotzdem eintragen.</div>`}
     <label class="feld">Name<input data-f="name" value="${esc(c.name)}" ${dis}></label>
     <div class="zeile">
@@ -1118,14 +1261,30 @@ function panelZeichnen(c){
         <select data-f="betreuung" ${istLeitung() ? '' : 'disabled'}>${opt([['', '— noch frei —'], ...D.team.map(p => [p.id, p.name])], c.betreuung)}</select></label>
     </div>
     ${!c.betreuung && !istLeitung() ? `<button class="knopf gold klein" data-akt="uebernehmen" style="margin-bottom:12px">Diesen Ort übernehmen</button>` : ''}
-    <label class="feld">Adresse<input data-f="adresse" value="${esc(c.adresse)}" ${dis}></label>
+    ${odooBox(c)}
+    ${hatPunkt(c) ? '' : `<div class="ohne-punkt">📍 <b>Noch kein Punkt auf der Karte.</b> Der Ort steht in der Liste und lässt sich ganz normal pflegen.
+      ${darf ? '<button class="knopf gold klein" data-akt="platzieren">Kartenpunkt setzen</button>' : ''}</div>`}
+    <label class="feld">Adresse <small>(Straße, Hausnummer)</small><input data-f="adresse" value="${esc(c.adresse)}" autocomplete="off" ${dis}></label>
     <div class="zeile">
-      <label class="feld">Stadt<input data-f="stadt" value="${esc(c.stadt)}" ${dis}></label>
+      <label class="feld">PLZ / Stadt<input data-f="stadt" value="${esc(c.stadt)}" ${dis}></label>
       <label class="feld">Bundesland / Region<input data-f="region" list="regionen" value="${esc(c.region)}" ${dis}></label>
     </div>
-    <div class="zeile">
-      <label class="feld">Ansprechperson<input data-f="ansprechperson" value="${esc(c.ansprechperson)}" ${dis}></label>
-      <label class="feld">Telefon / Mail / Insta<input data-f="kontakt" value="${esc(c.kontakt)}" ${dis}></label>
+    <label class="feld">Land<input data-f="land" value="${esc(c.land)}" ${dis}></label>
+    <div class="abschnitt" style="margin-top:4px">
+      <h4>Ansprechperson</h4>
+      ${fehlendeAngaben(c).length ? `<div class="fehlt">Für Bestellungen fehlt noch: ${fehlendeAngaben(c).join(', ')}</div>` : ''}
+      <div class="zeile">
+        <label class="feld">Vorname<input data-f="vorname" value="${esc(c.vorname)}" autocomplete="off" ${dis}></label>
+        <label class="feld">Nachname<input data-f="nachname" value="${esc(c.nachname)}" autocomplete="off" ${dis}></label>
+      </div>
+      <div class="zeile">
+        <label class="feld">Telefon${c.telefon ? ` <a href="tel:${esc(c.telefon.replace(/[^+0-9]/g, ''))}" class="feld-link">anrufen</a>` : ''}
+          <input type="tel" data-f="telefon" value="${esc(c.telefon)}" autocomplete="off" ${dis}></label>
+        <label class="feld">E-Mail${c.email ? ` <a href="mailto:${esc(c.email)}" class="feld-link">schreiben</a>` : ''}
+          <input type="email" data-f="email" value="${esc(c.email)}" autocomplete="off" ${dis}></label>
+      </div>
+      ${c.ansprechperson && !c.vorname && !c.nachname ? `<div class="meta" style="font-size:12px;color:var(--leise);margin:-4px 0 8px">Früher eingetragen: ${esc(c.ansprechperson)}</div>` : ''}
+      <label class="feld">Website / Instagram<input data-f="kontakt" value="${esc(c.kontakt)}" autocomplete="off" ${dis}></label>
     </div>
     <label class="feld">Nächster Kontakt<input type="date" data-f="naechsterKontakt" value="${esc(c.naechsterKontakt)}" ${dis}></label>
     ${c.google ? `<div class="abschnitt" style="margin-top:0;border-top:0;padding-top:0">
@@ -1176,8 +1335,11 @@ function panelZeichnen(c){
     </div>
 
     <div class="abschnitt inline">
-      <a class="knopf leise klein" style="text-decoration:none" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&destination=${c.lat},${c.lng}">🧭 Route</a>
-      ${istLeitung() ? `<button class="knopf rot klein" data-akt="loeschen">Ort entfernen</button>` : ''}
+      ${hatPunkt(c) ? `<a class="knopf leise klein" style="text-decoration:none" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&destination=${c.lat},${c.lng}">🧭 Route</a>`
+        : (c.adresse || c.stadt) ? `<a class="knopf leise klein" style="text-decoration:none" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent([c.adresse, c.stadt, c.land].filter(Boolean).join(', '))}">🧭 Route</a>` : ''}
+      ${hatPunkt(c) && darf ? '<button class="knopf leise klein" data-akt="platzieren">📍 Kartenpunkt ändern</button>' : ''}
+      ${istLeitung() ? `<button class="knopf rot klein" data-akt="loeschen">Ort entfernen</button>`
+        : !antragFuer(c.id) ? `<button class="knopf rot klein" data-akt="antrag">Entfernen beantragen</button>` : ''}
     </div>
   </div>
   <div class="panel-fuss"><button class="knopf gross" data-akt="speichern">✓ Speichern & schließen</button></div>`;
@@ -1204,6 +1366,10 @@ panel.addEventListener('click', e => {
     googleDetails(c.google).then(d => { if (document.getElementById('g-infos')) document.getElementById('g-infos').innerHTML = googleInfoHtml(d); })
       .catch(err => { box.innerHTML = `<span class="leise">${istLimit(err) ? 'Das Google-Tageslimit ist erreicht – ab 9 Uhr klappt es wieder.' : 'Gerade nicht ladbar (' + esc(String(err.message || err).slice(0, 120)) + ')'}</span>`; });
     return;
+  }
+  if (akt === 'platzieren') {
+    panel.querySelectorAll('[data-f]').forEach(el => { if (!el.disabled) c[el.dataset.f] = el.type === 'checkbox' ? el.checked : el.value; });
+    sichern(); return platzierenStarten(c);
   }
   if (akt === 'uebernehmen') { c.betreuung = ich.id; toast('Du betreust jetzt ' + c.name + '.'); }
   if (akt === 'art') { const w = b.dataset.wert; c.art = c.art.includes(w) ? c.art.filter(s => s !== w) : [...c.art, w]; }
@@ -1252,26 +1418,64 @@ panel.addEventListener('click', e => {
     sichern(); panelSchliessen(); allesZeichnen();
     return toast(notiz ? 'Gespeichert ✓ – inklusive neuem Besuch.' : 'Gespeichert ✓');
   }
+  if (akt === 'antrag') return antragStellen(c);
+  if (akt === 'antrag-zurueck') return antragEntfernen(b.dataset.id, 'zurueckgezogen');
+  if (akt === 'antrag-nein') return antragEntfernen(b.dataset.id, 'abgelehnt');
+  if (akt === 'antrag-ja') return antragBestaetigen(b.dataset.id);
   if (akt === 'loeschen') {
-    if (!confirm(`„${c.name}“ wirklich entfernen? Das lässt sich nicht rückgängig machen.`)) return;
+    if (!confirm(`„${c.name}“ wirklich entfernen? Das lässt sich in der App nicht rückgängig machen.` +
+      (c.odooLead ? '\n\nIm Odoo-CRM wird der Lead archiviert (nicht gelöscht) – dort lässt er sich wiederherstellen.' : ''))) return;
     D.cafes = D.cafes.filter(x => x.id !== c.id); sichern(); panelSchliessen(); allesZeichnen(); return;
   }
   sichern(); panelZeichnen(c); allesZeichnen();
 });
 
 /* ============ Neues Café ============ */
-document.getElementById('neu-knopf').onclick = () => { neuModus = true; document.body.classList.add('neu-modus'); document.getElementById('modus').classList.remove('versteckt'); };
-document.getElementById('modus-ende').onclick = () => { neuModus = false; document.body.classList.remove('neu-modus'); document.getElementById('modus').classList.add('versteckt'); };
-function kartenKlick(lat, lng){ if (neuModus) cafeAnlegen(lat, lng); }
+function modusZeigen(text, ohneKnopf){
+  document.getElementById('modus-text').textContent = text;
+  document.getElementById('modus-ohne').classList.toggle('versteckt', !ohneKnopf);
+  document.body.classList.add('neu-modus'); document.getElementById('modus').classList.remove('versteckt');
+}
+function modusEnde(){ neuModus = false; platzierenFuer = null; document.body.classList.remove('neu-modus'); document.getElementById('modus').classList.add('versteckt'); }
+document.getElementById('neu-knopf').onclick = () => { platzierenFuer = null; neuModus = true; modusZeigen('Tippe auf die Karte, wo der neue Ort liegt – oder such ihn oben', true); };
+document.getElementById('modus-ende').onclick = modusEnde;
+document.getElementById('modus-ohne').onclick = () => { modusEnde(); cafeAnlegen(null, null); toast('Ort ohne Kartenpunkt angelegt – den Punkt kannst du jederzeit nachtragen.'); };
+function kartenKlick(lat, lng){ if (platzierenFuer) return punktSetzen(platzierenFuer, lat, lng); if (neuModus) cafeAnlegen(lat, lng); }
+
+// Kartenpunkt für einen vorhandenen Ort setzen (per Tippen auf die Karte oder über einen Suchtreffer)
+function platzierenStarten(c){
+  platzierenFuer = c.id; neuModus = false; panelSchliessen(); ansichtWechseln('karte');
+  modusZeigen(`Tippe auf die Karte, wo „${c.name || 'der Ort'}“ liegt – oder such ihn oben`, false);
+  const such = [c.name, c.adresse, c.stadt].filter(Boolean).join(' ');
+  document.getElementById('suche').value = such; F.text = '';
+}
+async function punktSetzen(id, lat, lng, vorlage = {}){
+  const c = D.cafes.find(x => x.id === id); modusEnde(); if (!c) return;
+  c.lat = lat; c.lng = lng;
+  // Leere Felder aus dem Suchtreffer ergänzen – Vorhandenes bleibt
+  Object.entries(vorlage).forEach(([k, v]) => { if (v && !c[k]) c[k] = v; });
+  document.getElementById('suche').value = ''; F.text = '';
+  sichern(); allesZeichnen(); cafeOeffnen(c.id); toast('Kartenpunkt gesetzt ✓');
+  if (c.stadt && c.region) return;
+  try {
+    const r = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&accept-language=de`);
+    const a = (await r.json()).address || {};
+    c.adresse = c.adresse || [a.road, a.house_number].filter(Boolean).join(' ');
+    c.stadt = c.stadt || a.city || a.town || a.village || a.municipality || '';
+    c.region = c.region || a.state || ''; c.land = c.land || a.country || '';
+    sichern(); if (auswahl === c.id) panelZeichnen(c);
+  } catch(err){}
+}
 
 async function cafeAnlegen(lat, lng, vorlage = {}){
-  neuModus = false; document.body.classList.remove('neu-modus'); document.getElementById('modus').classList.add('versteckt');
+  modusEnde();
   const c = { id:uid(), name:'', adresse:'', stadt:'', region:'', land:'', lat, lng, status:'potenziell',
-    betreuung: istLeitung() ? '' : ich.id, art:[], zeremonie:false, event:false, ansprechperson:'', kontakt:'',
-    naechsterKontakt:'', notiz:'', besuche:[], proben:[], erstelltVon:ich.id, ...vorlage };
+    betreuung: istLeitung() ? '' : ich.id, art:[], zeremonie:false, event:false, ansprechperson:'',
+    vorname:'', nachname:'', telefon:'', email:'', kontakt:'', naechsterKontakt:'', notiz:'', besuche:[], proben:[],
+    odooLead:null, odooPhase:'', odooDaten:null, erstelltVon:ich.id, ...vorlage };
   D.cafes.push(c); sichern(); allesZeichnen(); cafeOeffnen(c.id);
   // Adresse automatisch ergänzen (OpenStreetMap), falls nicht schon von Google
-  if (c.stadt && c.region) return;
+  if (!hatPunkt(c) || (c.stadt && c.region)) return;
   try {
     const r = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&accept-language=de`);
     const a = (await r.json()).address || {};
@@ -1405,7 +1609,8 @@ async function ortKarteOeffnen(id){
           <a class="knopf leise klein" style="text-decoration:none" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&destination=${k.lat},${k.lng}">🧭 Route</a>
         </div>
       </div>
-      <div class="panel-fuss"><button class="knopf gold gross" data-kand="${esc(k.id)}">＋ Als potenziell auf die Karte</button></div>`;
+      <div class="panel-fuss"><button class="knopf gold gross" data-kand="${esc(k.id)}">${platzierenFuer
+        ? `📍 Hier liegt „${esc(D.cafes.find(c => c.id === platzierenFuer)?.name || 'der Ort')}“` : '＋ Als potenziell auf die Karte'}</button></div>`;
   };
   zeichnen(null, null);
   panel.classList.add('offen'); document.body.classList.add('panel-offen');
@@ -1490,7 +1695,7 @@ document.getElementById('finden-knopf').onclick = async () => {
       if (/yes|only/.test(tg['diet:vegetarian'] || '') && !merkmale.length) merkmale.push('Vegetarisch');
       liste.push({id:'o:' + id, osm:id, name:tg.name, lat, lng, info:merkmale.join(' · '),
         adresse:[tg['addr:street'], tg['addr:housenumber']].filter(Boolean).join(' '), stadt:tg['addr:city'] || '',
-        kontakt:tg.website || tg['contact:instagram'] || tg.phone || ''});
+        kontakt:tg.website || tg['contact:instagram'] || '', telefon:tg.phone || tg['contact:phone'] || ''});
     });
     kandidatenZeigen(liste);
     if (!liste.length) toast('Hier habe ich keine passenden Cafés gefunden.');
@@ -1508,7 +1713,7 @@ document.querySelector('main').addEventListener('click', async e => {
   offeneKarte = null;
   K.kandidatWeg(k.id); KAND.delete(k.id);
   trefferListe([...KAND.values()]);
-  const vorlage = {name:k.name, adresse:k.adresse, stadt:k.stadt || '', kontakt:k.kontakt || '',
+  const vorlage = {name:k.name, adresse:k.adresse, stadt:k.stadt || '', kontakt:k.kontakt || '', telefon:k.telefon || '',
     art:[K.art === 'google' ? (F.art || 'Café') : 'Café'], notiz:k.osm && k.info ? 'Laut OpenStreetMap: ' + k.info : ''};
   if (k.osm) vorlage.osm = k.osm;
   if (k.google) {
@@ -1519,9 +1724,10 @@ document.querySelector('main').addEventListener('click', async e => {
       const teil = typ => p.addressComponents?.find(a => a.types.includes(typ))?.longText || '';
       vorlage.stadt = teil('locality') || teil('postal_town'); vorlage.region = teil('administrative_area_level_1'); vorlage.land = teil('country');
       vorlage.adresse = [teil('route'), teil('street_number')].filter(Boolean).join(' ') || k.adresse;
-      vorlage.kontakt = p.nationalPhoneNumber || p.websiteURI || '';
+      vorlage.telefon = p.nationalPhoneNumber || ''; vorlage.kontakt = p.websiteURI || '';
     } catch(err){ console.error(err); }
   }
+  if (platzierenFuer) { delete vorlage.art; delete vorlage.notiz; delete vorlage.name; return punktSetzen(platzierenFuer, k.lat, k.lng, vorlage); }
   cafeAnlegen(k.lat, k.lng, vorlage);
   toast('Übernommen – magst du noch ein paar Details ergänzen?');
 });
@@ -1612,8 +1818,11 @@ function cafeZeile(c, zusatz = ''){
   const zuletzt = la ? `zuletzt ${wannText(la.datum)} (${datumDe(la.datum)}) · ${la.art} von ${esc(person(la.person)?.name || '?')}` : 'noch kein Kontakt';
   return `<div class="cafe-karte" data-cafe="${c.id}">
     <span class="status-pille" style="background:${STATUS[c.status].farbe}">${STATUS[c.status].name}</span>
-    <div class="info"><div class="name">${esc(c.name)} ${c.zeremonie || c.event ? '<span title="offen für Zeremonie/Event">✨</span>' : ''}</div>
-      <div class="klein">${esc(c.stadt)} · Betreuung: ${esc(person(c.betreuung)?.name || 'noch frei')}</div>
+    <div class="info"><div class="name">${esc(c.name)} ${c.zeremonie || c.event ? '<span title="offen für Zeremonie/Event">✨</span>' : ''}${
+        hatPunkt(c) ? '' : '<span class="tag-klein" title="noch kein Punkt auf der Karte">📍 ohne Kartenpunkt</span>'}${
+        c.odooLead ? `<span class="tag-klein odoo" title="Phase im Odoo-CRM">Odoo: ${esc(c.odooPhase)}</span>` : ''}</div>
+      <div class="klein">${esc([c.stadt, c.land].filter(Boolean).join(', ') || 'ohne Adresse')} · Betreuung: ${esc(person(c.betreuung)?.name || 'noch frei')}${
+        [c.vorname, c.nachname].some(Boolean) ? ' · ' + esc([c.vorname, c.nachname].filter(Boolean).join(' ')) : ''}</div>
       <div class="klein zuletzt">${zuletzt}</div>${zusatz}</div>
   </div>`;
 }
@@ -1638,11 +1847,15 @@ function faellige(){
   });
   return liste;
 }
-function badgeSetzen(){ const n = ich ? faellige().length : 0; const b = document.getElementById('badge'); b.textContent = n; b.style.display = n ? '' : 'none'; }
+function badgeSetzen(){ const n = ich ? faellige().length + (istLeitung() ? D.antraege.length : 0) : 0; const b = document.getElementById('badge'); b.textContent = n; b.style.display = n ? '' : 'none'; }
 function erinnerungenZeichnen(){
   const liste = faellige();
+  const antraege = istLeitung() ? D.antraege.map(a => ({a, c:D.cafes.find(c => c.id === a.ortId)})).filter(x => x.c) : [];
   document.getElementById('erinnerungen-inhalt').innerHTML = `
     <h2>Erinnerungen</h2>
+    ${antraege.length ? `<h3>🗑️ Orte sollen entfernt werden <span class="leise" style="font-weight:400;font-size:13px">– bitte bestätigen oder ablehnen</span></h3>
+      <div class="karten-liste" style="margin-bottom:18px">${antraege.map(({a, c}) => cafeZeile(c,
+        `<span class="grund">${esc(person(a.person)?.name || 'Jemand')}${a.grund ? ': „' + esc(a.grund) + '“' : ''}</span>`)).join('')}</div>` : ''}
     <p style="color:var(--leise);margin-top:-6px">${istLeitung() ? 'Du siehst als Teamleitung alle Orte.' : 'Hier siehst du die Orte, die du betreust.'}
       Erinnert werden die Betreuung und die Teamleitung. In der fertigen App kommt das zusätzlich per Mail oder Push.</p>
     <div class="karten-liste">${liste.map(({c, gruende}) =>
@@ -1660,15 +1873,18 @@ function einstellungenZeichnen(){
     ${leitung ? '<div class="hinweis" style="text-align:left;margin:-6px 0 12px">Die Teamleitung hat Admin-Rechte: Orte anderen zuweisen, Personen einladen, Rollen vergeben. Es kann mehrere geben – mindestens eine bleibt immer.</div>'
       : '<div class="lesen">Änderungen hier macht die Teamleitung. Du kannst alles ansehen.</div>'}
     <h3>Team</h3>
-    <table class="team"><tr><th>Name</th><th>Rolle</th><th>Region</th><th>Orte</th>${leitung ? '<th></th>' : ''}</tr>
+    <table class="team"><tr><th>Name</th><th>Rolle</th><th>Region</th><th>Orte</th>${!DEMO ? '<th>Odoo-Benutzer</th>' : ''}${leitung ? '<th></th>' : ''}</tr>
       ${D.team.map(p => `<tr><td>${esc(p.name)}${!DEMO ? `<div class="leise" style="font-size:12px">${esc(p.email || '')}${p.angemeldet ? '' : ' · noch nicht angemeldet'}</div>` : ''}</td><td>${leitung
         ? `<select data-rolle="${p.id}"><option value="betreuung" ${p.rolle === 'betreuung' ? 'selected' : ''}>Betreuung</option><option value="teamleitung" ${p.rolle === 'teamleitung' ? 'selected' : ''}>Teamleitung</option></select>`
         : (p.rolle === 'teamleitung' ? 'Teamleitung' : 'Betreuung')}</td><td>${esc(p.region)}</td>
-        <td>${D.cafes.filter(c => c.betreuung === p.id).length}</td>${leitung ? `<td>${p.id !== ich.id ? `<button class="knopf rot klein" data-person-weg="${p.id}">entfernen</button>` : ''}</td>` : ''}</tr>`).join('')}
+        <td>${D.cafes.filter(c => c.betreuung === p.id).length}</td>${!DEMO ? `<td>${leitung
+          ? `<select data-odoo-nutzer="${p.id}"><option value="">—</option>${ODOO.nutzer.map(n => `<option value="${n.odoo_id}" ${p.odooNutzer === n.odoo_id ? 'selected' : ''}>${esc(n.name)}</option>`).join('')}</select>`
+          : esc(ODOO.nutzer.find(n => n.odoo_id === p.odooNutzer)?.name || '–')}</td>` : ''}${leitung ? `<td>${p.id !== ich.id ? `<button class="knopf rot klein" data-person-weg="${p.id}">entfernen</button>` : ''}</td>` : ''}</tr>`).join('')}
     </table>
     ${leitung ? `<div class="inline" style="margin-top:10px"><input id="p-name" placeholder="Name"><input id="p-mail" type="email" placeholder="E-Mail-Adresse" style="min-width:200px"><select id="p-rolle"><option value="betreuung">Betreuung</option><option value="teamleitung">Teamleitung</option></select>
       <input id="p-region" placeholder="Region" list="regionen"><button class="knopf klein" id="p-dazu">Person anlegen</button></div>` : ''}
     ${leitung && !DEMO ? `<div class="hinweis" style="text-align:left;margin-top:8px">Neue Person einladen: 1. hier mit E-Mail-Adresse eintragen · 2. in Supabase unter <b>Authentication → Users → Add user → Send invitation</b> dieselbe Adresse einladen. Beim ersten Anmelden wird beides automatisch verbunden.</div>` : ''}
+    ${!DEMO ? odooAbschnitt(leitung) : ''}
     <h3>Arten (Auswahlliste)</h3>${liste('arten')}
     <h3>Produkte für Proben</h3><div class="hinweis" style="text-align:left;margin:-4px 0 8px">Neue Produkte entstehen auch automatisch, wenn jemand bei einer Probe etwas Neues eintippt.</div>${liste('sorten')}
     <h3>Erinnerung</h3>
@@ -1719,11 +1935,17 @@ document.getElementById('seite-einstellungen').addEventListener('click', e => {
     });
     return;
   }
+  else if (e.target.id === 'odoo-jetzt') { odooAbgleich(true); return; }
   else if (e.target.id === 'demo') { if (!confirm('Alle Daten durch die Demo-Daten ersetzen?')) return; D = demoDaten(); ich = person('u1'); }
   else return;
   sichern(); einstellungenZeichnen(); leisteZeichnen(); badgeSetzen();
 });
 document.getElementById('seite-einstellungen').addEventListener('change', e => {
+  if (e.target.dataset.odooNutzer) {
+    const p = person(e.target.dataset.odooNutzer); p.odooNutzer = e.target.value ? +e.target.value : null; sichern();
+    toast(p.odooNutzer ? `${p.name} ist jetzt dem Odoo-Benutzer zugeordnet – beim nächsten Abgleich kommen die passenden Orte dazu.` : `${p.name} hat jetzt keinen Odoo-Benutzer mehr.`);
+  }
+  if (e.target.id === 'nur-bestand') { produkteNurBestand = e.target.checked; einstellungenZeichnen(); }
   if (e.target.id === 'wochen') { D.einstellungen.wochen = Math.max(1, +e.target.value || 6); sichern(); badgeSetzen(); }
   if (e.target.dataset.rolle) {
     const p = person(e.target.dataset.rolle), neu = e.target.value;
@@ -1739,6 +1961,130 @@ document.getElementById('seite-einstellungen').addEventListener('change', e => {
   }
 });
 
+/* ============ Odoo (Stufe 1: lesen) ============ */
+// Die Brücke (Supabase-Funktion „odoo-abgleich“) holt Leads + Produkte aus Odoo – höchstens alle 10 Minuten.
+let produkteNurBestand = true;
+const zeitDe = iso => iso ? new Date(iso).toLocaleString('de-DE', {day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'}) : '–';
+const euro = n => Number(n || 0).toLocaleString('de-DE', {style:'currency', currency:'EUR'});
+function odooAbschnitt(leitung){
+  const a = ODOO.abgleich, e = a?.ergebnis;
+  const liste = ODOO.produkte.filter(p => !produkteNurBestand || (p.bestand ?? 0) > 0);
+  return `<h3 id="odoo-bereich">Odoo</h3>
+    <div class="odoo-stand">${a?.zuletzt ? `Letzter Abgleich: <b>${zeitDe(a.zuletzt)}</b>${e ? ` · ${e.leads_in_app} Orte aus dem CRM · ${e.produkte} Produkte` : ''}`
+      : 'Noch kein Abgleich mit Odoo.'}
+      ${a?.fehler ? `<div class="fehlt" style="margin:8px 0 0">Beim letzten Versuch: ${esc(a.fehler)}</div>` : ''}
+      ${ODOO.wartet.length ? `<div class="${ODOO.wartet.some(x => x.versuche) ? 'fehlt' : 'leise'}" style="margin:8px 0 0">
+        ${ODOO.wartet.length} ${ODOO.wartet.length === 1 ? 'Änderung wartet' : 'Änderungen warten'} noch auf Odoo${ODOO.wartet.some(x => x.versuche)
+          ? ` – zuletzt: ${esc(ODOO.wartet.find(x => x.versuche).fehler.slice(0, 160))}. Die App versucht es von selbst weiter.` : ' – geht gleich raus.'}</div>`
+        : (a?.zuletzt ? '<div class="leise" style="margin-top:6px">✓ Alle Änderungen aus der App sind in Odoo.</div>' : '')}
+      ${leitung ? `<div style="margin-top:8px"><button class="knopf klein" id="odoo-jetzt" ${ODOO.laeuft ? 'disabled' : ''}>${ODOO.laeuft ? 'Gleicht ab …' : '↻ Jetzt mit Odoo abgleichen'}</button></div>` : ''}
+      <div class="hinweis" style="text-align:left;margin-top:8px">Odoo ist die Hauptschnittstelle. Was ihr in der App speichert – neue Orte, Ansprechperson, Status,
+        Besuche, Proben, Notizen –, geht sofort ins Odoo-CRM. Umgekehrt holt sich die App alle 10 Minuten neue Leads und Phasen aus Odoo
+        (Lieferanten und Dienstleister bleiben draußen). Die Spalte „Odoo-Benutzer“ oben ordnet zu, wer in Odoo welche Leads hat;
+        Botschafter ohne Odoo-Zugang stehen in Odoo als Stichwort „Botschafter: Name“.</div></div>
+    <h3>Produkte aus Odoo <span class="leise" style="font-weight:400;font-size:13px">${liste.length} von ${ODOO.produkte.length}</span></h3>
+    <label class="schalter" style="margin-bottom:8px"><input type="checkbox" id="nur-bestand" ${produkteNurBestand ? 'checked' : ''}> Nur Produkte mit freiem Bestand</label>
+    ${ODOO.produkte.length ? `<div style="overflow-x:auto"><table class="produkte"><tr><th>Produkt</th><th>Art.-Nr.</th><th class="zahl">Preis</th><th class="zahl">Frei im Lager</th></tr>
+      ${liste.map(p => `<tr class="${(p.bestand ?? 0) > 0 ? '' : 'leer-bestand'}"><td>${esc(p.name)}</td><td>${esc(p.code)}</td>
+        <td class="zahl">${euro(p.preis)}</td><td class="zahl">${p.bestand == null ? '–' : Number(p.bestand).toLocaleString('de-DE')} ${p.bestand == null ? '' : esc(p.einheit === 'Einheiten' || p.einheit === 'Units' ? 'Stk.' : p.einheit)}</td></tr>`).join('')}
+      </table></div><div class="hinweis" style="text-align:left">Bestellungen für Kunden direkt aus der App kommen in einem der nächsten Schritte – sie landen dann als Angebot in Odoo.</div>`
+      : '<div class="leer">Die Produkte erscheinen nach dem ersten Abgleich mit Odoo.</div>'}`;
+}
+// App → Odoo: nach dem Speichern kurz sammeln und dann die Warteschlange abarbeiten lassen
+let odooSendenTimer = null;
+function odooSendenPlanen(){ if (DEMO || !sb) return; clearTimeout(odooSendenTimer); odooSendenTimer = setTimeout(odooSenden, 2500); }
+async function odooSenden(){
+  odooSendenTimer = null;
+  if (ODOO.laeuft) return odooSendenPlanen();
+  ODOO.laeuft = true;
+  try {
+    const {data, error} = await sb.functions.invoke('odoo-abgleich', {body:{aktion:'senden'}});
+    if (error) { ODOO.aufrufFehler = error.message || String(error); console.warn('Odoo senden:', ODOO.aufrufFehler); }
+    else {
+      ODOO.aufrufFehler = '';
+      // Neue Lead-Nummern/Phasen holen – aber nicht mitten in die Bearbeitung eines Ortes hinein
+      if (data?.gesendet && !panel.classList.contains('offen') && !syncTimer && !syncLaeuft) { await datenLaden(); allesZeichnen(); }
+    }
+  } catch(e){ console.warn('Odoo senden:', e); }
+  ODOO.laeuft = false;
+  await odooStandLaden();
+}
+async function odooStandLaden(){
+  if (DEMO || !sb) return;
+  const [{data:a}, {data:w}] = await Promise.all([
+    sb.from('odoo_abgleich').select('*').eq('id', 1).maybeSingle(),
+    sb.from('odoo_aufgaben').select('art,fehler,versuche,erstellt').is('erledigt', null).order('id'),
+  ]);
+  if (a) ODOO.abgleich = a;
+  ODOO.wartet = w || [];
+  odooStatusZeichnen();
+  if (ansicht === 'einstellungen') einstellungenZeichnen();
+}
+async function odooAbgleich(erzwingen){
+  if (DEMO || !sb || ODOO.laeuft) return;
+  ODOO.laeuft = true; if (ansicht === 'einstellungen') einstellungenZeichnen();
+  try {
+    const {data, error} = await sb.functions.invoke('odoo-abgleich', {body:{aktion:'abgleich', erzwingen:!!erzwingen}});
+    if (error) {
+      let text = error.message || String(error);
+      try { const j = await error.context?.json?.(); if (j?.fehler) text = j.fehler; } catch(e){}
+      ODOO.aufrufFehler = text;
+      if (erzwingen) { odooFehlerGezeigt = 'Die Brücke zu Odoo ist nicht erreichbar: ' + text; fehlerZeigen('Der Abgleich mit Odoo hat nicht geklappt:', text + '\n\nÄnderungen gehen nicht verloren – sie warten, bis es wieder klappt.'); }
+      else console.warn('Odoo-Abgleich:', text);
+    } else if (data?.ok) {
+      ODOO.aufrufFehler = '';
+      const n = (data.neu || 0) + (data.aktualisiert || 0) + (data.gesendet || 0);
+      // Neu laden – aber nicht mitten in die Bearbeitung eines Ortes hinein
+      if (n || erzwingen) { if (!panel.classList.contains('offen') && !syncTimer && !syncLaeuft) { await datenLaden(); allesZeichnen(); } }
+      if (data.neu && !data.uebersprungen) toast(`Aus Odoo: ${data.neu} neue ${data.neu === 1 ? 'Ort' : 'Orte'}${data.aktualisiert ? `, ${data.aktualisiert} aktualisiert` : ''}.`);
+      else if (erzwingen) toast(data.aktualisiert ? `✓ Abgleich geklappt – ${data.aktualisiert} Orte aus Odoo aktualisiert.` : '✓ Abgleich geklappt – alles auf dem Stand von Odoo.');
+    } else if (erzwingen && data?.uebersprungen) toast('Gerade eben erst abgeglichen – in einer halben Minute wieder.');
+  } catch(e){ ODOO.aufrufFehler = String(e.message || e); if (erzwingen) fehlerZeigen('Der Abgleich mit Odoo hat nicht geklappt:', ODOO.aufrufFehler); }
+  ODOO.laeuft = false;
+  await odooStandLaden();
+}
+// Beim Start und danach alle 10 Minuten (die Brücke selbst wartet ebenfalls mindestens 10 Minuten)
+setInterval(() => { if (ich && !document.hidden) odooAbgleich(false); }, 10 * 60000);
+
+// Wie aktuell ist die App gegenüber Odoo? grün = letzter Abgleich ≤ 15 Min. und nichts wartet
+function odooZustand(){
+  const a = ODOO.abgleich, haengt = ODOO.wartet.filter(x => x.versuche > 0);
+  const min = a?.zuletzt ? Math.max(0, Math.round((Date.now() - Date.parse(a.zuletzt)) / 60000)) : null;
+  const vor = min === null ? '' : min < 1 ? 'gerade eben' : min === 1 ? 'vor 1 Minute' : `vor ${min} Minuten`;
+  if (ODOO.aufrufFehler) return {art:'fehler', kurz:'Odoo', text:'Die Brücke zu Odoo ist nicht erreichbar: ' + ODOO.aufrufFehler};
+  if (a?.fehler) return {art:'fehler', kurz:'Odoo', text:'Der letzte Abgleich mit Odoo hat nicht geklappt: ' + a.fehler};
+  if (haengt.length) return {art:'fehler', kurz:'Odoo', text:`${haengt.length} ${haengt.length === 1 ? 'Änderung kommt' : 'Änderungen kommen'} gerade nicht bei Odoo an: ${haengt[0].fehler}`};
+  if (min === null) return {art:'wartet', kurz:'Odoo', text:'Noch kein Abgleich mit Odoo.'};
+  if (ODOO.wartet.length) return {art:'wartet', kurz:'Odoo', text:'Änderungen werden gerade an Odoo übertragen …'};
+  if (min > 15) return {art:'alt', kurz:'Odoo', text:`Letzter Abgleich mit Odoo ${vor} – der nächste läuft gleich.`};
+  return {art:'ok', kurz:'Odoo', text:`Alles aktuell mit Odoo – letzter Abgleich ${vor}.`};
+}
+let odooFehlerGezeigt = '';
+function odooStatusZeichnen(){
+  const el = document.getElementById('odoo-status'); if (!el) return;
+  if (DEMO || !sb || !ich) return el.classList.add('versteckt');
+  const z = odooZustand();
+  el.className = 'odoo-status ' + z.art; el.title = z.text;
+  el.innerHTML = `<span class="os-punkt">${{ok:'✓', wartet:'⟳', alt:'⟳', fehler:'!'}[z.art]}</span><span class="os-text">${z.kurz}</span>`;
+  // Teamleitung: Fehler einmal als Fenster zeigen (gleiche Meldung nicht immer wieder)
+  if (z.art === 'fehler' && istLeitung() && odooFehlerGezeigt !== z.text) {
+    odooFehlerGezeigt = z.text;
+    fehlerZeigen('Odoo-Abgleich: bitte kurz prüfen', z.text + '\n\nÄnderungen gehen nicht verloren – sie warten und gehen raus, sobald es wieder klappt. Unter „Team → Odoo“ kannst du neu abgleichen.');
+  }
+  if (z.art !== 'fehler') odooFehlerGezeigt = '';
+}
+document.getElementById('odoo-status').onclick = () => {
+  const z = odooZustand();
+  if (istLeitung()) { ansichtWechseln('einstellungen'); setTimeout(() => document.getElementById('odoo-bereich')?.scrollIntoView({behavior:'smooth'}), 80); }
+  toast(z.text);
+};
+setInterval(odooStatusZeichnen, 30000);
+// Stand der anderen regelmäßig holen (Anträge, neue Orte) – nicht mitten in eine Bearbeitung hinein
+setInterval(async () => {
+  if (DEMO || !sb || !ich || document.hidden || syncTimer || syncLaeuft || panel.classList.contains('offen')) return;
+  try { await datenLaden(); allesZeichnen(); } catch(e){}
+}, 2 * 60000);
+
 /* ============ Excel-Export (nur Teamleitung) ============ */
 function skriptLaden(src){
   return new Promise((ok, fehler) => { const s = document.createElement('script'); s.src = src; s.onload = ok; s.onerror = () => fehler(new Error('Excel-Baustein ließ sich nicht laden')); document.head.append(s); });
@@ -1753,11 +2099,12 @@ async function excelExport(){
     const orte = D.cafes.map(c => { const la = letzteAktivitaet(c); return {
       'Name':c.name, 'Art':c.art.join(', '), 'Status':STATUS[c.status].name, 'Betreuung':name(c.betreuung) || 'noch frei',
       'Adresse':c.adresse, 'Stadt':c.stadt, 'Bundesland / Region':c.region, 'Land':c.land,
-      'Ansprechperson':c.ansprechperson, 'Telefon / Mail / Insta':c.kontakt,
+      'Vorname':c.vorname, 'Nachname':c.nachname, 'Telefon':c.telefon, 'E-Mail':c.email, 'Website / Instagram':c.kontakt,
       'Offen für Zeremonie':c.zeremonie ? 'ja' : 'nein', 'Offen für Events':c.event ? 'ja' : 'nein',
       'Nächster Kontakt':datum(c.naechsterKontakt), 'Letzter Kontakt':la ? datum(la.datum) : '', 'Letzter Kontakt von':la ? name(la.person) : '',
       'Besuche':c.besuche.length, 'Proben':c.proben.length, 'Proben mit Bestellung':c.proben.filter(p => p.bestellung === 'ja').length,
-      'Notiz':c.notiz, 'Breitengrad':c.lat, 'Längengrad':c.lng, 'Google Place ID':c.google || ''}; });
+      'Notiz':c.notiz, 'Breitengrad':hatPunkt(c) ? c.lat : '', 'Längengrad':hatPunkt(c) ? c.lng : '', 'Google Place ID':c.google || '',
+      'Odoo-Lead':c.odooLead || '', 'Odoo-Phase':c.odooPhase || ''}; });
     const besuche = D.cafes.flatMap(c => c.besuche.map(b => ({'Datum':datum(b.datum), 'Ort':c.name, 'Stadt':c.stadt, 'Von':name(b.person), 'Notiz':b.notiz})))
       .sort((a, b) => b['Datum'] - a['Datum']);
     const proben = D.cafes.flatMap(c => c.proben.map(p => ({'Datum':datum(p.datum), 'Ort':c.name, 'Stadt':c.stadt, 'Produkt':p.sorte, 'Menge':p.menge,
@@ -1770,7 +2117,7 @@ async function excelExport(){
       if (zeilen.length) ws['!autofilter'] = {ref:ws['!ref']};
       XLSX.utils.book_append_sheet(mappe, ws, titel);
     };
-    blatt(orte, 'Orte', [28,18,18,14,26,16,20,12,20,24,10,10,14,14,16,8,8,10,40,11,11,28]);
+    blatt(orte, 'Orte', [28,18,18,14,26,16,20,12,14,16,18,26,24,10,10,14,14,16,8,8,10,40,11,11,28,10,24]);
     blatt(besuche, 'Besuche', [12,28,16,14,60]);
     blatt(proben, 'Proben', [12,28,16,18,14,16,14]);
     XLSX.writeFile(mappe, `maya-munay-botschafter-karte-${heute()}.xlsx`);
@@ -1816,7 +2163,9 @@ const RUNDGANG = [
     <p>🔐 <b>Nur eingeladene Personen</b> aus dem Team sehen die Karte. Die Anmeldung läuft ohne Passwort über einen Link per Mail.</p>
     <p>🇪🇺 Die Daten liegen auf <b>Servern in der EU</b> (Frankfurt). Jede Person bearbeitet ihre eigenen Orte, die Teamleitung koordiniert.</p>
     <p>🗺️ Die Karte kommt von <b>Google Maps</b> – beim Laden erhält Google deine IP-Adresse.</p>
-    <p>🙏 Bei Ansprechpersonen bitte nur das Nötigste eintragen, z.B. „Anna (Inhaberin)“.</p>
+    <p>🤝 Für Bestellungen braucht es bei jedem Ort die <b>Ansprechperson mit Vor- und Nachname, Adresse, Telefon und E-Mail</b>.
+       Bitte nur geschäftliche Angaben eintragen, die dir die Person selbst gegeben hat.</p>
+    <p>🔗 Orte und Ansprechpersonen kommen auch aus dem <b>Odoo-CRM von Maya Munay</b> – dort laufen später die Bestellungen.</p>
     <p><a href="#" data-datenschutz style="color:var(--kakao)">Den ganzen Datenschutzhinweis lesen</a></p>
     <p class="leise" style="font-size:13px">Diesen Rundgang findest du jederzeit wieder über das <b>?</b> oben rechts.</p>`},
 ];
@@ -1871,10 +2220,13 @@ async function start(){
   document.getElementById('ich-rolle').textContent = istLeitung() ? 'Teamleitung' : 'Betreuung';
   legendeZeichnen(); allesZeichnen(); ansichtWechseln('karte');
   googleStandLaden();
+  setTimeout(() => odooAbgleich(false), 1500);
+  odooStatusZeichnen();
+  if (istLeitung() && D.antraege.length) setTimeout(() => toast(`🗑️ ${D.antraege.length} ${D.antraege.length === 1 ? 'Ort soll' : 'Orte sollen'} entfernt werden – siehe Erinnerungen.`), 1200);
   let gesehen = false; try { gesehen = !!localStorage.getItem(rgSchluessel()); } catch(e){}
   if (!gesehen) setTimeout(() => rundgangZeigen(0), 400);
   if (!istLeitung()) {
-    const eigene = D.cafes.filter(c => c.betreuung === ich.id);
+    const eigene = D.cafes.filter(c => c.betreuung === ich.id && hatPunkt(c));
     if (eigene.length) K.fitPoints(eigene.map(c => [c.lat, c.lng]), 13);
   }
 }
