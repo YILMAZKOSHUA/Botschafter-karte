@@ -394,6 +394,15 @@ table.team th{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color
 .vs-info{flex:1;min-width:200px}
 .vs-knoepfe{display:flex;gap:6px;flex-wrap:wrap}
 .vs-warn{color:#8a5a1a;font-size:12px}
+
+/* Proben-Konto */
+.monat-wahl{align-items:center;gap:8px;margin:0 0 6px;flex-wrap:wrap}
+.monat-name{min-width:150px;text-align:center;color:var(--kakao);font-size:16px}
+.rueck{font-size:12px;border-radius:999px;padding:1px 8px}
+.rueck.offen{background:#fdf3e7;color:#8a5a1a}
+.rueck.ja{background:#e6f2e8;color:#2f6a3d}
+.rueck.nein{background:#f1eeea;color:#7a6a5d}
+#seite-proben .cafe-karte .weg{margin-left:auto}
 </style>
 </head>
 <body>
@@ -438,6 +447,7 @@ table.team th{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color
     <button data-view="karte" class="aktiv"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2z"/><path d="M9 4v14M15 6v14"/></svg><span>Karte</span></button>
     <button data-view="liste"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6h12M9 12h12M9 18h12"/><circle cx="4" cy="6" r="1.2"/><circle cx="4" cy="12" r="1.2"/><circle cx="4" cy="18" r="1.2"/></svg><span>Liste</span></button>
     <button data-view="erinnerungen"><span class="tab-sym"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 8-3 8h18s-3-1-3-8"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg><span class="badge" id="badge"></span></span><span>Erinnerungen</span></button>
+    <button data-view="proben"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2.6C17.4 5 19.6 9.8 19 14.6c-.6 4.6-3.8 7.2-7 7.8-3.2-.6-6.4-3.2-7-7.8C4.4 9.8 6.6 5 12 2.6z"/><path d="M12 4.5v16M8.8 6c-1.6 4.2-1.4 10.4 1 14M15.2 6c1.6 4.2 1.4 10.4-1 14"/></svg><span>Proben</span></button>
     <button data-view="einstellungen" id="tab-einst"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8"/></svg><span>Team</span></button>
   </nav>
   <div class="ich"><span id="sync-status" class="sync-status"></span>
@@ -470,6 +480,7 @@ table.team th{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color
 
   <section class="seite versteckt" id="seite-liste"><div class="seite-inhalt" id="liste-inhalt"></div></section>
   <section class="seite versteckt" id="seite-erinnerungen"><div class="seite-inhalt" id="erinnerungen-inhalt"></div></section>
+  <section class="seite versteckt" id="seite-proben"><div class="seite-inhalt" id="proben-inhalt"></div></section>
   <section class="seite versteckt" id="seite-einstellungen"><div class="seite-inhalt" id="einst-inhalt"></div></section>
 
   <aside id="panel"></aside>
@@ -621,8 +632,15 @@ function demoDaten(){
       telefon:'+49 172 4695132', email:'info@seminarhof-drawehn.de', adresse:'Im alten Rundling 13',
       odooLead:42, odooPhase:'Angebotsphase', odooDaten:{verkaeufer:'David van der Zaan', prioritaet:0, stichwoerter:['B2B Tour 2026']}}),
   ];
+  cafes.forEach(c => c.proben.forEach(p => { p.id = p.id || uid(); p.person = p.person || c.betreuung || 'u1'; p.anzahl = p.anzahl || 1; }));
+  const ausgaben = [
+    {id:uid(), person:'u2', datum:tag(-30), sorte:'Aloha', anzahl:10, notiz:'Monatspaket', erfasstVon:'u1'},
+    {id:uid(), person:'u2', datum:tag(-30), sorte:'Kukulkan', anzahl:5, notiz:'', erfasstVon:'u1'},
+    {id:uid(), person:'u5', datum:tag(-28), sorte:'Zeremonie-Kakao', anzahl:6, notiz:'', erfasstVon:'u1'},
+    {id:uid(), person:'u2', datum:tag(-3), sorte:'Aloha', anzahl:8, notiz:'', erfasstVon:'u1'},
+  ];
   return {
-    team, cafes, antraege:[],
+    team, cafes, antraege:[], ausgaben,
     einstellungen:{
       arten:['Yoga-Studio','Event-Location','Café','Hof','Supermarkt'],
       sorten:['Aloha','Kukulkan','Postkarten','Mondkalender','Zeremonie-Kakao','Trinkschokolade','Kakaonibs','Kakaobutter'],
@@ -641,8 +659,9 @@ const sb = (!DEMO && window.supabase)
   ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {auth:{flowType:'implicit', persistSession:true, autoRefreshToken:true, detectSessionInUrl:true}})
   : null;
 
-let D = DEMO ? laden() : {team:[], cafes:[], antraege:[], einstellungen:{arten:[], sorten:[], wochen:6}};
+let D = DEMO ? laden() : {team:[], cafes:[], antraege:[], ausgaben:[], einstellungen:{arten:[], sorten:[], wochen:6}};
 if (!D.antraege) D.antraege = [];
+if (!D.ausgaben) D.ausgaben = [];
 const ODOO = {produkte:[], nutzer:[], abgleich:null, wartet:[], laeuft:false, aufrufFehler:''};   // Daten aus Odoo (nur lesen)
 const ODOO_ADRESSE = 'https://mayamunay.odoo.com';
 const hatPunkt = c => c.lat != null && c.lng != null && !isNaN(c.lat) && !isNaN(c.lng);
@@ -675,14 +694,16 @@ const ortZeile = c => ({id:c.id, name:c.name || '', adresse:c.adresse || '', sta
   kontakt:c.kontakt || '', naechster_kontakt:c.naechsterKontakt || null, notiz:c.notiz || '',
   google:c.google || null, osm:c.osm || null, erstellt_von:c.erstelltVon || null});
 const besuchZeile = (b, ortId) => ({id:b.id, ort_id:ortId, datum:b.datum, person:b.person || null, notiz:b.notiz});
-const probeZeile = (p, ortId) => ({id:p.id, ort_id:ortId, datum:p.datum, sorte:p.sorte, menge:p.menge || '', bestellung:p.bestellung, person:p.person || null});
+const probeZeile = (p, ortId) => ({id:p.id, ort_id:ortId, datum:p.datum, sorte:p.sorte, menge:p.menge || '', anzahl:Math.max(1, +p.anzahl || 1), bestellung:p.bestellung, person:p.person || null});
+const ausgabeZeile = a => ({id:a.id, person:a.person || null, datum:a.datum, sorte:a.sorte, anzahl:Math.max(1, +a.anzahl || 1), notiz:a.notiz || '', erfasst_von:a.erfasstVon || null});
 const teamZeile = p => ({id:p.id, email:(p.email || '').trim(), name:p.name, rolle:p.rolle, region:p.region || '', odoo_nutzer:p.odooNutzer || null});
 const einstZeile = () => ({arten:D.einstellungen.arten, sorten:D.einstellungen.sorten, wochen:D.einstellungen.wochen});
 
 // Stand der Datenbank (für den Vergleich: was hat sich geändert?)
-let stand = {team:new Map(), orte:new Map(), besuche:new Map(), proben:new Map(), einst:''};
+let stand = {team:new Map(), orte:new Map(), besuche:new Map(), proben:new Map(), ausgaben:new Map(), einst:''};
 function standMerken(){
-  stand = {team:new Map(), orte:new Map(), besuche:new Map(), proben:new Map(), einst:JSON.stringify(einstZeile())};
+  stand = {team:new Map(), orte:new Map(), besuche:new Map(), proben:new Map(), ausgaben:new Map(), einst:JSON.stringify(einstZeile())};
+  (D.ausgaben || []).forEach(a => stand.ausgaben.set(a.id, JSON.stringify(ausgabeZeile(a))));
   D.team.forEach(p => stand.team.set(p.id, JSON.stringify(teamZeile(p))));
   D.cafes.forEach(c => {
     stand.orte.set(c.id, JSON.stringify(ortZeile(c)));
@@ -712,9 +733,12 @@ async function datenLaden(){
     google:x.google || '', osm:x.osm || '', erstelltVon:x.erstellt_von || '',
     odooLead:x.odoo_lead || null, odooPhase:x.odoo_phase || '', odooDaten:x.odoo_daten || null,
     besuche:(bNach[x.id] || []).map(y => ({id:y.id, datum:y.datum, person:y.person || '', notiz:y.notiz})),
-    proben:(pNach[x.id] || []).map(y => ({id:y.id, datum:y.datum, sorte:y.sorte, menge:y.menge, bestellung:y.bestellung, person:y.person || ''}))}));
+    proben:(pNach[x.id] || []).map(y => ({id:y.id, datum:y.datum, sorte:y.sorte, menge:y.menge, anzahl:y.anzahl || 1, bestellung:y.bestellung, person:y.person || ''}))}));
   if (e.data) D.einstellungen = {arten:e.data.arten, sorten:e.data.sorten, wochen:e.data.wochen};
   googleSchluesselWert = k.data?.google_schluessel || '';
+  // Erhaltene Proben (Tabelle fehlt, solange schema.sql noch nicht neu ausgeführt ist)
+  const au = await sb.from('proben_ausgabe').select('*').order('datum');
+  D.ausgaben = au.error ? [] : au.data.map(x => ({id:x.id, person:x.person || '', datum:x.datum, sorte:x.sorte, anzahl:x.anzahl, notiz:x.notiz, erfasstVon:x.erfasst_von || ''}));
   standMerken();
   // Anträge zum Entfernen (Tabelle fehlt, solange schema.sql noch nicht neu ausgeführt ist)
   const an = await sb.from('entfernen_antraege').select('*').order('erstellt');
@@ -753,7 +777,7 @@ async function syncJetzt(){
     for (const z of zeilen) {
       const j = JSON.stringify(z), alt = merker.get(z.id);
       if (alt === j) continue;
-      if (tabelle !== 'team') fuerOdoo = true;
+      if (!['team', 'proben_ausgabe'].includes(tabelle)) fuerOdoo = true;
       const ok = alt === undefined
         ? await schritt(sb.from(tabelle).insert(z), `${name} anlegen`)
         : await schritt(sb.from(tabelle).update(z).eq('id', z.id).select('id'), `${name} ändern`, true);
@@ -773,8 +797,10 @@ async function syncJetzt(){
     await abgleich('orte', stand.orte, D.cafes.map(ortZeile), 'Ort');
     await abgleich('besuche', stand.besuche, besuche, 'Besuch');
     await abgleich('proben', stand.proben, proben, 'Probe');
+    await abgleich('proben_ausgabe', stand.ausgaben, (D.ausgaben || []).map(ausgabeZeile), 'Erhaltene Proben');
     await loeschen('besuche', stand.besuche, new Set(besuche.map(x => x.id)), 'Besuch');
     await loeschen('proben', stand.proben, new Set(proben.map(x => x.id)), 'Probe');
+    await loeschen('proben_ausgabe', stand.ausgaben, new Set((D.ausgaben || []).map(x => x.id)), 'Erhaltene Proben');
     await loeschen('orte', stand.orte, new Set(D.cafes.map(c => c.id)), 'Ort');
     await loeschen('team', stand.team, new Set(D.team.map(p => p.id)), 'Person');
     const einst = JSON.stringify(einstZeile());
@@ -862,7 +888,13 @@ document.getElementById('code-knopf').onclick = async () => {
   if (!mail) return loginNachricht('Magst du oben deine E-Mail-Adresse eintragen?');
   if (code.length < 6) return loginNachricht('Der Code hat 6 Ziffern – magst du ihn vollständig eintippen?');
   const knopf = document.getElementById('code-knopf'); knopf.disabled = true; knopf.textContent = 'Prüfe Code …';
-  const {error} = await sb.auth.verifyOtp({email:mail, token:code, type:'email'});
+  // Bei noch nicht bestätigten Einladungen schickt Supabase den Code aus „Confirm signup“ bzw. „Invite user“ –
+  // deshalb nacheinander alle passenden Arten prüfen
+  let error = null;
+  for (const type of ['email', 'signup', 'invite']) {
+    ({error} = await sb.auth.verifyOtp({email:mail, token:code, type}));
+    if (!error || !/expired|invalid|not found/i.test(error.message || '')) break;
+  }
   knopf.disabled = false; knopf.textContent = 'Anmelden';
   if (error) {
     const m = error.message || '';
@@ -1186,14 +1218,15 @@ document.getElementById('tabs').onclick = e => { const b = e.target.closest('[da
 function ansichtWechseln(v){
   ansicht = v;
   document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('aktiv', b.dataset.view === v));
-  ['liste','erinnerungen','einstellungen'].forEach(s => document.getElementById('seite-'+s).classList.toggle('versteckt', s !== v));
+  ['liste','erinnerungen','proben','einstellungen'].forEach(s => document.getElementById('seite-'+s).classList.toggle('versteckt', s !== v));
   ['karten-knoepfe','legende'].forEach(id => document.getElementById(id).classList.toggle('versteckt', v !== 'karte'));
-  document.getElementById('leiste').classList.toggle('versteckt', v === 'einstellungen' || v === 'erinnerungen');
+  document.getElementById('leiste').classList.toggle('versteckt', ['einstellungen', 'erinnerungen', 'proben'].includes(v));
   obenSetzen();
   if (v === 'karte') setTimeout(() => K && K.resize(), 50);
   if (v === 'liste') listeZeichnen();
   if (v === 'erinnerungen') erinnerungenZeichnen();
   if (v === 'einstellungen') einstellungenZeichnen();
+  if (v === 'proben') probenZeichnen();
 }
 function obenSetzen(){
   const kopf = document.querySelector('header').offsetHeight;
@@ -1353,7 +1386,7 @@ function panelZeichnen(c){
 
     <div class="abschnitt">
       <h4>Proben <span style="font-weight:400;font-size:12px;color:var(--leise)">${c.proben.length}</span></h4>
-      ${c.proben.map((p, i) => `<div class="eintrag"><div class="eintrag-kopf"><div><b>${esc(p.sorte)}</b>${p.menge ? ' · ' + esc(p.menge) : ''} <span class="meta">am ${datumDe(p.datum)}</span></div>
+      ${c.proben.map((p, i) => `<div class="eintrag"><div class="eintrag-kopf"><div><b>${(+p.anzahl || 1) > 1 ? p.anzahl + ' × ' : ''}${esc(p.sorte)}</b>${p.menge ? ' · ' + esc(p.menge) : ''} <span class="meta">am ${datumDe(p.datum)}${p.person ? ' · ' + esc(person(p.person)?.name || '') : ''}</span></div>
           ${darfEintragLoeschen(p) ? `<button class="weg" data-akt="probe-weg" data-i="${i}" title="Probe löschen" aria-label="Probe löschen">×</button>` : ''}</div>
         <div class="inline" style="margin-top:4px;align-items:center"><span class="meta">Bestellung danach?</span>
         <select data-akt="probe-status" data-i="${i}" ${dis}>${opt([['offen','noch offen'],['ja','ja 🎉'],['nein','nein']], p.bestellung)}</select></div></div>`).join('') || '<div class="meta" style="font-size:13px;color:var(--leise)">Noch keine Probe.</div>'}
@@ -1362,7 +1395,8 @@ function panelZeichnen(c){
           <input id="probe-sorte" list="produkt-liste" autocomplete="off" placeholder="eintippen oder aus der Liste wählen"></label>
         <datalist id="produkt-liste">${D.einstellungen.sorten.map(s => `<option value="${esc(s)}">`).join('')}</datalist>
         <div class="inline">
-          <input id="probe-menge" placeholder="Menge, z.B. 100 g / 5 Stück" style="flex:1;min-width:140px">
+          <input id="probe-anzahl" type="number" min="1" value="1" title="Wie viele Proben?" aria-label="Anzahl" style="width:70px">
+          <input id="probe-menge" placeholder="Größe, z.B. 100 g" style="flex:1;min-width:120px">
           <input id="probe-datum" type="date" value="${heute()}">
           <button class="knopf klein" data-akt="probe">Probe speichern</button>
         </div>
@@ -1433,7 +1467,8 @@ panel.addEventListener('click', e => {
     const bekannt = D.einstellungen.sorten.find(s => s.toLowerCase() === produkt.toLowerCase());
     if (!bekannt) D.einstellungen.sorten.push(produkt);
     c.proben.push({id:uid(), datum:document.getElementById('probe-datum').value || heute(), sorte:bekannt || produkt,
-      menge:document.getElementById('probe-menge').value.trim(), bestellung:'offen', person:ich.id});
+      menge:document.getElementById('probe-menge').value.trim(), anzahl:Math.max(1, +document.getElementById('probe-anzahl').value || 1),
+      bestellung:'offen', person:ich.id});
     if (['potenziell','angesprochen'].includes(c.status)) c.status = 'probe';
     toast(bekannt ? 'Probe gespeichert. Ich erinnere in 14 Tagen daran.' : `Probe gespeichert – „${produkt}“ steht jetzt allen in der Produktliste zur Auswahl.`);
   }
@@ -1872,14 +1907,14 @@ function vorschlagBox(){
   if (!vorschlaege) {
     if (!ohne.length) return '';
     return `<div class="vs-box"><b>📍 ${ohne.length} ${ohne.length === 1 ? 'Ort hat' : 'Orte haben'} noch keinen Kartenpunkt.</b>
-      Die App kann sie bei Google suchen (Name, Adresse, Stadt) – du bestätigst jeden Vorschlag, bevor er gilt.
-      <div class="inline" style="margin-top:8px"><button class="knopf gold klein" data-vs-start>Kartenpunkte vorschlagen</button>
+      Die App kann sie bei Google suchen (Name, Adresse, Stadt) – du bestätigst jeden Treffer, bevor er gilt.
+      <div class="inline" style="margin-top:8px"><button class="knopf gold klein" data-vs-start>Kartenpunkte suchen</button>
       <span class="leise" style="font-size:12px">${K && K.art === 'google' ? `braucht bis zu ${ohne.length} der heute noch ${uebrig('suche')} freien Google-Suchen` : 'ohne Google: Suche über OpenStreetMap, nur für Orte mit Adresse'}</span></div></div>`;
   }
   const offen = vorschlaege.filter(v => !v.erledigt);
   const sicher = offen.filter(v => v.gefunden && !v.unsicher).length;
   return `<div class="vs-box"><div class="inline" style="justify-content:space-between;align-items:center">
-      <b>📍 Vorschläge für Kartenpunkte ${vorschlagLaeuft ? `<span class="leise">– suche … ${vorschlaege.length} von ${ohne.length + vorschlaege.filter(v => v.erledigt).length}</span>` : ''}</b>
+      <b>📍 Gefundene Kartenpunkte ${vorschlagLaeuft ? `<span class="leise">– suche … ${vorschlaege.length} von ${ohne.length + vorschlaege.filter(v => v.erledigt).length}</span>` : ''}</b>
       <span>${sicher ? `<button class="knopf gold klein" data-vs-alle>✓ Alle ${sicher} passenden übernehmen</button>` : ''}
         ${vorschlagLaeuft ? '' : '<button class="knopf leise klein" data-vs-zu>Fertig</button>'}</span></div>
     ${offen.map(v => { const c = D.cafes.find(x => x.id === v.ortId); if (!c) return '';
@@ -1889,7 +1924,7 @@ function vorschlagBox(){
         <div class="vs-knoepfe">${v.gefunden ? `<button class="knopf klein" data-vs-ja="${v.ortId}">✓ Übernehmen</button>
           <button class="knopf leise klein" data-vs-ansehen="${v.ortId}">Ansehen</button>` : ''}
           <button class="knopf leise klein" data-vs-hand="${v.ortId}">Von Hand</button>
-          <button class="knopf leise klein" data-vs-nein="${v.ortId}" title="Vorschlag verwerfen">✕</button></div></div>`; }).join('')
+          <button class="knopf leise klein" data-vs-nein="${v.ortId}" title="Treffer überspringen">✕</button></div></div>`; }).join('')
       || (vorschlagLaeuft ? '' : '<div class="leise">Alles erledigt ✓</div>')}</div>`;
 }
 async function kartenpunkteVorschlagen(){
@@ -1945,8 +1980,8 @@ document.getElementById('seite-liste').addEventListener('click', e => {
   if (d.vsAnsehen) {
     const v = vorschlaege.find(x => x.ortId === d.vsAnsehen); if (!v) return;
     ansichtWechseln('karte'); K.zentrieren(v.lat, v.lng, 16);
-    K.kandidaten([{id:'vs', lat:v.lat, lng:v.lng, titel:v.name || 'Vorschlag'}], () => {});
-    return toast('Die Kakaofrucht zeigt den Vorschlag. Unter „Liste“ kannst du ihn übernehmen.');
+    K.kandidaten([{id:'vs', lat:v.lat, lng:v.lng, titel:v.name || 'Treffer'}], () => {});
+    return toast('Die Kakaofrucht zeigt den Treffer. Unter „Liste“ kannst du ihn übernehmen.');
   }
   if (d.vsHand) { const c = D.cafes.find(x => x.id === d.vsHand); if (c) platzierenStarten(c); }
 });
@@ -2008,6 +2043,134 @@ function erinnerungenZeichnen(){
     <div class="karten-liste">${liste.map(({c, gruende}) =>
       cafeZeile(c, gruende.map(g => `<span class="grund ${g.art === 'probe' ? 'probe' : ''}">${esc(g.text)}</span>`).join(' '))).join('')
       || '<div class="leer">Alles im Fluss – gerade wartet kein Ort auf einen Kontakt. 🌿</div>'}</div>`;
+}
+
+/* ============ Proben-Konto: erhalten · abgegeben · noch da – je Monat und Botschafter ============ */
+let probenMonat = heute().slice(0, 7), probenPerson = null;
+const monatName = m => new Date(m + '-15T12:00').toLocaleDateString('de-DE', {month:'long', year:'numeric'});
+const monatPlus = (m, n) => { const d = new Date(m + '-15T12:00'); d.setMonth(d.getMonth() + n); return d.toISOString().slice(0, 7); };
+const stueck = liste => liste.reduce((n, x) => n + Math.max(1, +x.anzahl || 1), 0);
+const alleAbgaben = () => D.cafes.flatMap(c => c.proben.map(p => ({...p, ort:c})));
+
+function probenDaten(){
+  if (probenPerson === null) probenPerson = istLeitung() ? '' : ich.id;
+  const imMonat = x => String(x.datum).slice(0, 7) === probenMonat;
+  const bisEnde = x => String(x.datum).slice(0, 7) <= probenMonat;
+  const fuer = x => !probenPerson || x.person === probenPerson;
+  const abgaben = alleAbgaben(), ausgaben = D.ausgaben || [];
+  const personen = D.team.filter(p => !probenPerson || p.id === probenPerson)
+    .map(p => {
+      const meinAb = abgaben.filter(x => x.person === p.id), meinErh = ausgaben.filter(x => x.person === p.id);
+      return {p, erhalten:stueck(meinErh.filter(imMonat)), abgegeben:stueck(meinAb.filter(imMonat)),
+        noch:stueck(meinErh.filter(bisEnde)) - stueck(meinAb.filter(bisEnde)), erfasst:meinErh.some(bisEnde),
+        bestellt:meinAb.filter(imMonat).filter(x => x.bestellung === 'ja').length};
+    })
+    .filter(z => z.erhalten || z.abgegeben || z.noch || z.p.id === probenPerson);
+  return {
+    personen,
+    abgegeben: abgaben.filter(imMonat).filter(fuer).sort((a, b) => b.datum.localeCompare(a.datum)),
+    erhalten: ausgaben.filter(imMonat).filter(fuer).sort((a, b) => b.datum.localeCompare(a.datum)),
+  };
+}
+
+function probenZeichnen(){
+  const d = probenDaten(), leitung = istLeitung();
+  const proProdukt = {};
+  d.abgegeben.forEach(x => { proProdukt[x.sorte] = (proProdukt[x.sorte] || 0) + Math.max(1, +x.anzahl || 1); });
+  const rueck = {offen:'<span class="rueck offen">Rückmeldung offen</span>', ja:'<span class="rueck ja">Bestellung 🎉</span>', nein:'<span class="rueck nein">keine Bestellung</span>'};
+  document.getElementById('proben-inhalt').innerHTML = `
+    <div class="liste-kopf"><h2>Proben</h2><button class="knopf leise klein" data-pr-excel>⬇︎ Monat als Excel</button></div>
+    <div class="inline monat-wahl">
+      <button class="knopf leise klein" data-pr-monat="-1" aria-label="Monat davor">‹</button>
+      <b class="monat-name">${monatName(probenMonat)}</b>
+      <button class="knopf leise klein" data-pr-monat="1" aria-label="Nächster Monat" ${probenMonat >= heute().slice(0, 7) ? 'disabled' : ''}>›</button>
+      <select data-pr-person><option value="">Alle Botschafter</option>${D.team.map(p => `<option value="${p.id}" ${probenPerson === p.id ? 'selected' : ''}>${esc(p.name)}${p.id === ich.id ? ' (ich)' : ''}</option>`).join('')}</select>
+    </div>
+
+    <h3>Übersicht</h3>
+    ${d.personen.length ? `<div style="overflow-x:auto"><table class="produkte"><tr><th>Botschafter</th><th class="zahl">Erhalten</th><th class="zahl">Abgegeben</th><th class="zahl" title="alle erhaltenen minus alle abgegebenen Proben bis Monatsende">Noch da</th><th class="zahl">Bestellung danach</th></tr>
+      ${d.personen.map(z => `<tr><td>${esc(z.p.name)}</td><td class="zahl">${z.erhalten}</td><td class="zahl">${z.abgegeben}</td>
+        <td class="zahl">${!z.erfasst ? '<span class="leise" title="Noch keine erhaltenen Proben eingetragen">–</span>' : z.noch < 0 ? `<span class="vs-warn" title="Es wurden mehr Proben abgegeben als erhalten eingetragen">${z.noch} ⚠︎</span>` : z.noch}</td>
+        <td class="zahl">${z.bestellt}</td></tr>`).join('')}</table></div>`
+      : '<div class="leer">In diesem Monat gibt es noch keine Proben.</div>'}
+
+    <h3>Abgegeben im ${monatName(probenMonat)} <span class="leise" style="font-weight:400;font-size:13px">${stueck(d.abgegeben)} ${stueck(d.abgegeben) === 1 ? 'Probe' : 'Proben'} an ${(n => n + (n === 1 ? ' Ort' : ' Orten'))(new Set(d.abgegeben.map(x => x.ort.id)).size)}</span></h3>
+    ${Object.keys(proProdukt).length ? `<div class="einst-liste" style="margin-bottom:8px">${Object.entries(proProdukt).sort((a, b) => b[1] - a[1]).map(([s, n]) => `<span class="tag">${esc(s)} · ${n}</span>`).join('')}</div>` : ''}
+    <div class="karten-liste">${d.abgegeben.map(x => `<div class="cafe-karte" data-cafe="${x.ort.id}">
+        <span class="status-pille" style="background:${STATUS.probe.farbe}">${Math.max(1, +x.anzahl || 1)} × ${esc(x.sorte)}</span>
+        <div class="info"><div class="name">${esc(x.ort.name)}</div>
+          <div class="klein">${datumDe(x.datum)} · ${esc([x.ort.stadt, x.ort.land].filter(Boolean).join(', ') || 'ohne Adresse')}${x.menge ? ' · ' + esc(x.menge) : ''} · von ${esc(person(x.person)?.name || '?')}</div>
+          <div class="klein">${rueck[x.bestellung] || ''}</div></div></div>`).join('')
+      || '<div class="leer">Keine abgegebenen Proben in diesem Monat.</div>'}</div>
+
+    <h3>Erhalten im ${monatName(probenMonat)} <span class="leise" style="font-weight:400;font-size:13px">${stueck(d.erhalten)} Proben</span></h3>
+    ${leitung ? `<div class="neu-box" style="margin-bottom:10px">
+      <div class="leise" style="font-size:13px;margin-bottom:6px">Hier trägt die Teamleitung ein, wer wie viele Proben bekommen hat.</div>
+      <div class="inline">
+        <select id="au-person">${D.team.map(p => `<option value="${p.id}" ${(probenPerson || '') === p.id ? 'selected' : ''}>${esc(p.name)}</option>`).join('')}</select>
+        <input id="au-sorte" list="au-produkte" placeholder="Produkt" style="flex:1;min-width:120px">
+        <datalist id="au-produkte">${D.einstellungen.sorten.map(s => `<option value="${esc(s)}">`).join('')}</datalist>
+        <input id="au-anzahl" type="number" min="1" value="1" style="width:70px" aria-label="Anzahl">
+        <input id="au-datum" type="date" value="${probenMonat === heute().slice(0, 7) ? heute() : probenMonat + '-01'}">
+        <input id="au-notiz" placeholder="Notiz (optional)" style="flex:1;min-width:120px">
+        <button class="knopf klein" data-pr-dazu>Eintragen</button>
+      </div></div>` : ''}
+    <div class="karten-liste">${d.erhalten.map(a => `<div class="cafe-karte">
+        <span class="status-pille" style="background:var(--gold)">${Math.max(1, +a.anzahl || 1)} × ${esc(a.sorte)}</span>
+        <div class="info"><div class="name">${esc(person(a.person)?.name || '?')}</div>
+          <div class="klein">${datumDe(a.datum)}${a.notiz ? ' · ' + esc(a.notiz) : ''}${a.erfasstVon ? ' · eingetragen von ' + esc(person(a.erfasstVon)?.name || '?') : ''}</div></div>
+        ${leitung ? `<button class="weg" data-pr-weg="${a.id}" title="Eintrag löschen" aria-label="Eintrag löschen">×</button>` : ''}</div>`).join('')
+      || '<div class="leer">Keine erhaltenen Proben eingetragen.</div>'}</div>`;
+}
+document.getElementById('seite-proben').addEventListener('click', e => {
+  const b = e.target.closest('[data-pr-monat],[data-pr-dazu],[data-pr-weg],[data-pr-excel]'); if (!b) return;
+  if (b.dataset.prMonat) { probenMonat = monatPlus(probenMonat, +b.dataset.prMonat); return probenZeichnen(); }
+  if ('prExcel' in b.dataset) return probenExcel();
+  if (!istLeitung()) return;
+  if ('prDazu' in b.dataset) {
+    const sorteFeld = document.getElementById('au-sorte'), sorte = sorteFeld.value.trim();
+    if (!sorte) { sorteFeld.focus(); return toast('Magst du eintragen, welches Produkt es war?'); }
+    const bekannt = D.einstellungen.sorten.find(x => x.toLowerCase() === sorte.toLowerCase());
+    if (!bekannt) D.einstellungen.sorten.push(sorte);
+    const a = {id:uid(), person:document.getElementById('au-person').value, datum:document.getElementById('au-datum').value || heute(),
+      sorte:bekannt || sorte, anzahl:Math.max(1, +document.getElementById('au-anzahl').value || 1),
+      notiz:document.getElementById('au-notiz').value.trim(), erfasstVon:ich.id};
+    D.ausgaben.push(a); sichern(); probenZeichnen();
+    return toast(`Eingetragen: ${a.anzahl} × ${a.sorte} für ${person(a.person)?.name || '?'}.`);
+  }
+  if (b.dataset.prWeg) {
+    const a = D.ausgaben.find(x => x.id === b.dataset.prWeg);
+    if (!a || !confirm(`${a.anzahl} × ${a.sorte} für ${person(a.person)?.name || '?'} vom ${datumDe(a.datum)} löschen?`)) return;
+    D.ausgaben = D.ausgaben.filter(x => x.id !== a.id); sichern(); probenZeichnen();
+  }
+});
+document.getElementById('seite-proben').addEventListener('change', e => {
+  if (e.target.matches('[data-pr-person]')) { probenPerson = e.target.value; probenZeichnen(); }
+});
+// Zum Dokumentieren: der gewählte Monat als Excel (Botschafter: nur die eigenen Proben)
+async function probenExcel(){
+  const merk = probenPerson;
+  if (!istLeitung()) probenPerson = ich.id;
+  const d = probenDaten(); probenPerson = merk;
+  toast('Excel-Tabelle wird erstellt …');
+  try {
+    if (!window.XLSX) await skriptLaden('https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js');
+    const datum = iso => iso ? new Date(iso + 'T12:00') : '';
+    const mappe = XLSX.utils.book_new();
+    const blatt = (zeilen, titel, breiten) => {
+      const ws = XLSX.utils.json_to_sheet(zeilen.length ? zeilen : [{'':'(keine Einträge)'}], {cellDates:true, dateNF:'dd.mm.yyyy'});
+      ws['!cols'] = breiten.map(w => ({wch:w})); XLSX.utils.book_append_sheet(mappe, ws, titel);
+    };
+    blatt(d.personen.map(z => ({'Botschafter':z.p.name, 'Erhalten':z.erhalten, 'Abgegeben':z.abgegeben, 'Noch da (bis Monatsende)':z.erfasst ? z.noch : '', 'Bestellung danach':z.bestellt})),
+      'Übersicht', [24, 10, 10, 22, 16]);
+    blatt(d.abgegeben.map(x => ({'Datum':datum(x.datum), 'Ort':x.ort.name, 'Adresse':x.ort.adresse, 'Stadt':x.ort.stadt, 'Land':x.ort.land,
+      'Produkt':x.sorte, 'Anzahl':Math.max(1, +x.anzahl || 1), 'Größe':x.menge, 'Botschafter':person(x.person)?.name || '',
+      'Bestellung danach':{offen:'noch offen', ja:'ja', nein:'nein'}[x.bestellung] || ''})), 'Abgegeben', [12, 28, 24, 18, 14, 18, 8, 12, 18, 16]);
+    blatt(d.erhalten.map(a => ({'Datum':datum(a.datum), 'Botschafter':person(a.person)?.name || '', 'Produkt':a.sorte, 'Anzahl':Math.max(1, +a.anzahl || 1),
+      'Notiz':a.notiz, 'Eingetragen von':person(a.erfasstVon)?.name || ''})), 'Erhalten', [12, 18, 18, 8, 30, 18]);
+    XLSX.writeFile(mappe, `proben-${probenMonat}${istLeitung() && !probenPerson ? '' : '-' + (person(istLeitung() ? probenPerson : ich.id)?.name || '').toLowerCase().replace(/[^a-z0-9äöüß]+/g, '-')}.xlsx`);
+    toast('Excel-Tabelle ist heruntergeladen ✓');
+  } catch(e){ fehlerZeigen('Der Excel-Export hat nicht geklappt:', String(e.message || e)); }
 }
 
 /* ============ Team & Einstellungen ============ */
@@ -2176,7 +2339,7 @@ async function odooAbgleich(erzwingen){
       let text = error.message || String(error);
       try { const j = await error.context?.json?.(); if (j?.fehler) text = j.fehler; } catch(e){}
       ODOO.aufrufFehler = text;
-      if (erzwingen) { odooFehlerGezeigt = 'Die Brücke zu Odoo ist nicht erreichbar: ' + text; fehlerZeigen('Der Abgleich mit Odoo hat nicht geklappt:', text + '\n\nÄnderungen gehen nicht verloren – sie warten, bis es wieder klappt.'); }
+      if (erzwingen) { odooFehlerGezeigt = 'Die Brücke zu Odoo ist nicht erreichbar: ' + text; fehlerZeigen('Der Abgleich mit Odoo hat nicht geklappt:', text + '\n\nAlle Änderungen bleiben erhalten – sie warten, bis es wieder klappt.'); }
       else console.warn('Odoo-Abgleich:', text);
     } else if (data?.ok) {
       ODOO.aufrufFehler = '';
@@ -2216,7 +2379,7 @@ function odooStatusZeichnen(){
   // Teamleitung: Fehler einmal als Fenster zeigen (gleiche Meldung nicht immer wieder)
   if (z.art === 'fehler' && istLeitung() && odooFehlerGezeigt !== z.text) {
     odooFehlerGezeigt = z.text;
-    fehlerZeigen('Odoo-Abgleich: bitte kurz prüfen', z.text + '\n\nÄnderungen gehen nicht verloren – sie warten und gehen raus, sobald es wieder klappt. Unter „Team → Odoo“ kannst du neu abgleichen.');
+    fehlerZeigen('Odoo-Abgleich: bitte kurz prüfen', z.text + '\n\nAlle Änderungen bleiben erhalten – sie warten und gehen raus, sobald es wieder klappt. Unter „Team → Odoo“ kannst du neu abgleichen.');
   }
   if (z.art !== 'fehler') odooFehlerGezeigt = '';
 }
@@ -2358,6 +2521,7 @@ function allesZeichnen(){
   leisteZeichnen(); markerZeichnen(); badgeSetzen();
   if (ansicht === 'liste') listeZeichnen();
   if (ansicht === 'erinnerungen') erinnerungenZeichnen();
+  if (ansicht === 'proben') probenZeichnen();
 }
 async function start(){
   document.getElementById('login').classList.add('versteckt');
