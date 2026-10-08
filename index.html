@@ -403,6 +403,18 @@ table.team th{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color
 .rueck.ja{background:#e6f2e8;color:#2f6a3d}
 .rueck.nein{background:#f1eeea;color:#7a6a5d}
 #seite-proben .cafe-karte .weg{margin-left:auto}
+
+/* Bestellung */
+.bd-karte{width:min(640px,100%)}
+.bd-liste{max-height:46vh;overflow:auto;border:1px solid var(--linie);border-radius:12px;background:#fff}
+.bd-zeile{display:flex;gap:10px;align-items:center;justify-content:space-between;padding:8px 10px;border-bottom:1px solid var(--linie);font-size:14px}
+.bd-zeile:last-child{border-bottom:0}
+.bd-zeile.an{background:var(--gold-hell)}
+.bd-zeile input{width:76px;text-align:center;font-size:16px;padding:7px;border:1px solid var(--linie);border-radius:10px}
+.bd-info{flex:1;min-width:0}
+.bd-summe{margin:8px 0 4px;display:flex;flex-direction:column;gap:2px;font-size:14px}
+#bestell-dialog{position:fixed;inset:0;background:rgba(43,33,27,.45);z-index:2550;display:grid;place-items:center;padding:16px}
+#bestell-dialog.versteckt{display:none!important}
 </style>
 </head>
 <body>
@@ -487,6 +499,13 @@ table.team th{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color
 </main>
 
 <div id="toast"></div>
+<div id="bestell-dialog" class="versteckt" role="dialog" aria-modal="true" aria-labelledby="bd-titel">
+  <div class="rg-karte bd-karte">
+    <div class="rg-kopf"><span class="leise">Bestellung → Angebot in Odoo</span><button class="rg-zu" data-bd="zu" aria-label="Schließen">×</button></div>
+    <h2 id="bd-titel"></h2>
+    <div id="bd-inhalt"></div>
+  </div>
+</div>
 <div id="datenschutz" class="versteckt" role="dialog" aria-modal="true" aria-labelledby="ds-titel">
   <div class="rg-karte ds-karte">
     <div class="rg-kopf"><span class="leise">Stand: 05.10.2026</span><button class="rg-zu" data-ds-zu aria-label="Schließen">×</button></div>
@@ -640,7 +659,7 @@ function demoDaten(){
     {id:uid(), person:'u2', datum:tag(-3), sorte:'Aloha', anzahl:8, notiz:'', erfasstVon:'u1'},
   ];
   return {
-    team, cafes, antraege:[], ausgaben,
+    team, cafes, antraege:[], ausgaben, bestellungen:[],
     einstellungen:{
       arten:['Yoga-Studio','Event-Location','Café','Hof','Supermarkt'],
       sorten:['Aloha','Kukulkan','Postkarten','Mondkalender','Zeremonie-Kakao','Trinkschokolade','Kakaonibs','Kakaobutter'],
@@ -662,6 +681,7 @@ const sb = (!DEMO && window.supabase)
 let D = DEMO ? laden() : {team:[], cafes:[], antraege:[], ausgaben:[], einstellungen:{arten:[], sorten:[], wochen:6}};
 if (!D.antraege) D.antraege = [];
 if (!D.ausgaben) D.ausgaben = [];
+if (!D.bestellungen) D.bestellungen = [];
 const ODOO = {produkte:[], nutzer:[], abgleich:null, wartet:[], laeuft:false, aufrufFehler:''};   // Daten aus Odoo (nur lesen)
 const ODOO_ADRESSE = 'https://mayamunay.odoo.com';
 const hatPunkt = c => c.lat != null && c.lng != null && !isNaN(c.lat) && !isNaN(c.lng);
@@ -743,6 +763,7 @@ async function datenLaden(){
   // Anträge zum Entfernen (Tabelle fehlt, solange schema.sql noch nicht neu ausgeführt ist)
   const an = await sb.from('entfernen_antraege').select('*').order('erstellt');
   D.antraege = an.error ? [] : an.data.map(x => ({id:x.id, ortId:x.ort_id, person:x.person || '', grund:x.grund, erstellt:x.erstellt}));
+  await bestellungenLaden();
   // Aus Odoo (schreibt nur die Brücke): Produkte, Odoo-Benutzer, letzter Abgleich
   const [pr2, nu, ab] = await Promise.all([
     sb.from('produkte').select('*').order('name'),
@@ -1253,6 +1274,121 @@ function panelSchliessen(){ panel.classList.remove('offen'); document.body.class
 
 function letzterBesuch(c){ return c.besuche.length ? c.besuche.map(b => b.datum).sort().at(-1) : null; }
 
+/* ---------- Bestellungen: aus der App → Angebot in Odoo (Maya Munay prüft und bestätigt) ---------- */
+const DEMO_PRODUKTE = [
+  {odoo_id:1, name:'Kakaomasse Bruchstücke ALOHA (100 g)', code:'mm-kakaomasse-aloha-100', preis:9.92, bestand:337, einheit:'Stk.'},
+  {odoo_id:2, name:'Kakaomasse Bruchstücke ALOHA (250 g)', code:'mm-kakaomasse-aloha-250', preis:22.75, bestand:319, einheit:'Stk.'},
+  {odoo_id:3, name:'Kakaodrops Kukulkan (Sur del Lago) (100 g)', code:'mm-kakaodrops-kukulkan-100', preis:9.92, bestand:86, einheit:'Stk.'},
+  {odoo_id:4, name:'Mayamunay Mondkalender 2026 B2B (a-6)', code:'mm-mondkalender-01-b2b', preis:2.22, bestand:1971, einheit:'Stk.'},
+];
+const produktListe = () => DEMO ? DEMO_PRODUKTE : ODOO.produkte;
+async function bestellungenLaden(){
+  if (DEMO || !sb) return;
+  const {data, error} = await sb.from('bestellungen').select('*').order('erstellt', {ascending:false});
+  if (!error) D.bestellungen = data.map(x => ({id:x.id, ortId:x.ort_id, person:x.person || '', positionen:x.positionen || [], notiz:x.notiz,
+    status:x.status, odooName:x.odoo_name, odooStatus:x.odoo_status, summe:x.summe, fehler:x.fehler, erstellt:x.erstellt}));
+}
+function bestellListeHtml(c){
+  const liste = D.bestellungen.filter(b => b.ortId === c.id);
+  if (!liste.length) return '<div class="meta" style="font-size:13px;color:var(--leise)">Noch keine Bestellung aus der App.</div>';
+  return liste.map(b => {
+    const stueck = b.positionen.reduce((n, p) => n + (+p.menge || 0), 0);
+    const st = b.status === 'angebot' ? `<span class="rueck ja">${esc(b.odooStatus || 'Angebot')} ${esc(b.odooName)}${b.summe != null ? ' · ' + euro(b.summe) : ''}</span>`
+      : b.status === 'fehler' ? `<span class="rueck nein" title="${esc(b.fehler)}">hat nicht geklappt – Teamleitung informiert</span>`
+      : `<span class="rueck offen">wird an Odoo übertragen …</span>`;
+    return `<div class="eintrag"><div class="eintrag-kopf"><div><b>${stueck} Artikel</b> <span class="meta">am ${datumDe(String(b.erstellt).slice(0, 10))} · ${esc(person(b.person)?.name || '?')}</span></div></div>
+      <div class="klein" style="font-size:13px">${b.positionen.map(p => `${p.menge} × ${esc(p.name)}`).join(' · ')}</div>
+      ${b.notiz ? `<div class="meta" style="font-size:12px;color:var(--leise)">Hinweis: ${esc(b.notiz)}</div>` : ''}
+      <div style="margin-top:4px">${st}</div></div>`;
+  }).join('');
+}
+let bestellOrt = null, bestellMengen = {}, bestellSuche = '', bestellNurBestand = true;
+function bestellDialogOeffnen(c){
+  // Felder aus dem Panel vorher übernehmen (z.B. gerade eingetippte Adresse)
+  panel.querySelectorAll('[data-f]').forEach(el => { if (!el.disabled) c[el.dataset.f] = el.type === 'checkbox' ? el.checked : el.value; });
+  sichern();
+  bestellOrt = c.id; bestellMengen = {}; bestellSuche = '';
+  document.getElementById('bd-titel').textContent = 'Bestellung für ' + (c.name || 'diesen Ort');
+  bestellDialogZeichnen();
+  document.getElementById('bestell-dialog').classList.remove('versteckt');
+}
+function bestellDialogZeichnen(){
+  const c = D.cafes.find(x => x.id === bestellOrt); if (!c) return;
+  const fehlt = ['adresse', 'stadt'].filter(k => !String(c[k] || '').trim());
+  const empfohlen = fehlendeAngaben(c).filter(n => !['Adresse'].includes(n));
+  const t = bestellSuche.trim().toLowerCase();
+  const produkte = produktListe().filter(p => (!bestellNurBestand || (p.bestand ?? 1) > 0 || bestellMengen[p.odoo_id]) &&
+    (!t || (p.name + ' ' + p.code).toLowerCase().includes(t)));
+  const pos = produktListe().filter(p => bestellMengen[p.odoo_id] > 0);
+  const summe = pos.reduce((n, p) => n + bestellMengen[p.odoo_id] * (+p.preis || 0), 0);
+  document.getElementById('bd-inhalt').innerHTML = `
+    ${fehlt.length ? `<div class="fehlt">Für ein Angebot braucht Odoo die <b>Adresse und PLZ/Stadt</b> des Kunden. Magst du sie zuerst beim Ort eintragen?</div>`
+      : empfohlen.length ? `<div class="fehlt">Hilfreich für Maya Munay wäre noch: ${empfohlen.join(', ')}.</div>` : ''}
+    ${produktListe().length ? `<div class="inline" style="margin:6px 0 8px">
+      <input id="bd-suche" type="search" placeholder="Produkt suchen …" value="${esc(bestellSuche)}" style="flex:1;min-width:160px">
+      <label class="schalter" style="margin:0"><input type="checkbox" id="bd-bestand" ${bestellNurBestand ? 'checked' : ''}> nur mit Bestand</label></div>
+    <div class="bd-liste">${produkte.map(p => `<div class="bd-zeile ${bestellMengen[p.odoo_id] > 0 ? 'an' : ''}">
+        <div class="bd-info"><b>${esc(p.name)}</b><br><span class="leise">${esc(p.code)} · ${euro(p.preis)}${p.bestand != null ? ` · frei: ${Number(p.bestand).toLocaleString('de-DE')}` : ''}</span>
+          ${p.bestand != null && bestellMengen[p.odoo_id] > p.bestand ? '<br><span class="vs-warn">⚠︎ mehr als frei im Lager</span>' : ''}</div>
+        <input type="number" min="0" step="1" inputmode="numeric" data-bd-menge="${p.odoo_id}" value="${bestellMengen[p.odoo_id] || ''}" placeholder="0" aria-label="Menge"></div>`).join('')
+      || '<div class="leer">Kein Produkt passt zur Suche.</div>'}</div>`
+    : '<div class="leer">Die Produkte erscheinen nach dem ersten Abgleich mit Odoo (Team → Odoo).</div>'}
+    <label class="feld" style="margin-top:10px">Hinweis für Maya Munay <small>(Lieferwunsch, Ansprechperson vor Ort …)</small>
+      <textarea id="bd-notiz" placeholder="z.B. Lieferung bitte bis Freitag"></textarea></label>
+    <div class="bd-summe">${pos.length ? `<b>${pos.reduce((n, p) => n + bestellMengen[p.odoo_id], 0)} Artikel · ca. ${euro(summe)}</b>
+      <span class="leise">laut Preisliste – den Endbetrag zeigt das Angebot in Odoo</span>` : '<span class="leise">Noch kein Produkt gewählt.</span>'}</div>
+    <div class="rg-fuss" style="justify-content:flex-end;gap:8px">
+      <button class="knopf leise" data-bd="zu">Abbrechen</button>
+      <button class="knopf gold" data-bd="senden" ${!pos.length || fehlt.length ? 'disabled' : ''}>Als Angebot an Maya Munay schicken</button>
+    </div>`;
+  const notiz = document.getElementById('bd-notiz'); notiz.value = bestellNotiz;
+}
+let bestellNotiz = '';
+function bestellDialogZu(){ document.getElementById('bestell-dialog').classList.add('versteckt'); bestellOrt = null; bestellNotiz = ''; }
+async function bestellungSenden(){
+  const c = D.cafes.find(x => x.id === bestellOrt); if (!c) return;
+  const positionen = produktListe().filter(p => bestellMengen[p.odoo_id] > 0)
+    .map(p => ({odoo_id:p.odoo_id, name:p.name, code:p.code, menge:bestellMengen[p.odoo_id], preis:+p.preis || 0}));
+  if (!positionen.length) return;
+  const b = {id:uid(), ortId:c.id, person:ich.id, positionen, notiz:bestellNotiz.trim(), status:'neu', odooName:'', odooStatus:'',
+    summe:null, fehler:'', erstellt:new Date().toISOString()};
+  const knopf = document.querySelector('[data-bd="senden"]'); if (knopf) { knopf.disabled = true; knopf.textContent = 'Schicke …'; }
+  if (!DEMO) {
+    // Erst sicherstellen, dass der Ort gespeichert ist (er muss in Odoo existieren, bevor das Angebot entsteht)
+    if (syncTimer) { clearTimeout(syncTimer); syncTimer = null; await syncJetzt(); }
+    const {error} = await sb.from('bestellungen').insert({id:b.id, ort_id:c.id, person:ich.id, positionen, notiz:b.notiz});
+    if (error) { if (knopf) { knopf.disabled = false; knopf.textContent = 'Als Angebot an Maya Munay schicken'; }
+      return fehlerZeigen('Die Bestellung ließ sich nicht speichern:', error.message); }
+    odooSendenPlanen();
+  } else {
+    setTimeout(() => { b.status = 'angebot'; b.odooName = 'S0DEMO'; b.odooStatus = 'Angebot'; b.summe = positionen.reduce((n, p) => n + p.menge * p.preis, 0);
+      sichern(); const el = document.getElementById('bestell-liste'); if (el && auswahl === c.id) el.innerHTML = bestellListeHtml(c); }, 1500);
+  }
+  D.bestellungen.unshift(b); sichern(); bestellDialogZu();
+  const el = document.getElementById('bestell-liste'); if (el && auswahl === c.id) el.innerHTML = bestellListeHtml(c);
+  toast('Bestellung ist unterwegs – sie landet als Angebot in Odoo, Maya Munay prüft und bestätigt sie.');
+}
+document.getElementById('bestell-dialog').addEventListener('click', e => {
+  const a = e.target.closest('[data-bd]')?.dataset.bd;
+  if (e.target.id === 'bestell-dialog' || a === 'zu') return bestellDialogZu();
+  if (a === 'senden') { bestellNotiz = document.getElementById('bd-notiz').value; return bestellungSenden(); }
+});
+document.getElementById('bestell-dialog').addEventListener('input', e => {
+  if (e.target.id === 'bd-notiz') { bestellNotiz = e.target.value; return; }
+  if (e.target.dataset.bdMenge) { const v = Math.max(0, Math.floor(+e.target.value || 0)); bestellMengen[e.target.dataset.bdMenge] = v; teilZeichnen(e.target); }
+  if (e.target.id === 'bd-suche') { bestellSuche = e.target.value; teilZeichnen(e.target); }
+});
+document.getElementById('bestell-dialog').addEventListener('change', e => {
+  if (e.target.id === 'bd-bestand') { bestellNurBestand = e.target.checked; bestellDialogZeichnen(); }
+});
+// Neu zeichnen, ohne dass das Eingabefeld den Fokus verliert
+function teilZeichnen(feld){
+  const id = feld.id, menge = feld.dataset.bdMenge, pos = feld.selectionStart;
+  bestellDialogZeichnen();
+  const neu = id ? document.getElementById(id) : document.querySelector(`[data-bd-menge="${menge}"]`);
+  if (neu) { neu.focus(); try { neu.setSelectionRange(pos, pos); } catch(e){} }
+}
+
 /* ---------- Orte entfernen: Botschafter beantragen, Teamleitung entscheidet ---------- */
 const antragFuer = ortId => D.antraege.find(a => a.ortId === ortId);
 function antragBox(c){
@@ -1370,6 +1506,11 @@ function panelZeichnen(c){
     ${c.google ? `<div class="abschnitt" style="margin-top:0;border-top:0;padding-top:0">
       <div id="g-infos">${GDETAILS.has(c.google) ? googleInfoHtml(GDETAILS.get(c.google))
         : '<button class="knopf leise klein" data-akt="google-infos">ⓘ Infos von Google anzeigen (Öffnungszeiten, Bewertung …)</button>'}</div></div>` : ''}
+    <div class="abschnitt" style="margin-top:4px">
+      <h4>Bestellungen</h4>
+      <div id="bestell-liste">${bestellListeHtml(c)}</div>
+      <button class="knopf gold klein" data-akt="bestellen" style="margin-top:8px">🛒 Bestellung aufgeben</button>
+    </div>
     <label class="feld">Notiz zum Ort <small>(Öffnungszeiten, Besonderheiten …)</small><textarea data-f="notiz" ${dis}>${esc(c.notiz)}</textarea></label>
 
     <div class="abschnitt">
@@ -1500,6 +1641,7 @@ panel.addEventListener('click', e => {
     sichern(); panelSchliessen(); allesZeichnen();
     return toast(notiz ? 'Gespeichert ✓ – inklusive neuem Besuch.' : 'Gespeichert ✓');
   }
+  if (akt === 'bestellen') return bestellDialogOeffnen(c);
   if (akt === 'antrag') return antragStellen(c);
   if (akt === 'antrag-zurueck') return antragEntfernen(b.dataset.id, 'zurueckgezogen');
   if (akt === 'antrag-nein') return antragEntfernen(b.dataset.id, 'abgelehnt');
@@ -2296,7 +2438,7 @@ function odooAbschnitt(leitung){
     <label class="schalter" style="margin-bottom:8px"><input type="checkbox" id="nur-bestand" ${produkteNurBestand ? 'checked' : ''}> Nur Produkte mit freiem Bestand</label>
     ${ODOO.produkte.length ? `<div style="overflow-x:auto"><table class="produkte"><tr><th>Produkt</th><th>Art.-Nr.</th><th class="zahl">Preis</th><th class="zahl">Frei im Lager</th></tr>
       ${liste.map(p => `<tr class="${(p.bestand ?? 0) > 0 ? '' : 'leer-bestand'}"><td>${esc(p.name)}</td><td>${esc(p.code)}</td>
-        <td class="zahl">${euro(p.preis)}</td><td class="zahl">${p.bestand == null ? '–' : Number(p.bestand).toLocaleString('de-DE')} ${p.bestand == null ? '' : esc(p.einheit === 'Einheiten' || p.einheit === 'Units' ? 'Stk.' : p.einheit)}</td></tr>`).join('')}
+        <td class="zahl">${euro(p.preis)}</td><td class="zahl">${p.bestand == null ? '–' : Number(p.bestand).toLocaleString('de-DE')} ${p.bestand == null ? '' : esc(/^(einheit|unit)/i.test(p.einheit || '') ? 'Stk.' : p.einheit)}</td></tr>`).join('')}
       </table></div><div class="hinweis" style="text-align:left">Bestellungen für Kunden direkt aus der App kommen in einem der nächsten Schritte – sie landen dann als Angebot in Odoo.</div>`
       : '<div class="leer">Die Produkte erscheinen nach dem ersten Abgleich mit Odoo.</div>'}`;
 }
@@ -2317,6 +2459,8 @@ async function odooSenden(){
     }
   } catch(e){ console.warn('Odoo senden:', e); }
   ODOO.laeuft = false;
+  await bestellungenLaden();
+  if (auswahl) { const c = D.cafes.find(x => x.id === auswahl), el = document.getElementById('bestell-liste'); if (c && el) el.innerHTML = bestellListeHtml(c); }
   await odooStandLaden();
 }
 async function odooStandLaden(){
