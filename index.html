@@ -415,6 +415,25 @@ table.team th{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color
 .bd-summe{margin:8px 0 4px;display:flex;flex-direction:column;gap:2px;font-size:14px}
 #bestell-dialog{position:fixed;inset:0;background:rgba(43,33,27,.45);z-index:2550;display:grid;place-items:center;padding:16px}
 #bestell-dialog.versteckt{display:none!important}
+
+/* Dokumente + Abgänge */
+.dok-zeile{align-items:center}
+.dok-sym{font-size:11px;font-weight:700;letter-spacing:.06em;color:var(--kakao);background:var(--gold-hell);border:1px solid #e6d49a;border-radius:8px;padding:8px 6px;min-width:48px;text-align:center}
+.dok-knoepfe{display:flex;gap:6px;align-items:center;margin-left:auto}
+.dok-zeile{flex-wrap:wrap}
+.dok-text{font-size:13px;color:var(--leise);margin:2px 0}
+.dok-marke{display:inline-block;font-size:11px;border-radius:999px;padding:1px 8px;margin:0 6px 2px 0;background:var(--gold-hell);border:1px solid #e6d49a;color:var(--kakao)}
+.dok-marke.lernen{background:#eef4ea;border-color:#cfe0c4}
+.dok-form{flex-basis:100%;display:flex;flex-direction:column;gap:8px;margin-top:10px;padding-top:10px;border-top:1px solid var(--linie);font-size:14px}
+.dok-form input[type=text]{width:100%}
+.abgang-tag{background:#fff;border:1px solid var(--linie);border-radius:12px;padding:10px 12px;margin-bottom:10px}
+.abgang-tag.erledigt{opacity:.75}
+.link-knopf{border:0;background:none;color:var(--kakao);text-decoration:underline;font-size:12px;padding:0 0 0 6px}
+@media (max-width:760px){ nav.tabs button span:not(.badge){font-size:10px} }
+.so-gehts{background:#fff;border:1px solid var(--linie);border-radius:12px;padding:8px 12px;margin:0 0 10px;font-size:14px}
+.so-gehts summary{cursor:pointer;font-weight:600;color:var(--kakao)}
+.so-gehts ol{margin:8px 0 6px;padding-left:20px}
+.so-gehts li{margin-bottom:5px}
 </style>
 </head>
 <body>
@@ -460,6 +479,7 @@ table.team th{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color
     <button data-view="liste"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6h12M9 12h12M9 18h12"/><circle cx="4" cy="6" r="1.2"/><circle cx="4" cy="12" r="1.2"/><circle cx="4" cy="18" r="1.2"/></svg><span>Liste</span></button>
     <button data-view="erinnerungen"><span class="tab-sym"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 8-3 8h18s-3-1-3-8"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg><span class="badge" id="badge"></span></span><span>Erinnerungen</span></button>
     <button data-view="proben"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2.6C17.4 5 19.6 9.8 19 14.6c-.6 4.6-3.8 7.2-7 7.8-3.2-.6-6.4-3.2-7-7.8C4.4 9.8 6.6 5 12 2.6z"/><path d="M12 4.5v16M8.8 6c-1.6 4.2-1.4 10.4 1 14M15.2 6c1.6 4.2 1.4 10.4-1 14"/></svg><span>Proben</span></button>
+    <button data-view="dokumente"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h6"/></svg><span>Dokumente</span></button>
     <button data-view="einstellungen" id="tab-einst"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8"/></svg><span>Team</span></button>
   </nav>
   <div class="ich"><span id="sync-status" class="sync-status"></span>
@@ -493,6 +513,7 @@ table.team th{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color
   <section class="seite versteckt" id="seite-liste"><div class="seite-inhalt" id="liste-inhalt"></div></section>
   <section class="seite versteckt" id="seite-erinnerungen"><div class="seite-inhalt" id="erinnerungen-inhalt"></div></section>
   <section class="seite versteckt" id="seite-proben"><div class="seite-inhalt" id="proben-inhalt"></div></section>
+  <section class="seite versteckt" id="seite-dokumente"><div class="seite-inhalt" id="dokumente-inhalt"></div></section>
   <section class="seite versteckt" id="seite-einstellungen"><div class="seite-inhalt" id="einst-inhalt"></div></section>
 
   <aside id="panel"></aside>
@@ -764,6 +785,7 @@ async function datenLaden(){
   const an = await sb.from('entfernen_antraege').select('*').order('erstellt');
   D.antraege = an.error ? [] : an.data.map(x => ({id:x.id, ortId:x.ort_id, person:x.person || '', grund:x.grund, erstellt:x.erstellt}));
   await bestellungenLaden();
+  await abgaengeLaden();
   // Aus Odoo (schreibt nur die Brücke): Produkte, Odoo-Benutzer, letzter Abgleich
   const [pr2, nu, ab] = await Promise.all([
     sb.from('produkte').select('*').order('name'),
@@ -1239,15 +1261,16 @@ document.getElementById('tabs').onclick = e => { const b = e.target.closest('[da
 function ansichtWechseln(v){
   ansicht = v;
   document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('aktiv', b.dataset.view === v));
-  ['liste','erinnerungen','proben','einstellungen'].forEach(s => document.getElementById('seite-'+s).classList.toggle('versteckt', s !== v));
+  ['liste','erinnerungen','proben','dokumente','einstellungen'].forEach(s => document.getElementById('seite-'+s).classList.toggle('versteckt', s !== v));
   ['karten-knoepfe','legende'].forEach(id => document.getElementById(id).classList.toggle('versteckt', v !== 'karte'));
-  document.getElementById('leiste').classList.toggle('versteckt', ['einstellungen', 'erinnerungen', 'proben'].includes(v));
+  document.getElementById('leiste').classList.toggle('versteckt', ['einstellungen', 'erinnerungen', 'proben', 'dokumente'].includes(v));
   obenSetzen();
   if (v === 'karte') setTimeout(() => K && K.resize(), 50);
   if (v === 'liste') listeZeichnen();
   if (v === 'erinnerungen') erinnerungenZeichnen();
   if (v === 'einstellungen') einstellungenZeichnen();
   if (v === 'proben') probenZeichnen();
+  if (v === 'dokumente') dokumenteZeichnen();
 }
 function obenSetzen(){
   const kopf = document.querySelector('header').offsetHeight;
@@ -1273,6 +1296,150 @@ function cafeOeffnen(id){
 function panelSchliessen(){ panel.classList.remove('offen'); document.body.classList.remove('panel-offen'); auswahl = null; markerZeichnen(); }
 
 function letzterBesuch(c){ return c.besuche.length ? c.besuche.map(b => b.datum).sort().at(-1) : null; }
+
+/* ---------- Dokumente: Preisliste, Flyer, Portfolios – privat in Supabase, nur fürs Team ---------- */
+let DOKS = null, doksLaedt = false, DOKINFO = {}, dokInfoFehlt = false, dokFilter = 'alle', dokBearbeiten = null;
+const DOK_BUCKET = 'dokumente';
+const dokName = k => k.replace(/\.[^.]+$/, '').replace(/_/g, ' ');
+const dokGroesse = b => !b ? '' : b > 1e6 ? (b / 1e6).toLocaleString('de-DE', {maximumFractionDigits:1}) + ' MB' : Math.max(1, Math.round(b / 1e3)) + ' KB';
+// Supabase erlaubt in Dateinamen keine Umlaute → umschreiben (Anzeige wandelt _ wieder in Leerzeichen)
+const dokSchluessel = n => n.normalize('NFC').replace(/ä/g,'ae').replace(/ö/g,'oe').replace(/ü/g,'ue').replace(/Ä/g,'Ae').replace(/Ö/g,'Oe').replace(/Ü/g,'Ue').replace(/ß/g,'ss')
+  .replace(/[^A-Za-z0-9.()\-]+/g, '_').replace(/_+/g, '_');
+async function dokumenteLaden(){
+  if (DEMO || !sb) { DOKS = []; return; }
+  doksLaedt = true;
+  const [liste, info] = await Promise.all([
+    sb.storage.from(DOK_BUCKET).list('', {limit:200, sortBy:{column:'name', order:'asc'}}),
+    sb.from('dokumente_info').select('*')]);
+  doksLaedt = false;
+  DOKS = liste.error ? {fehler:liste.error.message} : liste.data.filter(d => d.id && !d.name.startsWith('.'));
+  // Fehlt die Tabelle noch (schema.sql nicht ausgeführt), bleiben die Dokumente trotzdem nutzbar
+  dokInfoFehlt = !!info.error;
+  DOKINFO = Object.fromEntries((info.data || []).map(i => [i.name, i]));
+}
+const dokPasst = d => dokFilter === 'alle' || !!DOKINFO[d.name]?.[dokFilter];
+function dokZeile(d, leitung){
+  const i = DOKINFO[d.name] || {}, offen = dokBearbeiten === d.name;
+  return `<div class="cafe-karte dok-zeile${offen ? ' offen' : ''}">
+    <span class="dok-sym">${/\.pdf$/i.test(d.name) ? 'PDF' : /\.(png|jpe?g|webp)$/i.test(d.name) ? 'BILD' : 'DATEI'}</span>
+    <div class="info"><div class="name">${esc(dokName(d.name))}</div>
+      ${i.beschreibung ? `<div class="dok-text">${esc(i.beschreibung)}</div>` : ''}
+      <div class="klein">${i.willkommensmail ? '<span class="dok-marke">✉ Willkommensmail</span>' : ''}${i.lernen ? '<span class="dok-marke lernen">Zum Lernen</span>' : ''}${dokGroesse(d.metadata?.size)}${d.updated_at ? ' · ' + datumDe(String(d.updated_at).slice(0, 10)) : ''}</div></div>
+    <div class="dok-knoepfe"><button class="knopf klein" data-dok-auf="${esc(d.name)}">Öffnen</button>
+      ${leitung && !dokInfoFehlt ? `<button class="knopf klein" data-dok-bearb="${esc(d.name)}">${offen ? 'Schließen' : 'Bearbeiten'}</button>` : ''}
+      ${leitung ? `<button class="weg" data-dok-weg="${esc(d.name)}" title="Dokument löschen" aria-label="Dokument löschen">×</button>` : ''}</div>
+    ${offen ? `<div class="dok-form">
+      <label><input type="checkbox" id="dok-wm" ${i.willkommensmail ? 'checked' : ''}> geht mit der Willkommensmail an neue Kunden</label>
+      <label><input type="checkbox" id="dok-ln" ${i.lernen ? 'checked' : ''}> zum Lernen für die Botschafter</label>
+      <input type="text" id="dok-bs" maxlength="200" placeholder="Kurze Beschreibung, z.B. „Alles über Herkunft und Team – gut vor dem ersten Kundengespräch“" value="${esc(i.beschreibung || '')}">
+      <div><button class="knopf klein" data-dok-speichern="${esc(d.name)}">Speichern</button></div></div>` : ''}
+  </div>`;
+}
+async function dokumenteZeichnen(neu){
+  const el = document.getElementById('dokumente-inhalt'), leitung = istLeitung();
+  if (DOKS === null || neu) { el.innerHTML = '<h2>Dokumente</h2><div class="leise">Lade …</div>'; await dokumenteLaden(); }
+  const alle = Array.isArray(DOKS) ? DOKS : [];
+  const zahl = k => alle.filter(d => DOKINFO[d.name]?.[k]).length;
+  const sichtbar = alle.filter(dokPasst);
+  el.innerHTML = `<div class="liste-kopf"><h2>Dokumente</h2></div>
+    <p class="leise" style="margin-top:-6px">Preisliste, Portfolios und Flyer – zum Ansehen, zum Lernen und zum Weitergeben an eure Kunden.
+      Unter <b>Zum Lernen</b> findet ihr alles, was hilft, Maya Munay und den Kakao gut zu erklären.</p>
+    ${DEMO ? '<div class="leer">In der Demo gibt es keine Dokumente – in der echten App liegen hier Preisliste, Portfolios und Flyer.</div>'
+      : DOKS.fehler ? `<div class="fehlt">Die Dokumente lassen sich gerade nicht laden: ${esc(DOKS.fehler)}</div>`
+      : `${dokInfoFehlt ? '' : `<div class="chips" style="margin:4px 0 12px">
+          <button class="chip${dokFilter === 'alle' ? ' an' : ''}" data-dok-filter="alle">Alle <small>${alle.length}</small></button>
+          <button class="chip${dokFilter === 'willkommensmail' ? ' an' : ''}" data-dok-filter="willkommensmail">✉ Willkommensmail <small>${zahl('willkommensmail')}</small></button>
+          <button class="chip${dokFilter === 'lernen' ? ' an' : ''}" data-dok-filter="lernen">Zum Lernen <small>${zahl('lernen')}</small></button></div>`}
+        <div class="karten-liste">${sichtbar.map(d => dokZeile(d, leitung)).join('')
+        || `<div class="leer">${alle.length ? 'In diesem Bereich liegt noch nichts.' : 'Noch keine Dokumente.'}</div>`}</div>`}
+    ${leitung && !DEMO && dokInfoFehlt ? '<div class="leise" style="margin-top:10px;font-size:13px">Für die Bereiche „Willkommensmail“ und „Zum Lernen“ bitte einmal die neue schema.sql in Supabase ausführen.</div>' : ''}
+    ${leitung && !DEMO ? `<div class="neu-box" style="margin-top:14px">
+      <b>Dokument hinzufügen</b> <span class="leise" style="font-size:13px">(nur Teamleitung · PDF oder Bild · gleicher Name ersetzt die alte Version)</span>
+      <div class="inline" style="margin-top:8px"><input type="file" id="dok-datei" multiple accept=".pdf,.png,.jpg,.jpeg,.webp">
+        <button class="knopf klein" data-dok-hoch>Hochladen</button></div></div>` : ''}`;
+}
+document.getElementById('seite-dokumente').addEventListener('click', async e => {
+  const auf = e.target.closest('[data-dok-auf]')?.dataset.dokAuf, weg = e.target.closest('[data-dok-weg]')?.dataset.dokWeg;
+  const filter = e.target.closest('[data-dok-filter]')?.dataset.dokFilter, bearb = e.target.closest('[data-dok-bearb]')?.dataset.dokBearb;
+  const speichern = e.target.closest('[data-dok-speichern]')?.dataset.dokSpeichern;
+  if (filter) { dokFilter = filter; return dokumenteZeichnen(); }
+  if (bearb && istLeitung()) { dokBearbeiten = dokBearbeiten === bearb ? null : bearb; return dokumenteZeichnen(); }
+  if (speichern && istLeitung()) {
+    const zeile = {name:speichern, willkommensmail:document.getElementById('dok-wm').checked, lernen:document.getElementById('dok-ln').checked,
+                   beschreibung:document.getElementById('dok-bs').value.trim(), geaendert:new Date().toISOString()};
+    const {error} = await sb.from('dokumente_info').upsert(zeile);
+    if (error) return fehlerZeigen('Die Angaben ließen sich nicht speichern:', error.message);
+    DOKINFO[speichern] = zeile; dokBearbeiten = null; toast('Gespeichert ✓'); return dokumenteZeichnen();
+  }
+  if (auf) {
+    const fenster = window.open('', '_blank');   // sofort öffnen, sonst blockt der Browser das Fenster
+    const {data, error} = await sb.storage.from(DOK_BUCKET).createSignedUrl(auf, 300);
+    if (error) { fenster?.close(); return fehlerZeigen('Das Dokument ließ sich nicht öffnen:', error.message); }
+    if (fenster) fenster.location = data.signedUrl; else location.href = data.signedUrl;
+    return;
+  }
+  if (weg && istLeitung()) {
+    if (!confirm(`„${dokName(weg)}“ für alle löschen?`)) return;
+    const {error} = await sb.storage.from(DOK_BUCKET).remove([weg]);
+    if (error) return fehlerZeigen('Das Dokument ließ sich nicht löschen:', error.message);
+    if (!dokInfoFehlt) await sb.from('dokumente_info').delete().eq('name', weg);
+    toast('Gelöscht.'); return dokumenteZeichnen(true);
+  }
+  if (e.target.closest('[data-dok-hoch]') && istLeitung()) {
+    const dateien = [...(document.getElementById('dok-datei').files || [])];
+    if (!dateien.length) return toast('Magst du zuerst eine Datei auswählen?');
+    const knopf = e.target.closest('[data-dok-hoch]'); knopf.disabled = true; knopf.textContent = 'Lädt hoch …';
+    for (const f of dateien) {
+      const {error} = await sb.storage.from(DOK_BUCKET).upload(dokSchluessel(f.name), f, {upsert:true, contentType:f.type || undefined});
+      if (error) { knopf.disabled = false; knopf.textContent = 'Hochladen'; return fehlerZeigen(`„${f.name}“ ließ sich nicht hochladen:`, error.message); }
+    }
+    toast(dateien.length === 1 ? 'Dokument hochgeladen ✓ – unter „Bearbeiten“ kannst du es einem Bereich zuordnen.' : `${dateien.length} Dokumente hochgeladen ✓`);
+    return dokumenteZeichnen(true);
+  }
+});
+
+/* ---------- B2B-Abgänge für Shopify (bis zum Umstieg auf Odoo) ---------- */
+let ABGAENGE = [], SHOPIFY_ERLEDIGT = [];
+async function abgaengeLaden(){
+  if (DEMO || !sb || !istLeitung()) return;
+  const [a, e] = await Promise.all([sb.from('odoo_abgaenge').select('*').order('tag', {ascending:false}),
+    sb.from('shopify_erledigt').select('*')]);
+  ABGAENGE = a.error ? [] : a.data; SHOPIFY_ERLEDIGT = e.error ? [] : e.data;
+}
+function abgaengeAbschnitt(){
+  const tage = [...new Set(ABGAENGE.map(x => x.tag))];
+  return `<h3 id="abgaenge-bereich">B2B-Abgänge für Shopify</h3>
+    <div class="hinweis" style="text-align:left;margin:-4px 0 8px">Bis zum Umstieg auf Odoo: Diese Mengen gingen in bestätigten Odoo-Aufträgen raus
+      und werden in Shopify abgebucht. Danach den Tag abhaken – so sieht das ganze Team, was schon erledigt ist. (Letzte 30 Tage)</div>
+    <details class="so-gehts"><summary>So geht's – Schritt für Schritt</summary>
+      <ol>
+        <li>Unten steht für jeden Tag, welche Produkte in <b>bestätigten Odoo-Aufträgen</b> rausgegangen sind – mit Artikelnummer, Menge und Auftragsnummern.</li>
+        <li>In <b>Shopify</b>: Produkte → Produkt über die Artikelnummer (SKU) suchen → Variante öffnen → beim <b>Lagerbestand</b> die Menge abziehen → speichern. Für jede Zeile des Tages.</li>
+        <li>Zurück hier beim Tag auf <b>„In Shopify abgebucht ✓“</b> tippen – dann ist er für alle erledigt, mit deinem Namen.</li>
+      </ol>
+      <p class="leise">Offene Angebote erscheinen erst, wenn sie in Odoo bestätigt sind. Zu früh abgehakt? „rückgängig“ tippen.
+        Wird ein Auftrag in Odoo storniert, fällt er hier heraus – war der Tag schon abgehakt, die Menge in Shopify wieder dazubuchen.
+        Nach dem Umstieg auf Odoo fällt dieser Schritt weg.</p>
+    </details>
+    ${tage.map(t => { const er = SHOPIFY_ERLEDIGT.find(x => x.tag === t), zeilen = ABGAENGE.filter(x => x.tag === t);
+      return `<div class="abgang-tag ${er ? 'erledigt' : ''}"><div class="inline" style="justify-content:space-between;align-items:center">
+          <b>${datumDe(t)}</b>
+          ${er ? `<span class="rueck ja">✓ in Shopify abgebucht · ${esc(person(er.person)?.name || '')}
+                  <button class="link-knopf" data-abgang-zurueck="${t}">rückgängig</button></span>`
+               : `<button class="knopf gold klein" data-abgang-ok="${t}">In Shopify abgebucht ✓</button>`}</div>
+        <table class="produkte" style="margin-top:6px"><tr><th>Produkt</th><th>Art.-Nr.</th><th class="zahl">Menge</th><th>Aufträge</th></tr>
+          ${zeilen.map(z => `<tr><td>${esc(z.name)}</td><td>${esc(z.code)}</td><td class="zahl"><b>${Number(z.menge).toLocaleString('de-DE')}</b></td><td class="leise">${esc(z.auftraege)}</td></tr>`).join('')}
+        </table></div>`; }).join('') || '<div class="leer">In den letzten 30 Tagen gab es keine bestätigten Aufträge in Odoo.</div>'}`;
+}
+document.getElementById('seite-einstellungen').addEventListener('click', async e => {
+  const ok = e.target.closest('[data-abgang-ok]')?.dataset.abgangOk, zurueck = e.target.closest('[data-abgang-zurueck]')?.dataset.abgangZurueck;
+  if (!ok && !zurueck) return;
+  const {error} = ok ? await sb.from('shopify_erledigt').insert({tag:ok, person:ich.id})
+    : await sb.from('shopify_erledigt').delete().eq('tag', zurueck);
+  if (error && !/duplicate/i.test(error.message)) return fehlerZeigen('Das hat nicht geklappt:', error.message);
+  await abgaengeLaden(); einstellungenZeichnen();
+  setTimeout(() => document.getElementById('abgaenge-bereich')?.scrollIntoView({block:'start'}), 30);
+});
 
 /* ---------- Bestellungen: aus der App → Angebot in Odoo (Maya Munay prüft und bestätigt) ---------- */
 const DEMO_PRODUKTE = [
@@ -2337,6 +2504,7 @@ function einstellungenZeichnen(){
       <input id="p-region" placeholder="Region" list="regionen"><button class="knopf klein" id="p-dazu">Person anlegen</button></div>` : ''}
     ${leitung && !DEMO ? `<div class="hinweis" style="text-align:left;margin-top:8px">Neue Person einladen: 1. hier mit E-Mail-Adresse eintragen · 2. in Supabase unter <b>Authentication → Users → Add user → Send invitation</b> dieselbe Adresse einladen. Beim ersten Anmelden wird beides automatisch verbunden.</div>` : ''}
     ${!DEMO ? odooAbschnitt(leitung) : ''}
+    ${!DEMO && leitung ? abgaengeAbschnitt() : ''}
     <h3>Arten (Auswahlliste)</h3>${liste('arten')}
     <h3>Produkte für Proben</h3><div class="hinweis" style="text-align:left;margin:-4px 0 8px">Neue Produkte entstehen auch automatisch, wenn jemand bei einer Probe etwas Neues eintippt.</div>${liste('sorten')}
     <h3>Erinnerung</h3>
