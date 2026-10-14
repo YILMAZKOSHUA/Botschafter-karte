@@ -434,6 +434,15 @@ table.team th{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color
 .so-gehts summary{cursor:pointer;font-weight:600;color:var(--kakao)}
 .so-gehts ol{margin:8px 0 6px;padding-left:20px}
 .so-gehts li{margin-bottom:5px}
+.beispiel-marke{font-size:11px;font-weight:600;letter-spacing:.04em;vertical-align:middle;background:var(--gold-hell);border:1px solid #e6d49a;color:var(--kakao);border-radius:999px;padding:2px 8px;margin-left:6px}
+.prov-zahlen{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:10px 0}
+.prov-zahlen div{background:#fff;border:1px solid var(--linie);border-radius:12px;padding:8px 10px}
+.prov-zahlen small{display:block;font-size:12px;color:var(--leise)}
+.prov-zahlen b{font-size:17px}
+.prov-zahlen .gold{background:var(--gold-hell);border-color:#e6d49a}
+.prov-person{margin:12px 0 4px}
+.produkte .rueck{white-space:nowrap}
+@media (max-width:620px){ .prov-zahlen{grid-template-columns:1fr 1fr} }
 </style>
 </head>
 <body>
@@ -777,6 +786,7 @@ async function datenLaden(){
     proben:(pNach[x.id] || []).map(y => ({id:y.id, datum:y.datum, sorte:y.sorte, menge:y.menge, anzahl:y.anzahl || 1, bestellung:y.bestellung, person:y.person || ''}))}));
   if (e.data) D.einstellungen = {arten:e.data.arten, sorten:e.data.sorten, wochen:e.data.wochen};
   googleSchluesselWert = k.data?.google_schluessel || '';
+  PROVISION = k.data?.provision_prozent ?? 8;
   // Erhaltene Proben (Tabelle fehlt, solange schema.sql noch nicht neu ausgeführt ist)
   const au = await sb.from('proben_ausgabe').select('*').order('datum');
   D.ausgaben = au.error ? [] : au.data.map(x => ({id:x.id, person:x.person || '', datum:x.datum, sorte:x.sorte, anzahl:x.anzahl, notiz:x.notiz, erfasstVon:x.erfasst_von || ''}));
@@ -786,6 +796,7 @@ async function datenLaden(){
   D.antraege = an.error ? [] : an.data.map(x => ({id:x.id, ortId:x.ort_id, person:x.person || '', grund:x.grund, erstellt:x.erstellt}));
   await bestellungenLaden();
   await abgaengeLaden();
+  await umsaetzeLaden();
   // Aus Odoo (schreibt nur die Brücke): Produkte, Odoo-Benutzer, letzter Abgleich
   const [pr2, nu, ab] = await Promise.all([
     sb.from('produkte').select('*').order('name'),
@@ -1440,6 +1451,103 @@ document.getElementById('seite-einstellungen').addEventListener('click', async e
   await abgaengeLaden(); einstellungenZeichnen();
   setTimeout(() => document.getElementById('abgaenge-bereich')?.scrollIntoView({block:'start'}), 30);
 });
+
+/* ---------- Provision (Beispiel): Umsätze aus Odoo – Provision zählt erst, wenn die Rechnung bezahlt ist ---------- */
+// Regeln legt das Team noch fest. Satz stellt die Teamleitung ein (Tabelle „konfig“), Zahlen schreibt die Brücke.
+let UMSAETZE = [], PROVISION = 8, provMonat = heute().slice(0, 7);
+const ZAHLUNG = {bezahlt:'<span class="rueck ja">bezahlt</span>', offen:'<span class="rueck offen">Rechnung offen</span>',
+  'ohne Rechnung':'<span class="rueck offen">noch keine Rechnung</span>'};
+async function umsaetzeLaden(){
+  if (DEMO || !sb) return;
+  const {data, error} = await sb.from('odoo_umsaetze').select('*').order('datum', {ascending:false});
+  UMSAETZE = error ? [] : data;
+}
+// Demo: ein paar Beispiel-Aufträge für die Kunden aus den Demo-Daten
+function demoUmsaetze(){
+  const m0 = heute().slice(0, 7), m1 = monatPlus(m0, -1), liste = []; let n = 1;
+  D.cafes.filter(c => c.status === 'kunde' && c.betreuung).forEach((c, i) =>
+    [[m1, '09', 180 + i * 45, 'bezahlt'], [m0, '03', 130 + i * 25, i % 2 ? 'offen' : 'bezahlt'], [m0, '11', 65.35, 'ohne Rechnung']]
+      .forEach(([m, t, netto, zahlung]) => liste.push({odoo_id:n, name:'S' + String(n++).padStart(5, '0'), datum:`${m}-${t}`,
+        ort_id:c.id, betreuung:c.betreuung, netto, zahlung})));
+  return liste;
+}
+const provSumme = (liste, f) => liste.reduce((s, u) => s + f(u), 0);
+const provVon = u => u.zahlung === 'bezahlt' ? Number(u.netto) * (Number(PROVISION) || 0) / 100 : 0;
+// Echt filtert die Datenbank (jeder sieht nur die eigenen Kunden); in der Demo hier
+const provMonatListe = () => UMSAETZE.filter(u => String(u.datum).slice(0, 7) === provMonat && (!DEMO || istLeitung() || u.betreuung === ich.id));
+const provKunde = id => D.cafes.find(c => c.id === id)?.name || 'Kunde';
+function provisionAbschnitt(leitung){
+  if (DEMO && !UMSAETZE.length) UMSAETZE = demoUmsaetze();
+  const liste = provMonatListe(), satz = Number(PROVISION) || 0;
+  const netto = provSumme(liste, u => +u.netto), bezahlt = provSumme(liste.filter(u => u.zahlung === 'bezahlt'), u => +u.netto);
+  const kundenTabelle = teil => { const nachKunde = {};
+    teil.forEach(u => (nachKunde[u.ort_id] = nachKunde[u.ort_id] || []).push(u));
+    return `<div style="overflow-x:auto"><table class="produkte"><tr><th>Kunde</th><th class="zahl">Aufträge</th><th class="zahl">Netto</th><th class="zahl">davon bezahlt</th><th class="zahl">Provision</th></tr>
+      ${Object.entries(nachKunde).sort((a, b) => provKunde(a[0]).localeCompare(provKunde(b[0]), 'de')).map(([ort, l]) => `<tr><td>${esc(provKunde(ort))}</td>
+        <td class="zahl">${l.length}</td><td class="zahl">${euro(provSumme(l, u => +u.netto))}</td>
+        <td class="zahl">${euro(provSumme(l.filter(u => u.zahlung === 'bezahlt'), u => +u.netto))}</td><td class="zahl"><b>${euro(provSumme(l, provVon))}</b></td></tr>`).join('')}
+    </table></div>`; };
+  const personen = [...new Set(liste.map(u => u.betreuung))];
+  return `<h3 id="provision-bereich">Provision <span class="beispiel-marke">Beispiel</span></h3>
+    <div class="hinweis" style="text-align:left;margin:-4px 0 8px">Eine Beispielrechnung – die Regeln legt das Team noch fest.
+      Gerechnet werden <b>${satz.toLocaleString('de-DE')} %</b> vom Nettobetrag (ohne MwSt. und Versand) aller bestätigten Odoo-Aufträge
+      ${leitung ? 'der Kunden, die einem Botschafter zugeordnet sind' : 'deiner Kunden'}. Die Provision zählt, sobald die Rechnung bezahlt ist.</div>
+    <div class="inline monat-wahl">
+      <button class="knopf leise klein" data-prov-monat="-1" aria-label="Monat davor">‹</button>
+      <b class="monat-name">${monatName(provMonat)}</b>
+      <button class="knopf leise klein" data-prov-monat="1" aria-label="Nächster Monat" ${provMonat >= heute().slice(0, 7) ? 'disabled' : ''}>›</button>
+      <button class="knopf leise klein" data-prov-excel>⬇︎ Monat als Excel</button>
+    </div>
+    <div class="prov-zahlen">
+      <div><small>Umsatz netto</small><b>${euro(netto)}</b></div>
+      <div><small>davon bezahlt</small><b>${euro(bezahlt)}</b></div>
+      <div class="gold"><small>Provision</small><b>${euro(provSumme(liste, provVon))}</b></div>
+      <div><small>kommt dazu, sobald bezahlt</small><b>${euro((netto - bezahlt) * satz / 100)}</b></div>
+    </div>
+    ${!liste.length ? `<div class="leer">In diesem Monat gibt es noch keine bestätigten Aufträge${leitung ? '' : ' deiner Kunden'}.</div>`
+      : leitung && personen.length > 1 ? personen.map(p => { const teil = liste.filter(u => u.betreuung === p);
+          return `<div class="prov-person"><b>${esc(person(p)?.name || 'ohne Botschafter')}</b> · Provision ${euro(provSumme(teil, provVon))}</div>${kundenTabelle(teil)}`; }).join('')
+      : kundenTabelle(liste)}
+    ${liste.length ? `<details class="so-gehts" style="margin-top:8px"><summary>Aufträge im Einzelnen</summary>
+      <div style="overflow-x:auto"><table class="produkte"><tr><th>Datum</th><th>Auftrag</th><th>Kunde</th>${leitung ? '<th>Botschafter</th>' : ''}<th class="zahl">Netto</th><th>Zahlung</th><th class="zahl">Provision</th></tr>
+        ${liste.map(u => `<tr><td>${datumDe(u.datum)}</td><td>${esc(u.name)}</td><td>${esc(provKunde(u.ort_id))}</td>${leitung ? `<td>${esc(person(u.betreuung)?.name || '–')}</td>` : ''}
+          <td class="zahl">${euro(u.netto)}</td><td>${ZAHLUNG[u.zahlung] || esc(u.zahlung)}</td><td class="zahl">${u.zahlung === 'bezahlt' ? euro(provVon(u)) : '–'}</td></tr>`).join('')}
+      </table></div></details>` : ''}
+    ${leitung ? `<div class="inline" style="margin-top:8px;align-items:center">Provisionssatz
+      <input type="number" id="prov-satz" min="0" max="100" step="0.5" value="${satz}" style="width:80px"> %
+      <button class="knopf klein" data-prov-satz>Speichern</button></div>` : ''}`;
+}
+document.getElementById('seite-einstellungen').addEventListener('click', async e => {
+  const b = e.target.closest('[data-prov-monat],[data-prov-satz],[data-prov-excel]'); if (!b) return;
+  const zuProvision = () => setTimeout(() => document.getElementById('provision-bereich')?.scrollIntoView({block:'start'}), 30);
+  if (b.dataset.provMonat) { provMonat = monatPlus(provMonat, +b.dataset.provMonat); einstellungenZeichnen(); return zuProvision(); }
+  if ('provExcel' in b.dataset) return provisionExcel();
+  if ('provSatz' in b.dataset && istLeitung()) {
+    const v = Number(document.getElementById('prov-satz').value);
+    if (!(v >= 0 && v <= 100)) return toast('Magst du einen Satz zwischen 0 und 100 % eintragen?');
+    if (!DEMO) {
+      const {data, error} = await sb.from('konfig').update({provision_prozent:v}).eq('id', 1).select('id');
+      if (error || !data?.length) return fehlerZeigen('Der Satz ließ sich nicht speichern:', error?.message || 'keine Berechtigung');
+    }
+    PROVISION = v; toast(`Provisionssatz: ${v.toLocaleString('de-DE')} % ✓`); einstellungenZeichnen(); return zuProvision();
+  }
+});
+async function provisionExcel(){
+  try {
+    if (!window.XLSX) await skriptLaden('https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js');
+    const liste = provMonatListe(), mappe = XLSX.utils.book_new();
+    const auftraege = liste.map(u => ({Datum:new Date(u.datum + 'T12:00'), Auftrag:u.name, Kunde:provKunde(u.ort_id),
+      Botschafter:person(u.betreuung)?.name || '', 'Netto (€)':Number(u.netto), Zahlung:u.zahlung, 'Provision (€)':Math.round(provVon(u) * 100) / 100}));
+    const proPerson = [...new Set(liste.map(u => u.betreuung))].map(p => { const t = liste.filter(u => u.betreuung === p);
+      return {Botschafter:person(p)?.name || '', Aufträge:t.length, 'Netto (€)':Math.round(provSumme(t, u => +u.netto) * 100) / 100,
+        'davon bezahlt (€)':Math.round(provSumme(t.filter(u => u.zahlung === 'bezahlt'), u => +u.netto) * 100) / 100,
+        'Provision (€)':Math.round(provSumme(t, provVon) * 100) / 100}; });
+    [['Übersicht', proPerson, [22, 10, 12, 16, 14]], ['Aufträge', auftraege, [12, 10, 28, 20, 12, 14, 14]]].forEach(([titel, zeilen, breiten]) => {
+      const ws = XLSX.utils.json_to_sheet(zeilen.length ? zeilen : [{'':'(keine Aufträge)'}], {cellDates:true, dateNF:'dd.mm.yyyy'});
+      ws['!cols'] = breiten.map(w => ({wch:w})); XLSX.utils.book_append_sheet(mappe, ws, titel); });
+    XLSX.writeFile(mappe, `provision-beispiel-${provMonat}.xlsx`);
+  } catch (err) { fehlerZeigen('Die Excel-Datei ließ sich nicht erstellen:', err.message || String(err)); }
+}
 
 /* ---------- Bestellungen: aus der App → Angebot in Odoo (Maya Munay prüft und bestätigt) ---------- */
 const DEMO_PRODUKTE = [
@@ -2491,6 +2599,7 @@ function einstellungenZeichnen(){
     <h2>Team & Einstellungen</h2>
     ${leitung ? '<div class="hinweis" style="text-align:left;margin:-6px 0 12px">Die Teamleitung hat Admin-Rechte: Orte anderen zuweisen, Personen einladen, Rollen vergeben. Es kann mehrere geben – mindestens eine bleibt immer.</div>'
       : '<div class="lesen">Änderungen hier macht die Teamleitung. Du kannst alles ansehen.</div>'}
+    ${provisionAbschnitt(leitung)}
     <h3>Team</h3>
     <table class="team"><tr><th>Name</th><th>Rolle</th><th>Region</th><th>Orte</th>${!DEMO ? '<th>Odoo-Benutzer</th>' : ''}${leitung ? '<th></th>' : ''}</tr>
       ${D.team.map(p => `<tr><td>${esc(p.name)}${!DEMO ? `<div class="leise" style="font-size:12px">${esc(p.email || '')}${p.angemeldet ? '' : ' · noch nicht angemeldet'}</div>` : ''}</td><td>${leitung
