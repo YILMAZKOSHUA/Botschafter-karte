@@ -415,6 +415,12 @@ table.team th{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color
 .bd-summe{margin:8px 0 4px;display:flex;flex-direction:column;gap:2px;font-size:14px}
 #bestell-dialog{position:fixed;inset:0;background:rgba(43,33,27,.45);z-index:2550;display:grid;place-items:center;padding:16px}
 #bestell-dialog.versteckt{display:none!important}
+#profil-dialog{position:fixed;inset:0;background:rgba(43,33,27,.45);z-index:2550;display:grid;place-items:center;padding:16px}
+#profil-dialog.versteckt{display:none!important}
+.pf-foto{display:flex;gap:14px;align-items:center;margin:10px 0 14px}
+.pf-bild{width:84px;height:84px;border-radius:50%;background:var(--creme) center/cover no-repeat;display:grid;place-items:center;font-size:26px;color:var(--kakao);flex:none;border:2px solid #fff;box-shadow:0 0 0 1px var(--linie)}
+#ich-avatar{cursor:pointer;background-size:cover;background-position:center}
+.willkommen-status{font-size:13px;color:var(--leise);margin-top:8px}
 
 /* Dokumente + Abgänge */
 .dok-zeile{align-items:center}
@@ -494,7 +500,7 @@ table.team th{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color
   <div class="ich"><span id="sync-status" class="sync-status"></span>
     <button class="odoo-status versteckt" id="odoo-status" aria-live="polite"></button>
     <button class="icon-knopf" id="hilfe-knopf" title="Kurzer Rundgang" aria-label="Kurzer Rundgang">?</button>
-    <span class="avatar" id="ich-avatar" aria-hidden="true"></span>
+    <span class="avatar" id="ich-avatar" role="button" tabindex="0" title="Mein Profil" aria-label="Mein Profil"></span>
     <span class="ich-text"><strong id="ich-name"></strong><span class="rolle" id="ich-rolle"></span></span>
     <button class="icon-knopf" id="abmelden" title="Abmelden" aria-label="Abmelden"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/></svg></button></div>
 </header>
@@ -529,6 +535,13 @@ table.team th{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color
 </main>
 
 <div id="toast"></div>
+<div id="profil-dialog" class="versteckt" role="dialog" aria-modal="true" aria-labelledby="pf-titel">
+  <div class="rg-karte">
+    <div class="rg-kopf"><span class="leise">Für deine Kunden</span><button class="rg-zu" data-pf="zu" aria-label="Schließen">×</button></div>
+    <h2 id="pf-titel">Mein Botschafter-Profil</h2>
+    <div id="pf-inhalt"></div>
+  </div>
+</div>
 <div id="bestell-dialog" class="versteckt" role="dialog" aria-modal="true" aria-labelledby="bd-titel">
   <div class="rg-karte bd-karte">
     <div class="rg-kopf"><span class="leise">Bestellung → Angebot in Odoo</span><button class="rg-zu" data-bd="zu" aria-label="Schließen">×</button></div>
@@ -782,11 +795,13 @@ async function datenLaden(){
     kontakt:x.kontakt, naechsterKontakt:x.naechster_kontakt || '', notiz:x.notiz,
     google:x.google || '', osm:x.osm || '', erstelltVon:x.erstellt_von || '',
     odooLead:x.odoo_lead || null, odooPhase:x.odoo_phase || '', odooDaten:x.odoo_daten || null,
+    willkommenGesendet:x.willkommen_gesendet || '', willkommenInfo:x.willkommen_info || '',
     besuche:(bNach[x.id] || []).map(y => ({id:y.id, datum:y.datum, person:y.person || '', notiz:y.notiz})),
     proben:(pNach[x.id] || []).map(y => ({id:y.id, datum:y.datum, sorte:y.sorte, menge:y.menge, anzahl:y.anzahl || 1, bestellung:y.bestellung, person:y.person || ''}))}));
   if (e.data) D.einstellungen = {arten:e.data.arten, sorten:e.data.sorten, wochen:e.data.wochen};
   googleSchluesselWert = k.data?.google_schluessel || '';
-  PROVISION = k.data?.provision_prozent ?? 8;
+  PROVISION = k.data?.provision_prozent ?? 8; PROV_NOTIZ = !!k.data?.provision_notiz;
+  WILLKOMMEN = {an:!!k.data?.willkommen_an, ab:k.data?.willkommen_ab || '', absender:k.data?.mail_absender || 'info@mayamunay.com'};
   // Erhaltene Proben (Tabelle fehlt, solange schema.sql noch nicht neu ausgeführt ist)
   const au = await sb.from('proben_ausgabe').select('*').order('datum');
   D.ausgaben = au.error ? [] : au.data.map(x => ({id:x.id, person:x.person || '', datum:x.datum, sorte:x.sorte, anzahl:x.anzahl, notiz:x.notiz, erfasstVon:x.erfasst_von || ''}));
@@ -797,6 +812,7 @@ async function datenLaden(){
   await bestellungenLaden();
   await abgaengeLaden();
   await umsaetzeLaden();
+  await profileLaden();
   // Aus Odoo (schreibt nur die Brücke): Produkte, Odoo-Benutzer, letzter Abgleich
   const [pr2, nu, ab] = await Promise.all([
     sb.from('produkte').select('*').order('name'),
@@ -1454,7 +1470,7 @@ document.getElementById('seite-einstellungen').addEventListener('click', async e
 
 /* ---------- Provision (Beispiel): Umsätze aus Odoo – Provision zählt erst, wenn die Rechnung bezahlt ist ---------- */
 // Regeln legt das Team noch fest. Satz stellt die Teamleitung ein (Tabelle „konfig“), Zahlen schreibt die Brücke.
-let UMSAETZE = [], PROVISION = 8, provMonat = heute().slice(0, 7);
+let UMSAETZE = [], PROVISION = 8, PROV_NOTIZ = false, provMonat = heute().slice(0, 7);
 const ZAHLUNG = {bezahlt:'<span class="rueck ja">bezahlt</span>', offen:'<span class="rueck offen">Rechnung offen</span>',
   'ohne Rechnung':'<span class="rueck offen">noch keine Rechnung</span>'};
 async function umsaetzeLaden(){
@@ -1515,8 +1531,20 @@ function provisionAbschnitt(leitung){
       </table></div></details>` : ''}
     ${leitung ? `<div class="inline" style="margin-top:8px;align-items:center">Provisionssatz
       <input type="number" id="prov-satz" min="0" max="100" step="0.5" value="${satz}" style="width:80px"> %
-      <button class="knopf klein" data-prov-satz>Speichern</button></div>` : ''}`;
+      <button class="knopf klein" data-prov-satz>Speichern</button></div>
+    <label style="display:flex;margin-top:10px;align-items:flex-start;gap:8px;font-size:14px"><input type="checkbox" id="prov-notiz" style="flex:0 0 auto;margin-top:3px" ${PROV_NOTIZ ? 'checked' : ''}>
+      <span>Sobald eine Rechnung bezahlt ist, die Provision als Notiz in den Odoo-Auftrag schreiben (z.B. „Provision 8 % für Lena: 10,40 €“)</span></label>
+    <div class="hinweis" style="text-align:left">Am besten erst einschalten, wenn die Regeln im Team feststehen – jede Notiz erscheint einmal pro Auftrag in Odoo.</div>` : ''}`;
 }
+document.getElementById('seite-einstellungen').addEventListener('change', async e => {
+  if (e.target.id !== 'prov-notiz' || !istLeitung()) return;
+  const an = e.target.checked;
+  if (!DEMO) {
+    const {data, error} = await sb.from('konfig').update({provision_notiz:an}).eq('id', 1).select('id');
+    if (error || !data?.length) { e.target.checked = !an; return fehlerZeigen('Das ließ sich nicht speichern:', error?.message || 'keine Berechtigung'); }
+  }
+  PROV_NOTIZ = an; toast(an ? 'Provisions-Notizen in Odoo: eingeschaltet ✓' : 'Provisions-Notizen in Odoo: ausgeschaltet');
+});
 document.getElementById('seite-einstellungen').addEventListener('click', async e => {
   const b = e.target.closest('[data-prov-monat],[data-prov-satz],[data-prov-excel]'); if (!b) return;
   const zuProvision = () => setTimeout(() => document.getElementById('provision-bereich')?.scrollIntoView({block:'start'}), 30);
@@ -1548,6 +1576,174 @@ async function provisionExcel(){
     XLSX.writeFile(mappe, `provision-beispiel-${provMonat}.xlsx`);
   } catch (err) { fehlerZeigen('Die Excel-Datei ließ sich nicht erstellen:', err.message || String(err)); }
 }
+
+/* ---------- Botschafter-Profil (für Willkommens-Flyer + Willkommensmail) ---------- */
+let PROFILE = {}, FOTO_URL = {}, WILLKOMMEN = {an:false, ab:'', absender:'info@mayamunay.com'};
+async function profileLaden(){
+  if (DEMO || !sb) return;
+  const {data, error} = await sb.from('profile').select('*');
+  PROFILE = error ? {} : Object.fromEntries(data.map(p => [p.team_id, p]));
+}
+async function fotoUrl(teamId){
+  const p = PROFILE[teamId]; if (!p?.foto) return '';
+  if (DEMO) return p.foto;
+  if (FOTO_URL[teamId]?.pfad === p.foto + p.geaendert) return FOTO_URL[teamId].url;
+  const {data} = await sb.storage.from('profilbilder').createSignedUrl(p.foto, 3600);
+  FOTO_URL[teamId] = {pfad:p.foto + p.geaendert, url:data?.signedUrl || ''};
+  return FOTO_URL[teamId].url;
+}
+async function avatarZeichnen(){
+  const el = document.getElementById('ich-avatar'), url = await fotoUrl(ich.id);
+  el.style.backgroundImage = url ? `url("${url}")` : '';
+  el.textContent = url ? '' : ich.name.split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase();
+}
+const profilFertig = id => !!(PROFILE[id]?.vorname && PROFILE[id]?.email);
+let pfFoto = null;   // neu gewähltes Foto (PNG-Blob, rund) oder 'weg'
+async function profilOeffnen(){
+  const p = PROFILE[ich.id] || {}, teile = ich.name.split(/\s+/), url = await fotoUrl(ich.id);
+  pfFoto = null;
+  document.getElementById('pf-inhalt').innerHTML = `
+    <p class="leise" style="margin-top:-4px">Diese Angaben stehen im Willkommens-Flyer und in der Willkommensmail an deine Kunden.
+      Antworten deiner Kunden gehen an die E-Mail-Adresse hier.</p>
+    <div class="pf-foto"><div class="pf-bild" id="pf-bild" style="${url ? `background-image:url('${url}')` : ''}">${url ? '' : '🌱'}</div>
+      <div><label class="knopf leise klein" style="display:inline-block;cursor:pointer">Foto wählen<input type="file" id="pf-datei" accept="image/*" hidden></label>
+        ${url ? '<button class="knopf leise klein" data-pf="foto-weg">Foto entfernen</button>' : ''}
+        <div class="leise" style="font-size:12px;margin-top:4px">freiwillig · wird rund zugeschnitten</div></div></div>
+    <div class="zwei">
+      <label class="feld">Vorname<input id="pf-vorname" value="${esc(p.vorname ?? teile[0] ?? '')}" autocomplete="given-name"></label>
+      <label class="feld">Nachname<input id="pf-nachname" value="${esc(p.nachname ?? teile.slice(1).join(' '))}" autocomplete="family-name"></label>
+    </div>
+    <label class="feld">Telefon<input id="pf-telefon" type="tel" value="${esc(p.telefon || '')}" autocomplete="tel"></label>
+    <label class="feld">E-Mail für Kunden <small>(deine Mayamunay-Adresse)</small><input id="pf-email" type="email" value="${esc(p.email || '')}" placeholder="name@mayamunay.com"></label>
+    <div class="inline" style="justify-content:flex-end;margin-top:12px">
+      <button class="knopf leise" data-pf="zu">Abbrechen</button><button class="knopf gold" data-pf="speichern">Speichern</button></div>`;
+  document.getElementById('profil-dialog').classList.remove('versteckt');
+}
+// Foto quadratisch-rund zuschneiden (400 × 400 PNG mit durchsichtigen Ecken) – so landet es direkt im Flyer
+async function fotoRund(datei){
+  const bild = await createImageBitmap(datei), g = 400, c = document.createElement('canvas'); c.width = c.height = g;
+  const x = c.getContext('2d'), seite = Math.min(bild.width, bild.height);
+  x.beginPath(); x.arc(g / 2, g / 2, g / 2, 0, Math.PI * 2); x.closePath(); x.clip();
+  x.drawImage(bild, (bild.width - seite) / 2, (bild.height - seite) / 2.6, seite, seite, 0, 0, g, g);
+  return await new Promise(ok => c.toBlob(ok, 'image/png'));
+}
+document.getElementById('ich-avatar').addEventListener('click', profilOeffnen);
+document.getElementById('ich-avatar').addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); profilOeffnen(); } });
+document.getElementById('profil-dialog').addEventListener('change', async e => {
+  if (e.target.id !== 'pf-datei' || !e.target.files?.[0]) return;
+  try { pfFoto = await fotoRund(e.target.files[0]); }
+  catch (err) { return toast('Dieses Bild ließ sich nicht lesen – magst du ein JPG oder PNG wählen?'); }
+  const el = document.getElementById('pf-bild'); el.style.backgroundImage = `url("${URL.createObjectURL(pfFoto)}")`; el.textContent = '';
+});
+document.getElementById('profil-dialog').addEventListener('click', async e => {
+  const a = e.target.closest('[data-pf]')?.dataset.pf;
+  if (a === 'zu' || e.target.id === 'profil-dialog') return document.getElementById('profil-dialog').classList.add('versteckt');
+  if (a === 'foto-weg') { pfFoto = 'weg'; const el = document.getElementById('pf-bild'); el.style.backgroundImage = ''; el.textContent = '🌱'; return; }
+  if (a !== 'speichern') return;
+  const wert = id => document.getElementById(id).value.trim();
+  const neu = {team_id:ich.id, vorname:wert('pf-vorname'), nachname:wert('pf-nachname'), telefon:wert('pf-telefon'), email:wert('pf-email').toLowerCase(),
+    foto:PROFILE[ich.id]?.foto || '', geaendert:new Date().toISOString()};
+  if (!neu.vorname) return toast('Magst du deinen Vornamen eintragen?');
+  if (neu.email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(neu.email)) return toast('Die E-Mail-Adresse sieht noch nicht vollständig aus.');
+  const knopf = e.target.closest('[data-pf]'); knopf.disabled = true;
+  try {
+    if (pfFoto === 'weg') { if (!DEMO && neu.foto) await sb.storage.from('profilbilder').remove([neu.foto]); neu.foto = ''; }
+    else if (pfFoto) {
+      if (DEMO) neu.foto = URL.createObjectURL(pfFoto);
+      else {
+        const pfad = ich.id + '.png';
+        const {error} = await sb.storage.from('profilbilder').upload(pfad, pfFoto, {upsert:true, contentType:'image/png'});
+        if (error) throw error; neu.foto = pfad;
+      }
+    }
+    if (!DEMO) { const {error} = await sb.from('profile').upsert(neu); if (error) throw error; }
+    PROFILE[ich.id] = neu; delete FOTO_URL[ich.id];
+    document.getElementById('profil-dialog').classList.add('versteckt');
+    avatarZeichnen(); toast('Profil gespeichert ✓');
+    if (ansicht === 'einstellungen') einstellungenZeichnen();
+  } catch (err) { knopf.disabled = false; fehlerZeigen('Das Profil ließ sich nicht speichern:', err.message || String(err)); }
+});
+
+/* ---------- Willkommensmail: Status am Ort, Vorschau, Testlauf, Schalter ---------- */
+async function odooFehlertext(error){
+  let text = error.message || String(error);
+  try { const j = await error.context?.json?.(); if (j?.fehler) text = j.fehler; } catch(e){}
+  return text;
+}
+function willkommenStatusHtml(c){
+  if (c.status !== 'kunde' && !c.willkommenGesendet) return '';
+  const vorschau = !DEMO && (istLeitung() || c.betreuung === ich.id) ? ` <button class="link-knopf" data-akt="willkommen-vorschau">Flyer-Vorschau</button>` : '';
+  const text = c.willkommenGesendet ? `✉ Willkommensmail gesendet am ${datumDe(String(c.willkommenGesendet).slice(0, 10))}`
+    : c.willkommenInfo ? `✉ Willkommensmail noch nicht gesendet: ${esc(c.willkommenInfo)}`
+    : WILLKOMMEN.an ? '✉ Die Willkommensmail geht nach der ersten bestätigten Bestellung automatisch raus.'
+    : '✉ Willkommensmail: automatischer Versand ist noch ausgeschaltet.';
+  return `<div class="willkommen-status">${text}${vorschau}</div>`;
+}
+async function willkommenVorschau(ortId){
+  const fenster = window.open('', '_blank');
+  const {data, error} = await sb.functions.invoke('odoo-abgleich', {body:{aktion:'willkommen_vorschau', ort_id:ortId}});
+  const fehler = error ? await odooFehlertext(error) : data?.fehler;
+  if (fehler || !data?.pdf) { fenster?.close(); return fehlerZeigen('Die Vorschau ließ sich nicht erstellen:', fehler || 'keine Antwort'); }
+  const bytes = Uint8Array.from(atob(data.pdf), z => z.charCodeAt(0));
+  const url = URL.createObjectURL(new Blob([bytes], {type:'application/pdf'}));
+  if (fenster) fenster.location = url; else location.href = url;
+}
+function willkommenAbschnitt(){
+  const orte = D.cafes.filter(c => c.betreuung).sort((a, b) => (a.status === 'kunde' ? 0 : 1) - (b.status === 'kunde' ? 0 : 1) || a.name.localeCompare(b.name, 'de'));
+  const ohneProfil = D.team.filter(p => !profilFertig(p.id)).map(p => p.name);
+  const gesendet = D.cafes.filter(c => c.willkommenGesendet).sort((a, b) => String(b.willkommenGesendet).localeCompare(String(a.willkommenGesendet))).slice(0, 8);
+  const probleme = D.cafes.filter(c => !c.willkommenGesendet && c.willkommenInfo);
+  return `<h3 id="willkommen-bereich">Willkommensmail</h3>
+    <div class="hinweis" style="text-align:left;margin:-4px 0 8px">Nach der <b>ersten bestätigten Bestellung</b> eines Kunden schickt Odoo automatisch eine persönliche
+      Willkommensmail – im Namen des Botschafters, mit dem Willkommens-Flyer und den Dokumenten, die unter „Dokumente“ für die Willkommensmail markiert sind
+      (große Dateien als Link). Antworten gehen an die Mayamunay-Adresse aus dem Botschafter-Profil. Jeder Kunde bekommt sie nur einmal, und sie steht in Odoo am Kunden und am Lead.</div>
+    <label style="display:flex;align-items:flex-start;gap:8px;font-size:14px"><input type="checkbox" id="willkommen-an" style="flex:0 0 auto;margin-top:3px" ${WILLKOMMEN.an ? 'checked' : ''} ${DEMO ? 'disabled' : ''}>
+      <span><b>Automatischer Versand</b> ${WILLKOMMEN.an && WILLKOMMEN.ab ? `– eingeschaltet seit ${datumDe(String(WILLKOMMEN.ab).slice(0, 10))} (zählt Bestellungen ab dann)` : '– ausgeschaltet'}</span></label>
+    ${ohneProfil.length ? `<div class="fehlt" style="margin-top:8px">Profil (Vorname + Mayamunay-Adresse) fehlt noch bei: ${ohneProfil.map(esc).join(', ')} – jede Person trägt es selbst über das runde Symbol oben rechts ein.</div>` : ''}
+    <div class="neu-box" style="margin-top:10px"><b>Testlauf</b> <span class="leise" style="font-size:13px">(geht nur an die Testadresse, der Kunde bekommt nichts)</span>
+      <div class="inline" style="margin-top:8px"><select id="wt-ort" style="min-width:180px">${orte.map(c => `<option value="${c.id}">${esc(c.name)} · ${esc(person(c.betreuung)?.name || '')}</option>`).join('')}</select>
+        <input id="wt-an" type="email" placeholder="Testadresse" style="min-width:200px">
+        <button class="knopf klein" data-wt="senden" ${DEMO ? 'disabled' : ''}>Testmail senden</button>
+        <button class="knopf leise klein" data-wt="vorschau" ${DEMO ? 'disabled' : ''}>Flyer-Vorschau</button></div></div>
+    <div class="inline" style="margin-top:10px;align-items:center;font-size:14px">Absender, wenn Odoo für die Adresse des Botschafters keinen eigenen Mailserver kennt:
+      <input id="wt-absender" type="email" value="${esc(WILLKOMMEN.absender)}" style="min-width:200px" ${DEMO ? 'disabled' : ''}><button class="knopf leise klein" data-wt="absender" ${DEMO ? 'disabled' : ''}>Speichern</button></div>
+    ${probleme.length ? `<div class="fehlt" style="margin-top:8px"><b>Noch nicht gesendet:</b><br>${probleme.map(c => `${esc(c.name)} – ${esc(c.willkommenInfo)}`).join('<br>')}</div>` : ''}
+    ${gesendet.length ? `<div class="leise" style="margin-top:8px;font-size:13px"><b>Zuletzt gesendet:</b> ${gesendet.map(c => `${esc(c.name)} (${datumDe(String(c.willkommenGesendet).slice(0, 10))})`).join(' · ')}</div>` : ''}`;
+}
+document.getElementById('seite-einstellungen').addEventListener('change', async e => {
+  if (e.target.id !== 'willkommen-an' || !istLeitung() || DEMO) return;
+  const an = e.target.checked;
+  if (an && !confirm('Automatischen Versand einschalten? Ab jetzt bekommt jeder Kunde nach seiner ersten bestätigten Bestellung die Willkommensmail.')) { e.target.checked = false; return; }
+  const neu = an ? {willkommen_an:true, willkommen_ab:new Date().toISOString()} : {willkommen_an:false};
+  const {data, error} = await sb.from('konfig').update(neu).eq('id', 1).select('willkommen_an,willkommen_ab');
+  if (error || !data?.length) { e.target.checked = !an; return fehlerZeigen('Das ließ sich nicht speichern:', error?.message || 'keine Berechtigung'); }
+  WILLKOMMEN.an = data[0].willkommen_an; WILLKOMMEN.ab = data[0].willkommen_ab || '';
+  toast(an ? 'Willkommensmail: automatischer Versand eingeschaltet ✓' : 'Willkommensmail: ausgeschaltet'); einstellungenZeichnen();
+  setTimeout(() => document.getElementById('willkommen-bereich')?.scrollIntoView({block:'start'}), 30);
+});
+document.getElementById('seite-einstellungen').addEventListener('click', async e => {
+  const a = e.target.closest('[data-wt]')?.dataset.wt; if (!a || !istLeitung() || DEMO) return;
+  const ortId = document.getElementById('wt-ort')?.value;
+  if (a === 'vorschau') return ortId ? willkommenVorschau(ortId) : toast('Magst du zuerst einen Ort wählen?');
+  if (a === 'absender') {
+    const v = document.getElementById('wt-absender').value.trim().toLowerCase();
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v)) return toast('Magst du eine vollständige Adresse eintragen?');
+    const {data, error} = await sb.from('konfig').update({mail_absender:v}).eq('id', 1).select('id');
+    if (error || !data?.length) return fehlerZeigen('Das ließ sich nicht speichern:', error?.message || 'keine Berechtigung');
+    WILLKOMMEN.absender = v; return toast('Absender gespeichert ✓');
+  }
+  if (a === 'senden') {
+    const an = document.getElementById('wt-an').value.trim();
+    if (!ortId) return toast('Magst du zuerst einen Ort wählen?');
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(an)) return toast('Magst du eine Testadresse eintragen?');
+    const knopf = e.target.closest('[data-wt]'); knopf.disabled = true; knopf.textContent = 'Sendet …';
+    const {data, error} = await sb.functions.invoke('odoo-abgleich', {body:{aktion:'willkommen_test', ort_id:ortId, an}});
+    knopf.disabled = false; knopf.textContent = 'Testmail senden';
+    const fehler = error ? await odooFehlertext(error) : data?.fehler;
+    if (fehler) return fehlerZeigen('Die Testmail ließ sich nicht senden:', fehler);
+    toast(`Testmail an ${an} ist unterwegs ✓ (Absender: ${data.absender})`);
+  }
+});
 
 /* ---------- Bestellungen: aus der App → Angebot in Odoo (Maya Munay prüft und bestätigt) ---------- */
 const DEMO_PRODUKTE = [
@@ -1785,6 +1981,7 @@ function panelZeichnen(c){
       <h4>Bestellungen</h4>
       <div id="bestell-liste">${bestellListeHtml(c)}</div>
       <button class="knopf gold klein" data-akt="bestellen" style="margin-top:8px">🛒 Bestellung aufgeben</button>
+      ${willkommenStatusHtml(c)}
     </div>
     <label class="feld">Notiz zum Ort <small>(Öffnungszeiten, Besonderheiten …)</small><textarea data-f="notiz" ${dis}>${esc(c.notiz)}</textarea></label>
 
@@ -1917,6 +2114,7 @@ panel.addEventListener('click', e => {
     return toast(notiz ? 'Gespeichert ✓ – inklusive neuem Besuch.' : 'Gespeichert ✓');
   }
   if (akt === 'bestellen') return bestellDialogOeffnen(c);
+  if (akt === 'willkommen-vorschau') return willkommenVorschau(c.id);
   if (akt === 'antrag') return antragStellen(c);
   if (akt === 'antrag-zurueck') return antragEntfernen(b.dataset.id, 'zurueckgezogen');
   if (akt === 'antrag-nein') return antragEntfernen(b.dataset.id, 'abgelehnt');
@@ -2614,6 +2812,7 @@ function einstellungenZeichnen(){
     ${leitung && !DEMO ? `<div class="hinweis" style="text-align:left;margin-top:8px">Neue Person einladen: 1. hier mit E-Mail-Adresse eintragen · 2. in Supabase unter <b>Authentication → Users → Add user → Send invitation</b> dieselbe Adresse einladen. Beim ersten Anmelden wird beides automatisch verbunden.</div>` : ''}
     ${!DEMO ? odooAbschnitt(leitung) : ''}
     ${!DEMO && leitung ? abgaengeAbschnitt() : ''}
+    ${leitung ? willkommenAbschnitt() : ''}
     <h3>Arten (Auswahlliste)</h3>${liste('arten')}
     <h3>Produkte für Proben</h3><div class="hinweis" style="text-align:left;margin:-4px 0 8px">Neue Produkte entstehen auch automatisch, wenn jemand bei einer Probe etwas Neues eintippt.</div>${liste('sorten')}
     <h3>Erinnerung</h3>
@@ -2950,6 +3149,7 @@ async function start(){
   document.getElementById('ich-name').textContent = ich.name;
   document.getElementById('ich-avatar').textContent = ich.name.split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase();
   document.getElementById('ich-rolle').textContent = istLeitung() ? 'Teamleitung' : 'Betreuung';
+  avatarZeichnen();
   legendeZeichnen(); allesZeichnen(); ansichtWechseln('karte');
   googleStandLaden();
   setTimeout(() => odooAbgleich(false), 1500);
