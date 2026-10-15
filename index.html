@@ -452,6 +452,9 @@ table.team th{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color
 .prov-zahlen b{font-size:17px}
 .prov-zahlen .gold{background:var(--gold-hell);border-color:#e6d49a}
 .prov-person{margin:12px 0 4px}
+.prov-zahlen b small,.prov-zahlen div>small:last-child:not(:first-child){display:block;font-size:12px;color:var(--leise);font-weight:400}
+table.modell th.gruppe,table.modell td.gruppe{border-left:1px solid var(--linie)}
+table.modell td.treffer{background:var(--gold-hell);font-weight:700}
 .produkte .rueck{white-space:nowrap}
 @media (max-width:620px){ .prov-zahlen{grid-template-columns:1fr 1fr} .nur-breit{display:none} }
 </style>
@@ -762,7 +765,7 @@ const ortZeile = c => ({id:c.id, name:c.name || '', adresse:c.adresse || '', sta
   lat:c.lat, lng:c.lng, status:c.status, betreuung:c.betreuung || null, art:c.art || [], zeremonie:!!c.zeremonie, event:!!c.event,
   ansprechperson:c.ansprechperson || '', vorname:c.vorname || '', nachname:c.nachname || '', telefon:c.telefon || '', email:c.email || '',
   kontakt:c.kontakt || '', naechster_kontakt:c.naechsterKontakt || null, notiz:c.notiz || '',
-  google:c.google || null, osm:c.osm || null, erstellt_von:c.erstelltVon || null});
+  google:c.google || null, osm:c.osm || null, erstellt_von:c.erstelltVon || null, kundenpflege:c.kundenpflege !== false});
 const besuchZeile = (b, ortId) => ({id:b.id, ort_id:ortId, datum:b.datum, person:b.person || null, notiz:b.notiz});
 const probeZeile = (p, ortId) => ({id:p.id, ort_id:ortId, datum:p.datum, sorte:p.sorte, menge:p.menge || '', anzahl:Math.max(1, +p.anzahl || 1), bestellung:p.bestellung, person:p.person || null});
 const ausgabeZeile = a => ({id:a.id, person:a.person || null, datum:a.datum, sorte:a.sorte, anzahl:Math.max(1, +a.anzahl || 1), notiz:a.notiz || '', erfasst_von:a.erfasstVon || null});
@@ -802,12 +805,12 @@ async function datenLaden(){
     kontakt:x.kontakt, naechsterKontakt:x.naechster_kontakt || '', notiz:x.notiz,
     google:x.google || '', osm:x.osm || '', erstelltVon:x.erstellt_von || '',
     odooLead:x.odoo_lead || null, odooPhase:x.odoo_phase || '', odooDaten:x.odoo_daten || null,
-    willkommenGesendet:x.willkommen_gesendet || '', willkommenInfo:x.willkommen_info || '',
+    willkommenGesendet:x.willkommen_gesendet || '', willkommenInfo:x.willkommen_info || '', kundenpflege:x.kundenpflege !== false,
     besuche:(bNach[x.id] || []).map(y => ({id:y.id, datum:y.datum, person:y.person || '', notiz:y.notiz})),
     proben:(pNach[x.id] || []).map(y => ({id:y.id, datum:y.datum, sorte:y.sorte, menge:y.menge, anzahl:y.anzahl || 1, bestellung:y.bestellung, person:y.person || ''}))}));
   if (e.data) D.einstellungen = {arten:e.data.arten, sorten:e.data.sorten, wochen:e.data.wochen};
   googleSchluesselWert = k.data?.google_schluessel || '';
-  PROVISION = k.data?.provision_prozent ?? 8; PROV_NOTIZ = !!k.data?.provision_notiz;
+  PROV_NOTIZ = !!k.data?.provision_notiz;
   WILLKOMMEN = {an:!!k.data?.willkommen_an, ab:k.data?.willkommen_ab || '', absender:k.data?.mail_absender || 'info@mayamunay.com'};
   // Erhaltene Proben (Tabelle fehlt, solange schema.sql noch nicht neu ausgeführt ist)
   const au = await sb.from('proben_ausgabe').select('*').order('datum');
@@ -1476,9 +1479,30 @@ document.getElementById('seite-einstellungen').addEventListener('click', async e
   setTimeout(() => document.getElementById('abgaenge-bereich')?.scrollIntoView({block:'start'}), 30);
 });
 
-/* ---------- Provision (Beispiel): Umsätze aus Odoo – Provision zählt erst, wenn die Rechnung bezahlt ist ---------- */
-// Regeln legt das Team noch fest. Satz stellt die Teamleitung ein (Tabelle „konfig“), Zahlen schreibt die Brücke.
-let UMSAETZE = [], PROVISION = 8, PROV_NOTIZ = false, provMonat = heute().slice(0, 7);
+/* ---------- Provision: Modell „Geld vs. Kakao“ (Präsentation Okt. 2026, angepasste Sätze) ---------- */
+// Die Brücke rechnet echte Aufträge aus Odoo nach diesem Modell (Tabelle „odoo_umsaetze“). Hier: Liste, Rechner, Übersicht.
+// Gleiche Werte stehen in der Brücke (MODELL) – bei Änderung beide anpassen. Provision zählt, sobald die Rechnung bezahlt ist.
+const MODELL = {
+  listenpreisKg:65.35, herstellkostenKg:31.90, marktwertKg:77.77,
+  stufen:[5, 10, 20, 40], rabatt:[17.5, 22.5, 27.5, 32.5],
+  saetze:{erst:{geld:[16, 13.5, 10, 9], kakao:[20, 17, 14, 13]},
+          mit:{geld:[10.5, 9.5, 8.5, 7.5], kakao:[15, 13, 11, 10]},
+          ohne:{geld:[6.5, 5.5, 5, 5], kakao:[10, 8, 6, 5]}},
+  turbo:[[2500, 2], [5000, 3], [10000, 4]],          // Vorschlag A: Monatsumsatz (Bestellungen bis 39 kg) → +%
+  team:[[15000, 50], [30000, 100], [50000, 200]],    // Vorschlag B: Team-Monatsumsatz → € je Botschafter
+  versand:[['bis 1 kg', 6], ['bis 2 kg', 7.5], ['bis 4 kg', 10], ['bis 5 kg', 11], ['bis 10 kg', 13], ['bis 15 kg', 17], ['bis 20 kg', 18], ['bis 25 kg', 20], ['bis 31,5 kg', 22]],
+};
+const PHASEN = {erst:'Erstverkauf', mit:'Folgeverkauf mit Kundenpflege', ohne:'Folgeverkauf ohne Kundenpflege'};
+const r2 = n => Math.round(n * 100) / 100;
+const stufeVon = kg => Math.max(0, MODELL.stufen.filter(s => kg >= s).length - 1);   // unter 5 kg vorerst wie 5 kg
+function provisionModell(kg, phase, art){
+  const st = stufeVon(kg), satz = MODELL.saetze[phase][art === 'kakao' ? 'kakao' : 'geld'][st];
+  return art === 'kakao' ? {satz, geld:0, kg:r2(kg * satz / 100)} : {satz, geld:r2(kg * MODELL.listenpreisKg * satz / 100), kg:0};
+}
+const kgText = n => Number(n || 0).toLocaleString('de-DE', {maximumFractionDigits:2}) + ' kg';
+const prozent = n => Number(n).toLocaleString('de-DE') + ' %';
+
+let UMSAETZE = [], PROV_NOTIZ = false, provMonat = heute().slice(0, 7), RECHNER = {kg:10, phase:'erst', art:'geld'};
 const ZAHLUNG = {bezahlt:'<span class="rueck ja">bezahlt</span>', offen:'<span class="rueck offen">Rechnung offen</span>',
   'ohne Rechnung':'<span class="rueck offen">noch keine Rechnung</span>'};
 async function umsaetzeLaden(){
@@ -1486,37 +1510,56 @@ async function umsaetzeLaden(){
   const {data, error} = await sb.from('odoo_umsaetze').select('*').order('datum', {ascending:false});
   UMSAETZE = error ? [] : data;
 }
-// Demo: ein paar Beispiel-Aufträge für die Kunden aus den Demo-Daten
+// Demo: Beispiel-Aufträge für die Kunden aus den Demo-Daten, nach dem Modell gerechnet
 function demoUmsaetze(){
   const m0 = heute().slice(0, 7), m1 = monatPlus(m0, -1), liste = []; let n = 1;
   D.cafes.filter(c => c.status === 'kunde' && c.betreuung).forEach((c, i) =>
-    [[m1, '09', 180 + i * 45, 'bezahlt'], [m0, '03', 130 + i * 25, i % 2 ? 'offen' : 'bezahlt'], [m0, '11', 65.35, 'ohne Rechnung']]
-      .forEach(([m, t, netto, zahlung]) => liste.push({odoo_id:n, name:'S' + String(n++).padStart(5, '0'), datum:`${m}-${t}`,
-        ort_id:c.id, betreuung:c.betreuung, netto, zahlung})));
+    [[m1, '09', 5 + i * 5, 'bezahlt', 'erst'], [m0, '03', 10, i % 2 ? 'offen' : 'bezahlt', 'mit'], [m0, '11', 5, 'ohne Rechnung', 'mit']]
+      .forEach(([m, t, kg, zahlung, phase]) => {
+        const art = PROFILE[c.betreuung]?.auszahlung === 'kakao' ? 'kakao' : 'geld', p = provisionModell(kg, phase, art);
+        liste.push({odoo_id:n, name:'S' + String(n++).padStart(5, '0'), datum:`${m}-${t}`, ort_id:c.id, betreuung:c.betreuung,
+          netto:r2(kg * MODELL.listenpreisKg * (1 - (kg >= 5 ? MODELL.rabatt[stufeVon(kg)] : 0) / 100)), kakao_kg:kg, zahlung, phase,
+          auszahlung:art, provision_satz:p.satz, provision_geld:p.geld, provision_kg:p.kg});
+      }));
   return liste;
 }
-const provSumme = (liste, f) => liste.reduce((s, u) => s + f(u), 0);
-const provVon = u => u.zahlung === 'bezahlt' ? Number(u.netto) * (Number(PROVISION) || 0) / 100 : 0;
+const provSumme = (liste, f) => liste.reduce((s, u) => s + (Number(f(u)) || 0), 0);
+const bezahlt = u => u.zahlung === 'bezahlt';
+// Provision als Text: Geld in €, Kakao in kg (≈ Marktwert)
+const provText = (geld, kg) => [geld ? euro(geld) : '', kg ? `${kgText(kg)} Kakao <span class="leise">(≈ ${euro(kg * MODELL.marktwertKg)})</span>` : ''].filter(Boolean).join(' + ') || euro(0);
 // Echt filtert die Datenbank (jeder sieht nur die eigenen Kunden); in der Demo hier
 const provMonatListe = () => UMSAETZE.filter(u => String(u.datum).slice(0, 7) === provMonat && (!DEMO || istLeitung() || u.betreuung === ich.id));
 const provKunde = id => D.cafes.find(c => c.id === id)?.name || 'Kunde';
+// Turbo-Bonus (Vorschlag A): Netto-Monatsumsatz aus bezahlten Bestellungen bis 39 kg
+function turbo(teil){
+  const basis = provSumme(teil.filter(u => bezahlt(u) && Number(u.kakao_kg) < 40), u => u.netto);
+  const stufe = [...MODELL.turbo].reverse().find(([ab]) => basis >= ab);
+  return {basis, plus:stufe ? stufe[1] : 0, bonus:stufe ? r2(basis * stufe[1] / 100) : 0, naechste:MODELL.turbo.find(([ab]) => basis < ab)};
+}
 function provisionZeichnen(){ document.getElementById('provision-inhalt').innerHTML = provisionAbschnitt(istLeitung()); }
 function provisionAbschnitt(leitung){
   if (DEMO && !UMSAETZE.length) UMSAETZE = demoUmsaetze();
-  const liste = provMonatListe(), satz = Number(PROVISION) || 0;
-  const netto = provSumme(liste, u => +u.netto), bezahlt = provSumme(liste.filter(u => u.zahlung === 'bezahlt'), u => +u.netto);
+  const liste = provMonatListe(), personen = [...new Set(liste.map(u => u.betreuung))];
   const kundenTabelle = teil => { const nachKunde = {};
     teil.forEach(u => (nachKunde[u.ort_id] = nachKunde[u.ort_id] || []).push(u));
-    return `<div style="overflow-x:auto"><table class="produkte"><tr><th>Kunde</th><th class="zahl nur-breit">Aufträge</th><th class="zahl">Netto</th><th class="zahl nur-breit">davon bezahlt</th><th class="zahl">Provision</th></tr>
+    return `<div style="overflow-x:auto"><table class="produkte"><tr><th>Kunde</th><th class="zahl">Kakao</th><th class="zahl nur-breit">Netto</th><th class="zahl">Provision (bezahlt)</th></tr>
       ${Object.entries(nachKunde).sort((a, b) => provKunde(a[0]).localeCompare(provKunde(b[0]), 'de')).map(([ort, l]) => `<tr><td>${esc(provKunde(ort))}</td>
-        <td class="zahl nur-breit">${l.length}</td><td class="zahl">${euro(provSumme(l, u => +u.netto))}</td>
-        <td class="zahl nur-breit">${euro(provSumme(l.filter(u => u.zahlung === 'bezahlt'), u => +u.netto))}</td><td class="zahl"><b>${euro(provSumme(l, provVon))}</b></td></tr>`).join('')}
+        <td class="zahl">${kgText(provSumme(l, u => u.kakao_kg))}</td><td class="zahl nur-breit">${euro(provSumme(l, u => u.netto))}</td>
+        <td class="zahl"><b>${provText(provSumme(l.filter(bezahlt), u => u.provision_geld), provSumme(l.filter(bezahlt), u => u.provision_kg))}</b></td></tr>`).join('')}
     </table></div>`; };
-  const personen = [...new Set(liste.map(u => u.betreuung))];
+  const personKopf = teil => { const t = turbo(teil);
+    return `<div class="prov-person"><b>${esc(person(teil[0].betreuung)?.name || 'ohne Botschafter')}</b> · ${teil[0].auszahlung === 'kakao' ? 'Kakao-Modell' : 'Geld-Modell'} ·
+      Provision ${provText(provSumme(teil.filter(bezahlt), u => u.provision_geld), provSumme(teil.filter(bezahlt), u => u.provision_kg))}
+      ${t.bonus ? `<span class="leise"> · Turbo-Bonus (Vorschlag): +${euro(t.bonus)}</span>` : ''}</div>`; };
+  // Rechner
+  const R = RECHNER, st = stufeVon(R.kg), rabatt = R.kg >= 5 ? MODELL.rabatt[st] : 0, p = provisionModell(R.kg, R.phase, R.art);
+  const kundeNetto = R.kg * MODELL.listenpreisKg * (1 - rabatt / 100);
+  const db1 = kundeNetto - R.kg * MODELL.herstellkostenKg - p.geld - p.kg * MODELL.herstellkostenKg;
+  const zelle = (phase, art, i) => `<td class="zahl${RECHNER.phase === phase && RECHNER.art === art && st === i ? ' treffer' : ''}">${prozent(MODELL.saetze[phase][art][i])}</td>`;
   return `<div class="liste-kopf"><h2>Provision <span class="beispiel-marke">Beispiel</span></h2></div>
-    <div class="hinweis" style="text-align:left;margin:-4px 0 8px">Eine Beispielrechnung – die Regeln legt das Team noch fest.
-      Gerechnet werden <b>${satz.toLocaleString('de-DE')} %</b> vom Nettobetrag (ohne MwSt. und Versand) aller bestätigten Odoo-Aufträge
-      ${leitung ? 'der Kunden, die einem Botschafter zugeordnet sind' : 'deiner Kunden'}. Die Provision zählt, sobald die Rechnung bezahlt ist.</div>
+    <div class="hinweis" style="text-align:left;margin:-4px 0 8px">Gerechnet nach dem Provisionsmodell <b>„Geld vs. Kakao“</b> (angepasste Sätze) – die Regeln legt
+      das Team noch endgültig fest. Grundlage ist die Menge <b>Rohkakao</b> (Kakaomasse und Kakaodrops) je Bestellung × ${euro(MODELL.listenpreisKg)} pro kg
+      (Listenpreis der 1-kg-Packung, netto). Die Provision zählt, sobald die Rechnung bezahlt ist.</div>
     <div class="inline monat-wahl">
       <button class="knopf leise klein" data-prov-monat="-1" aria-label="Monat davor">‹</button>
       <b class="monat-name">${monatName(provMonat)}</b>
@@ -1524,28 +1567,68 @@ function provisionAbschnitt(leitung){
       <button class="knopf leise klein" data-prov-excel>⬇︎ Monat als Excel</button>
     </div>
     <div class="prov-zahlen">
-      <div><small>Umsatz netto</small><b>${euro(netto)}</b></div>
-      <div><small>davon bezahlt</small><b>${euro(bezahlt)}</b></div>
-      <div class="gold"><small>Provision</small><b>${euro(provSumme(liste, provVon))}</b></div>
-      <div><small>kommt dazu, sobald bezahlt</small><b>${euro((netto - bezahlt) * satz / 100)}</b></div>
+      <div><small>Rohkakao bestellt</small><b>${kgText(provSumme(liste, u => u.kakao_kg))}</b></div>
+      <div><small>Umsatz netto</small><b>${euro(provSumme(liste, u => u.netto))}</b></div>
+      <div class="gold"><small>Provision (bezahlt)</small><b>${provText(provSumme(liste.filter(bezahlt), u => u.provision_geld), provSumme(liste.filter(bezahlt), u => u.provision_kg))}</b></div>
+      <div><small>kommt dazu, sobald bezahlt</small><b>${provText(provSumme(liste.filter(u => !bezahlt(u)), u => u.provision_geld), provSumme(liste.filter(u => !bezahlt(u)), u => u.provision_kg))}</b></div>
     </div>
     ${!liste.length ? `<div class="leer">In diesem Monat gibt es noch keine bestätigten Aufträge${leitung ? '' : ' deiner Kunden'}.</div>`
-      : leitung && personen.length > 1 ? personen.map(p => { const teil = liste.filter(u => u.betreuung === p);
-          return `<div class="prov-person"><b>${esc(person(p)?.name || 'ohne Botschafter')}</b> · Provision ${euro(provSumme(teil, provVon))}</div>${kundenTabelle(teil)}`; }).join('')
-      : kundenTabelle(liste)}
+      : personen.map(pp => { const teil = liste.filter(u => u.betreuung === pp); return personKopf(teil) + kundenTabelle(teil); }).join('')}
     ${liste.length ? `<details class="so-gehts" style="margin-top:8px"><summary>Aufträge im Einzelnen</summary>
-      <div style="overflow-x:auto"><table class="produkte"><tr><th>Datum</th><th>Auftrag</th><th>Kunde</th>${leitung ? '<th>Botschafter</th>' : ''}<th class="zahl">Netto</th><th>Zahlung</th><th class="zahl">Provision</th></tr>
+      <div style="overflow-x:auto"><table class="produkte"><tr><th>Datum</th><th>Auftrag</th><th>Kunde</th>${leitung ? '<th>Botschafter</th>' : ''}<th>Art</th><th class="zahl">Kakao</th><th class="zahl">Satz</th><th class="zahl">Provision</th><th>Zahlung</th></tr>
         ${liste.map(u => `<tr><td>${datumDe(u.datum)}</td><td>${esc(u.name)}</td><td>${esc(provKunde(u.ort_id))}</td>${leitung ? `<td>${esc(person(u.betreuung)?.name || '–')}</td>` : ''}
-          <td class="zahl">${euro(u.netto)}</td><td>${ZAHLUNG[u.zahlung] || esc(u.zahlung)}</td><td class="zahl">${u.zahlung === 'bezahlt' ? euro(provVon(u)) : '–'}</td></tr>`).join('')}
+          <td>${esc(PHASEN[u.phase] || '–')}</td><td class="zahl">${kgText(u.kakao_kg)}</td><td class="zahl">${u.provision_satz ? prozent(u.provision_satz) : '–'}</td>
+          <td class="zahl">${provText(u.provision_geld, u.provision_kg)}</td><td>${ZAHLUNG[u.zahlung] || esc(u.zahlung)}</td></tr>`).join('')}
       </table></div></details>` : ''}
-    ${leitung ? `<div class="inline" style="margin-top:8px;align-items:center">Provisionssatz
-      <input type="number" id="prov-satz" min="0" max="100" step="0.5" value="${satz}" style="width:80px"> %
-      <button class="knopf klein" data-prov-satz>Speichern</button></div>
-    <label style="display:flex;margin-top:10px;align-items:flex-start;gap:8px;font-size:14px"><input type="checkbox" id="prov-notiz" style="flex:0 0 auto;margin-top:3px" ${PROV_NOTIZ ? 'checked' : ''}>
-      <span>Sobald eine Rechnung bezahlt ist, die Provision als Notiz in den Odoo-Auftrag schreiben (z.B. „Provision 8 % für Lena: 10,40 €“)</span></label>
+
+    <h3 style="margin-top:22px">Das Provisionsmodell</h3>
+    <p class="leise" style="margin-top:-4px">Zwei gleichwertige Wege – jeder Botschafter wählt im eigenen Profil:
+      <b>Geld</b> (Provision in €) oder <b>Kakao</b> (Provision als Kakao, ≈ ${euro(MODELL.marktwertKg)} pro kg Marktwert). Der Satz hängt von der Menge der Bestellung ab
+      und davon, ob es der erste Auftrag eines Kunden ist oder ein Folgeauftrag – mit oder ohne aktive Kundenpflege.</p>
+    <div style="overflow-x:auto"><table class="produkte modell"><tr><th>Bestellung</th><th class="zahl">Rabatt Kunde</th>
+        <th class="zahl gruppe" colspan="2">Erstverkauf</th><th class="zahl gruppe" colspan="2">Folge mit Pflege</th><th class="zahl gruppe" colspan="2">Folge ohne Pflege</th></tr>
+      <tr><th></th><th></th>${['erst', 'mit', 'ohne'].map(() => '<th class="zahl gruppe">Geld</th><th class="zahl">Kakao</th>').join('')}</tr>
+      ${MODELL.stufen.map((s, i) => `<tr><td>ab ${s} kg</td><td class="zahl">${prozent(MODELL.rabatt[i])}</td>
+        ${['erst', 'mit', 'ohne'].map(ph => zelle(ph, 'geld', i).replace('<td class="zahl', '<td class="zahl gruppe') + zelle(ph, 'kakao', i)).join('')}</tr>`).join('')}
+    </table></div>
+
+    <div class="neu-box rechner-box" style="margin-top:12px"><b>Rechner</b>
+      <div class="inline" style="margin-top:8px;align-items:center">
+        <label class="feld" style="margin:0">Menge Rohkakao (kg)<input type="number" id="pr-kg" min="1" step="1" value="${R.kg}" style="width:90px"></label>
+        <label class="feld" style="margin:0">Art<select id="pr-phase">${Object.entries(PHASEN).map(([k, v]) => `<option value="${k}" ${R.phase === k ? 'selected' : ''}>${v}</option>`).join('')}</select></label>
+        <label class="feld" style="margin:0">Auszahlung<select id="pr-art"><option value="geld" ${R.art === 'geld' ? 'selected' : ''}>Geld</option><option value="kakao" ${R.art === 'kakao' ? 'selected' : ''}>Kakao</option></select></label>
+      </div>
+      <div class="prov-zahlen" style="margin-bottom:0">
+        <div><small>Rabatt für den Kunden</small><b>${prozent(rabatt)}</b></div>
+        <div><small>Kunde zahlt (netto)</small><b>${euro(kundeNetto)}</b></div>
+        <div class="gold"><small>Provision (${prozent(p.satz)})</small><b>${R.art === 'kakao' ? `${kgText(p.kg)}</b><small>≈ ${euro(p.kg * MODELL.marktwertKg)} Marktwert</small>` : `${euro(p.geld)}</b>`}</div>
+        ${leitung ? `<div><small>Firmen-DB1</small><b>${euro(db1)}</b><small>${euro(db1 / R.kg)} pro kg</small></div>` : ''}
+      </div>
+      ${R.kg < 5 ? '<div class="hinweis" style="text-align:left">Unter 5 kg ist im Modell noch offen – gerechnet wie ab 5 kg, ohne Rabatt.</div>' : ''}
+    </div>
+
+    <details class="so-gehts" style="margin-top:12px"><summary>Zusätzliche Hebel (Vorschläge, noch nicht entschieden)</summary>
+      <ol>
+        <li><b>Neukunden-Fixbonus:</b> einmalig z.B. 50–75 € beim ersten erfolgreichen B2B-Abschluss – unabhängig von der Menge.</li>
+        <li><b>Turbo-Bonus (A, pro Botschafter):</b> auf den Netto-Monatsumsatz aus Bestellungen bis 39 kg –
+          ${MODELL.turbo.map(([ab, plus]) => `ab ${euro(ab)} +${plus} %`).join(', ')} (auf den ganzen Betrag). In der Übersicht oben als „Turbo-Bonus (Vorschlag)“ mitgerechnet.</li>
+        <li><b>Team-Bonus (B):</b> Team-Monatsumsatz ${MODELL.team.map(([ab, b]) => `ab ${euro(ab)} → ${euro(b)}`).join(', ')} je Botschafter.</li>
+        <li><b>DB1-Untergrenze:</b> mindestens ca. 4 € pro kg für die Firma – Bestellungen ab 40 kg zählen deshalb nicht für den Turbo-Bonus.</li>
+      </ol></details>
+    <details class="so-gehts"><summary>Versandkosten beim Kakao-Modell</summary>
+      <p class="leise" style="margin:6px 0">Wer die Provision als Kakao nimmt, trägt Versand bzw. Abholung selbst (DHL national, inkl. MwSt.):</p>
+      <table class="produkte">${MODELL.versand.map(([g, pr]) => `<tr><td>${g}</td><td class="zahl">${euro(pr)}</td></tr>`).join('')}</table></details>
+
+    ${leitung ? `<label style="display:flex;margin-top:14px;align-items:flex-start;gap:8px;font-size:14px"><input type="checkbox" id="prov-notiz" style="flex:0 0 auto;margin-top:3px" ${PROV_NOTIZ ? 'checked' : ''}>
+      <span>Sobald eine Rechnung bezahlt ist, die Provision als Notiz in den Odoo-Auftrag schreiben (z.B. „Provision für Lena: 52,28 € – Erstverkauf, 5 kg Rohkakao, 16 %“)</span></label>
     <div class="hinweis" style="text-align:left">Am besten erst einschalten, wenn die Regeln im Team feststehen – jede Notiz erscheint einmal pro Auftrag in Odoo.</div>` : ''}`;
 }
 document.getElementById('seite-provision').addEventListener('change', async e => {
+  if (['pr-kg', 'pr-phase', 'pr-art'].includes(e.target.id)) {
+    RECHNER = {kg:Math.max(1, Number(document.getElementById('pr-kg').value) || 1), phase:document.getElementById('pr-phase').value, art:document.getElementById('pr-art').value};
+    const y = window.scrollY, box = document.querySelector('.rechner-box')?.getBoundingClientRect().top;
+    provisionZeichnen(); window.scrollTo(0, y); return;
+  }
   if (e.target.id !== 'prov-notiz' || !istLeitung()) return;
   const an = e.target.checked;
   if (!DEMO) {
@@ -1555,33 +1638,27 @@ document.getElementById('seite-provision').addEventListener('change', async e =>
   PROV_NOTIZ = an; toast(an ? 'Provisions-Notizen in Odoo: eingeschaltet ✓' : 'Provisions-Notizen in Odoo: ausgeschaltet');
 });
 document.getElementById('seite-provision').addEventListener('click', async e => {
-  const b = e.target.closest('[data-prov-monat],[data-prov-satz],[data-prov-excel]'); if (!b) return;
+  const b = e.target.closest('[data-prov-monat],[data-prov-excel]'); if (!b) return;
   if (b.dataset.provMonat) { provMonat = monatPlus(provMonat, +b.dataset.provMonat); return provisionZeichnen(); }
   if ('provExcel' in b.dataset) return provisionExcel();
-  if ('provSatz' in b.dataset && istLeitung()) {
-    const v = Number(document.getElementById('prov-satz').value);
-    if (!(v >= 0 && v <= 100)) return toast('Magst du einen Satz zwischen 0 und 100 % eintragen?');
-    if (!DEMO) {
-      const {data, error} = await sb.from('konfig').update({provision_prozent:v}).eq('id', 1).select('id');
-      if (error || !data?.length) return fehlerZeigen('Der Satz ließ sich nicht speichern:', error?.message || 'keine Berechtigung');
-    }
-    PROVISION = v; toast(`Provisionssatz: ${v.toLocaleString('de-DE')} % ✓`); return provisionZeichnen();
-  }
 });
 async function provisionExcel(){
   try {
     if (!window.XLSX) await skriptLaden('https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js');
     const liste = provMonatListe(), mappe = XLSX.utils.book_new();
     const auftraege = liste.map(u => ({Datum:new Date(u.datum + 'T12:00'), Auftrag:u.name, Kunde:provKunde(u.ort_id),
-      Botschafter:person(u.betreuung)?.name || '', 'Netto (€)':Number(u.netto), Zahlung:u.zahlung, 'Provision (€)':Math.round(provVon(u) * 100) / 100}));
-    const proPerson = [...new Set(liste.map(u => u.betreuung))].map(p => { const t = liste.filter(u => u.betreuung === p);
-      return {Botschafter:person(p)?.name || '', Aufträge:t.length, 'Netto (€)':Math.round(provSumme(t, u => +u.netto) * 100) / 100,
-        'davon bezahlt (€)':Math.round(provSumme(t.filter(u => u.zahlung === 'bezahlt'), u => +u.netto) * 100) / 100,
-        'Provision (€)':Math.round(provSumme(t, provVon) * 100) / 100}; });
-    [['Übersicht', proPerson, [22, 10, 12, 16, 14]], ['Aufträge', auftraege, [12, 10, 28, 20, 12, 14, 14]]].forEach(([titel, zeilen, breiten]) => {
+      Botschafter:person(u.betreuung)?.name || '', Art:PHASEN[u.phase] || '', 'Rohkakao (kg)':Number(u.kakao_kg), 'Netto (€)':Number(u.netto),
+      Modell:u.auszahlung === 'kakao' ? 'Kakao' : 'Geld', 'Satz (%)':Number(u.provision_satz), 'Provision (€)':Number(u.provision_geld),
+      'Provision (kg Kakao)':Number(u.provision_kg), Zahlung:u.zahlung}));
+    const proPerson = [...new Set(liste.map(u => u.betreuung))].map(p => { const t = liste.filter(u => u.betreuung === p), b = t.filter(bezahlt), tb = turbo(t);
+      return {Botschafter:person(p)?.name || '', Modell:t[0].auszahlung === 'kakao' ? 'Kakao' : 'Geld', Aufträge:t.length,
+        'Rohkakao (kg)':r2(provSumme(t, u => u.kakao_kg)), 'Netto (€)':r2(provSumme(t, u => u.netto)),
+        'Provision bezahlt (€)':r2(provSumme(b, u => u.provision_geld)), 'Provision bezahlt (kg Kakao)':r2(provSumme(b, u => u.provision_kg)),
+        'Turbo-Bonus Vorschlag (€)':tb.bonus}; });
+    [['Übersicht', proPerson, [20, 10, 10, 14, 12, 20, 24, 22]], ['Aufträge', auftraege, [12, 10, 26, 18, 28, 14, 12, 9, 9, 14, 18, 14]]].forEach(([titel, zeilen, breiten]) => {
       const ws = XLSX.utils.json_to_sheet(zeilen.length ? zeilen : [{'':'(keine Aufträge)'}], {cellDates:true, dateNF:'dd.mm.yyyy'});
       ws['!cols'] = breiten.map(w => ({wch:w})); XLSX.utils.book_append_sheet(mappe, ws, titel); });
-    XLSX.writeFile(mappe, `provision-beispiel-${provMonat}.xlsx`);
+    XLSX.writeFile(mappe, `provision-${provMonat}.xlsx`);
   } catch (err) { fehlerZeigen('Die Excel-Datei ließ sich nicht erstellen:', err.message || String(err)); }
 }
 
@@ -1623,6 +1700,10 @@ async function profilOeffnen(){
     </div>
     <label class="feld">Telefon<input id="pf-telefon" type="tel" value="${esc(p.telefon || '')}" autocomplete="tel"></label>
     <label class="feld">E-Mail für Kunden <small>(deine Mayamunay-Adresse)</small><input id="pf-email" type="email" value="${esc(p.email || '')}" placeholder="name@mayamunay.com"></label>
+    <div class="feld">Meine Provision als
+      <div class="inline" style="gap:14px;margin-top:4px"><label><input type="radio" name="pf-auszahlung" value="geld" ${p.auszahlung !== 'kakao' ? 'checked' : ''}> Geld</label>
+        <label><input type="radio" name="pf-auszahlung" value="kakao" ${p.auszahlung === 'kakao' ? 'checked' : ''}> Kakao</label></div>
+      <small class="leise">Siehe Reiter „Provision“ – beide Wege sind gleichwertig.</small></div>
     <div class="inline" style="justify-content:flex-end;margin-top:12px">
       <button class="knopf leise" data-pf="zu">Abbrechen</button><button class="knopf gold" data-pf="speichern">Speichern</button></div>`;
   document.getElementById('profil-dialog').classList.remove('versteckt');
@@ -1650,7 +1731,7 @@ document.getElementById('profil-dialog').addEventListener('click', async e => {
   if (a !== 'speichern') return;
   const wert = id => document.getElementById(id).value.trim();
   const neu = {team_id:ich.id, vorname:wert('pf-vorname'), nachname:wert('pf-nachname'), telefon:wert('pf-telefon'), email:wert('pf-email').toLowerCase(),
-    foto:PROFILE[ich.id]?.foto || '', geaendert:new Date().toISOString()};
+    foto:PROFILE[ich.id]?.foto || '', auszahlung:document.querySelector('[name=pf-auszahlung]:checked')?.value || 'geld', geaendert:new Date().toISOString()};
   if (!neu.vorname) return toast('Magst du deinen Vornamen eintragen?');
   if (neu.email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(neu.email)) return toast('Die E-Mail-Adresse sieht noch nicht vollständig aus.');
   const knopf = e.target.closest('[data-pf]'); knopf.disabled = true;
@@ -1990,6 +2071,8 @@ function panelZeichnen(c){
       <div id="bestell-liste">${bestellListeHtml(c)}</div>
       <button class="knopf gold klein" data-akt="bestellen" style="margin-top:8px">🛒 Bestellung aufgeben</button>
       ${willkommenStatusHtml(c)}
+      ${c.status === 'kunde' && c.betreuung ? `<label style="display:flex;align-items:flex-start;gap:8px;font-size:13px;margin-top:8px"><input type="checkbox" data-f="kundenpflege" style="flex:0 0 auto;margin-top:2px" ${c.kundenpflege !== false ? 'checked' : ''} ${dis}>
+        <span>Kunde wird aktiv betreut <span class="leise">(Folgeaufträge mit Kundenpflege – höhere Provision)</span></span></label>` : ''}
     </div>
     <label class="feld">Notiz zum Ort <small>(Öffnungszeiten, Besonderheiten …)</small><textarea data-f="notiz" ${dis}>${esc(c.notiz)}</textarea></label>
 
