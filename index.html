@@ -440,6 +440,11 @@ table.team th{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color
 .so-gehts summary{cursor:pointer;font-weight:600;color:var(--kakao)}
 .so-gehts ol{margin:8px 0 6px;padding-left:20px}
 .so-gehts li{margin-bottom:5px}
+.klappe>summary{cursor:pointer;list-style:none}
+.klappe>summary::-webkit-details-marker{display:none}
+.klappe>summary h3{display:inline-block}
+.klappe>summary h3::before{content:'▸ ';color:var(--gold)}
+.klappe[open]>summary h3::before{content:'▾ '}
 .beispiel-marke{font-size:11px;font-weight:600;letter-spacing:.04em;vertical-align:middle;background:var(--gold-hell);border:1px solid #e6d49a;color:var(--kakao);border-radius:999px;padding:2px 8px;margin-left:6px}
 .prov-zahlen{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:10px 0}
 .prov-zahlen div{background:#fff;border:1px solid var(--linie);border-radius:12px;padding:8px 10px}
@@ -448,7 +453,7 @@ table.team th{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color
 .prov-zahlen .gold{background:var(--gold-hell);border-color:#e6d49a}
 .prov-person{margin:12px 0 4px}
 .produkte .rueck{white-space:nowrap}
-@media (max-width:620px){ .prov-zahlen{grid-template-columns:1fr 1fr} }
+@media (max-width:620px){ .prov-zahlen{grid-template-columns:1fr 1fr} .nur-breit{display:none} }
 </style>
 </head>
 <body>
@@ -495,6 +500,7 @@ table.team th{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color
     <button data-view="erinnerungen"><span class="tab-sym"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 8-3 8h18s-3-1-3-8"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg><span class="badge" id="badge"></span></span><span>Erinnerungen</span></button>
     <button data-view="proben"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2.6C17.4 5 19.6 9.8 19 14.6c-.6 4.6-3.8 7.2-7 7.8-3.2-.6-6.4-3.2-7-7.8C4.4 9.8 6.6 5 12 2.6z"/><path d="M12 4.5v16M8.8 6c-1.6 4.2-1.4 10.4 1 14M15.2 6c1.6 4.2 1.4 10.4-1 14"/></svg><span>Proben</span></button>
     <button data-view="dokumente"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h6"/></svg><span>Dokumente</span></button>
+    <button data-view="provision"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5a4 4 0 1 0 0 7M7 10.5h6M7 13.5h6"/></svg><span>Provision</span></button>
     <button data-view="einstellungen" id="tab-einst"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8"/></svg><span>Team</span></button>
   </nav>
   <div class="ich"><span id="sync-status" class="sync-status"></span>
@@ -529,6 +535,7 @@ table.team th{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color
   <section class="seite versteckt" id="seite-erinnerungen"><div class="seite-inhalt" id="erinnerungen-inhalt"></div></section>
   <section class="seite versteckt" id="seite-proben"><div class="seite-inhalt" id="proben-inhalt"></div></section>
   <section class="seite versteckt" id="seite-dokumente"><div class="seite-inhalt" id="dokumente-inhalt"></div></section>
+  <section class="seite versteckt" id="seite-provision"><div class="seite-inhalt" id="provision-inhalt"></div></section>
   <section class="seite versteckt" id="seite-einstellungen"><div class="seite-inhalt" id="einst-inhalt"></div></section>
 
   <aside id="panel"></aside>
@@ -1288,9 +1295,9 @@ document.getElementById('tabs').onclick = e => { const b = e.target.closest('[da
 function ansichtWechseln(v){
   ansicht = v;
   document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('aktiv', b.dataset.view === v));
-  ['liste','erinnerungen','proben','dokumente','einstellungen'].forEach(s => document.getElementById('seite-'+s).classList.toggle('versteckt', s !== v));
+  ['liste','erinnerungen','proben','dokumente','provision','einstellungen'].forEach(s => document.getElementById('seite-'+s).classList.toggle('versteckt', s !== v));
   ['karten-knoepfe','legende'].forEach(id => document.getElementById(id).classList.toggle('versteckt', v !== 'karte'));
-  document.getElementById('leiste').classList.toggle('versteckt', ['einstellungen', 'erinnerungen', 'proben', 'dokumente'].includes(v));
+  document.getElementById('leiste').classList.toggle('versteckt', ['einstellungen', 'erinnerungen', 'proben', 'dokumente', 'provision'].includes(v));
   obenSetzen();
   if (v === 'karte') setTimeout(() => K && K.resize(), 50);
   if (v === 'liste') listeZeichnen();
@@ -1298,6 +1305,7 @@ function ansichtWechseln(v){
   if (v === 'einstellungen') einstellungenZeichnen();
   if (v === 'proben') probenZeichnen();
   if (v === 'dokumente') dokumenteZeichnen();
+  if (v === 'provision') provisionZeichnen();
 }
 function obenSetzen(){
   const kopf = document.querySelector('header').offsetHeight;
@@ -1492,19 +1500,20 @@ const provVon = u => u.zahlung === 'bezahlt' ? Number(u.netto) * (Number(PROVISI
 // Echt filtert die Datenbank (jeder sieht nur die eigenen Kunden); in der Demo hier
 const provMonatListe = () => UMSAETZE.filter(u => String(u.datum).slice(0, 7) === provMonat && (!DEMO || istLeitung() || u.betreuung === ich.id));
 const provKunde = id => D.cafes.find(c => c.id === id)?.name || 'Kunde';
+function provisionZeichnen(){ document.getElementById('provision-inhalt').innerHTML = provisionAbschnitt(istLeitung()); }
 function provisionAbschnitt(leitung){
   if (DEMO && !UMSAETZE.length) UMSAETZE = demoUmsaetze();
   const liste = provMonatListe(), satz = Number(PROVISION) || 0;
   const netto = provSumme(liste, u => +u.netto), bezahlt = provSumme(liste.filter(u => u.zahlung === 'bezahlt'), u => +u.netto);
   const kundenTabelle = teil => { const nachKunde = {};
     teil.forEach(u => (nachKunde[u.ort_id] = nachKunde[u.ort_id] || []).push(u));
-    return `<div style="overflow-x:auto"><table class="produkte"><tr><th>Kunde</th><th class="zahl">Aufträge</th><th class="zahl">Netto</th><th class="zahl">davon bezahlt</th><th class="zahl">Provision</th></tr>
+    return `<div style="overflow-x:auto"><table class="produkte"><tr><th>Kunde</th><th class="zahl nur-breit">Aufträge</th><th class="zahl">Netto</th><th class="zahl nur-breit">davon bezahlt</th><th class="zahl">Provision</th></tr>
       ${Object.entries(nachKunde).sort((a, b) => provKunde(a[0]).localeCompare(provKunde(b[0]), 'de')).map(([ort, l]) => `<tr><td>${esc(provKunde(ort))}</td>
-        <td class="zahl">${l.length}</td><td class="zahl">${euro(provSumme(l, u => +u.netto))}</td>
-        <td class="zahl">${euro(provSumme(l.filter(u => u.zahlung === 'bezahlt'), u => +u.netto))}</td><td class="zahl"><b>${euro(provSumme(l, provVon))}</b></td></tr>`).join('')}
+        <td class="zahl nur-breit">${l.length}</td><td class="zahl">${euro(provSumme(l, u => +u.netto))}</td>
+        <td class="zahl nur-breit">${euro(provSumme(l.filter(u => u.zahlung === 'bezahlt'), u => +u.netto))}</td><td class="zahl"><b>${euro(provSumme(l, provVon))}</b></td></tr>`).join('')}
     </table></div>`; };
   const personen = [...new Set(liste.map(u => u.betreuung))];
-  return `<h3 id="provision-bereich">Provision <span class="beispiel-marke">Beispiel</span></h3>
+  return `<div class="liste-kopf"><h2>Provision <span class="beispiel-marke">Beispiel</span></h2></div>
     <div class="hinweis" style="text-align:left;margin:-4px 0 8px">Eine Beispielrechnung – die Regeln legt das Team noch fest.
       Gerechnet werden <b>${satz.toLocaleString('de-DE')} %</b> vom Nettobetrag (ohne MwSt. und Versand) aller bestätigten Odoo-Aufträge
       ${leitung ? 'der Kunden, die einem Botschafter zugeordnet sind' : 'deiner Kunden'}. Die Provision zählt, sobald die Rechnung bezahlt ist.</div>
@@ -1536,7 +1545,7 @@ function provisionAbschnitt(leitung){
       <span>Sobald eine Rechnung bezahlt ist, die Provision als Notiz in den Odoo-Auftrag schreiben (z.B. „Provision 8 % für Lena: 10,40 €“)</span></label>
     <div class="hinweis" style="text-align:left">Am besten erst einschalten, wenn die Regeln im Team feststehen – jede Notiz erscheint einmal pro Auftrag in Odoo.</div>` : ''}`;
 }
-document.getElementById('seite-einstellungen').addEventListener('change', async e => {
+document.getElementById('seite-provision').addEventListener('change', async e => {
   if (e.target.id !== 'prov-notiz' || !istLeitung()) return;
   const an = e.target.checked;
   if (!DEMO) {
@@ -1545,10 +1554,9 @@ document.getElementById('seite-einstellungen').addEventListener('change', async 
   }
   PROV_NOTIZ = an; toast(an ? 'Provisions-Notizen in Odoo: eingeschaltet ✓' : 'Provisions-Notizen in Odoo: ausgeschaltet');
 });
-document.getElementById('seite-einstellungen').addEventListener('click', async e => {
+document.getElementById('seite-provision').addEventListener('click', async e => {
   const b = e.target.closest('[data-prov-monat],[data-prov-satz],[data-prov-excel]'); if (!b) return;
-  const zuProvision = () => setTimeout(() => document.getElementById('provision-bereich')?.scrollIntoView({block:'start'}), 30);
-  if (b.dataset.provMonat) { provMonat = monatPlus(provMonat, +b.dataset.provMonat); einstellungenZeichnen(); return zuProvision(); }
+  if (b.dataset.provMonat) { provMonat = monatPlus(provMonat, +b.dataset.provMonat); return provisionZeichnen(); }
   if ('provExcel' in b.dataset) return provisionExcel();
   if ('provSatz' in b.dataset && istLeitung()) {
     const v = Number(document.getElementById('prov-satz').value);
@@ -1557,7 +1565,7 @@ document.getElementById('seite-einstellungen').addEventListener('click', async e
       const {data, error} = await sb.from('konfig').update({provision_prozent:v}).eq('id', 1).select('id');
       if (error || !data?.length) return fehlerZeigen('Der Satz ließ sich nicht speichern:', error?.message || 'keine Berechtigung');
     }
-    PROVISION = v; toast(`Provisionssatz: ${v.toLocaleString('de-DE')} % ✓`); einstellungenZeichnen(); return zuProvision();
+    PROVISION = v; toast(`Provisionssatz: ${v.toLocaleString('de-DE')} % ✓`); return provisionZeichnen();
   }
 });
 async function provisionExcel(){
@@ -2797,7 +2805,6 @@ function einstellungenZeichnen(){
     <h2>Team & Einstellungen</h2>
     ${leitung ? '<div class="hinweis" style="text-align:left;margin:-6px 0 12px">Die Teamleitung hat Admin-Rechte: Orte anderen zuweisen, Personen einladen, Rollen vergeben. Es kann mehrere geben – mindestens eine bleibt immer.</div>'
       : '<div class="lesen">Änderungen hier macht die Teamleitung. Du kannst alles ansehen.</div>'}
-    ${provisionAbschnitt(leitung)}
     <h3>Team</h3>
     <table class="team"><tr><th>Name</th><th>Rolle</th><th>Region</th><th>Orte</th>${!DEMO ? '<th>Odoo-Benutzer</th>' : ''}${leitung ? '<th></th>' : ''}</tr>
       ${D.team.map(p => `<tr><td>${esc(p.name)}${!DEMO ? `<div class="leise" style="font-size:12px">${esc(p.email || '')}${p.angemeldet ? '' : ' · noch nicht angemeldet'}</div>` : ''}</td><td>${leitung
@@ -2894,6 +2901,13 @@ document.getElementById('seite-einstellungen').addEventListener('change', e => {
 let produkteNurBestand = true;
 const zeitDe = iso => iso ? new Date(iso).toLocaleString('de-DE', {day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'}) : '–';
 const euro = n => Number(n || 0).toLocaleString('de-DE', {style:'currency', currency:'EUR'});
+let produkteOffen = false;
+// Auf-/Zuklappen merken (das Ereignis „toggle“ steigt nicht auf → beim Einfangen abhören)
+document.getElementById('seite-einstellungen').addEventListener('toggle', e => {
+  if (e.target.id !== 'produkte-klappe') return;
+  produkteOffen = e.target.open;
+  const z = e.target.querySelector('summary .leise'); if (z) z.textContent = z.textContent.replace(/aufklappen|zuklappen/, produkteOffen ? 'zuklappen' : 'aufklappen');
+}, true);
 function odooAbschnitt(leitung){
   const a = ODOO.abgleich, e = a?.ergebnis;
   const liste = ODOO.produkte.filter(p => !produkteNurBestand || (p.bestand ?? 0) > 0);
@@ -2910,13 +2924,13 @@ function odooAbschnitt(leitung){
         Besuche, Proben, Notizen –, geht sofort ins Odoo-CRM. Umgekehrt holt sich die App alle 10 Minuten neue Leads und Phasen aus Odoo
         (Lieferanten und Dienstleister bleiben draußen). Die Spalte „Odoo-Benutzer“ oben ordnet zu, wer in Odoo welche Leads hat;
         Botschafter ohne Odoo-Zugang stehen in Odoo als Stichwort „Botschafter: Name“.</div></div>
-    <h3>Produkte aus Odoo <span class="leise" style="font-weight:400;font-size:13px">${liste.length} von ${ODOO.produkte.length}</span></h3>
+    <details class="klappe" id="produkte-klappe" ${produkteOffen ? 'open' : ''}><summary><h3>Produkte aus Odoo <span class="leise" style="font-weight:400;font-size:13px">${liste.length} von ${ODOO.produkte.length} · ${produkteOffen ? 'zuklappen' : 'aufklappen'}</span></h3></summary>
     <label class="schalter" style="margin-bottom:8px"><input type="checkbox" id="nur-bestand" ${produkteNurBestand ? 'checked' : ''}> Nur Produkte mit freiem Bestand</label>
     ${ODOO.produkte.length ? `<div style="overflow-x:auto"><table class="produkte"><tr><th>Produkt</th><th>Art.-Nr.</th><th class="zahl">Preis</th><th class="zahl">Frei im Lager</th></tr>
       ${liste.map(p => `<tr class="${(p.bestand ?? 0) > 0 ? '' : 'leer-bestand'}"><td>${esc(p.name)}</td><td>${esc(p.code)}</td>
         <td class="zahl">${euro(p.preis)}</td><td class="zahl">${p.bestand == null ? '–' : Number(p.bestand).toLocaleString('de-DE')} ${p.bestand == null ? '' : esc(/^(einheit|unit)/i.test(p.einheit || '') ? 'Stk.' : p.einheit)}</td></tr>`).join('')}
-      </table></div><div class="hinweis" style="text-align:left">Bestellungen für Kunden direkt aus der App kommen in einem der nächsten Schritte – sie landen dann als Angebot in Odoo.</div>`
-      : '<div class="leer">Die Produkte erscheinen nach dem ersten Abgleich mit Odoo.</div>'}`;
+      </table></div><div class="hinweis" style="text-align:left">Bestellen für Kunden: am Ort auf „Bestellung aufgeben“ – sie landet als Angebot in Odoo.</div>`
+      : '<div class="leer">Die Produkte erscheinen nach dem ersten Abgleich mit Odoo.</div>'}</details>`;
 }
 // App → Odoo: nach dem Speichern kurz sammeln und dann die Warteschlange abarbeiten lassen
 let odooSendenTimer = null;
@@ -3142,6 +3156,7 @@ function allesZeichnen(){
   if (ansicht === 'liste') listeZeichnen();
   if (ansicht === 'erinnerungen') erinnerungenZeichnen();
   if (ansicht === 'proben') probenZeichnen();
+  if (ansicht === 'provision') provisionZeichnen();
 }
 async function start(){
   document.getElementById('login').classList.add('versteckt');
