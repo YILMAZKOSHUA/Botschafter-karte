@@ -70,7 +70,7 @@ main{position:fixed;top:var(--oben,110px);left:0;right:0;bottom:0}
 .seite h3{color:var(--kakao);margin:22px 0 10px;font-size:16px}
 
 #modus{position:absolute;top:12px;left:50%;transform:translateX(-50%);background:var(--kakao);color:#fff;
-  padding:9px 14px;border-radius:999px;z-index:800;font-size:13px;box-shadow:var(--schatten);display:flex;gap:10px;align-items:center}
+  padding:9px 14px;border-radius:14px;z-index:800;font-size:13px;box-shadow:var(--schatten);display:flex;gap:10px;align-items:center}
 #modus button{background:transparent;border:1px solid rgba(255,255,255,.5);color:#fff;border-radius:999px;padding:3px 10px;font-size:12px}
 
 .legende{position:absolute;left:12px;bottom:20px;background:rgba(255,255,255,.95);border:1px solid var(--linie);
@@ -112,7 +112,7 @@ main{position:fixed;top:var(--oben,110px);left:0;right:0;bottom:0}
 .ds-inhalt li{margin-bottom:6px}
 .ds-inhalt a{color:var(--kakao)}
 #rundgang{position:fixed;inset:0;background:rgba(43,33,27,.45);z-index:2500;display:grid;place-items:center;padding:16px}
-.rg-karte{background:var(--papier);border-radius:18px;box-shadow:0 12px 40px rgba(0,0,0,.25);width:min(480px,100%);max-height:calc(100vh - 32px);overflow:auto;padding:18px 20px 16px}
+.rg-karte{background:var(--papier);border-radius:18px;box-shadow:0 12px 40px rgba(0,0,0,.25);width:min(480px,100%);max-height:calc(100vh - 32px);max-height:calc(100dvh - 32px);overflow:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;padding:18px 20px 16px}
 .rg-kopf{display:flex;justify-content:space-between;align-items:center;font-size:13px}
 .rg-zu{border:0;background:var(--creme);border-radius:50%;width:30px;height:30px;font-size:18px}
 .rg-karte h2{color:var(--kakao);font-size:20px;margin:6px 0 10px}
@@ -167,6 +167,7 @@ details.oi-zeile div.heute{color:var(--kakao);font-weight:600}
 .oi-zu{background:#fdecea;color:#8a2d22;border-radius:8px;padding:6px 10px;font-size:13px}
 body.neu-modus .karten-knoepfe{display:none}
 #modus{max-width:calc(100% - 24px)}
+#modus-text{min-width:0;overflow-wrap:break-word}
 .zeile{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .abschnitt{border-top:1px solid var(--linie);margin-top:14px;padding-top:12px}
 .abschnitt h4{margin:0 0 8px;font-size:14px;color:var(--kakao);display:flex;justify-content:space-between;align-items:center}
@@ -450,6 +451,8 @@ table.team th{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color
 .chat-eingabe{display:flex;gap:8px;align-items:flex-end;margin-top:8px}
 .chat-eingabe textarea{flex:1}
 .ort-link{padding:0;font-size:13px;text-align:left}
+.suche-los{display:none;border:0;background:var(--kakao);color:#fff;border-radius:8px;padding:5px 10px;font-size:13px;font-weight:600;margin-left:4px;flex:none}
+.suche-los.sichtbar{display:inline-block}
 .mail-zeile{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:6px;font-size:13px}
 
 /* Dokumente + Abgänge */
@@ -474,6 +477,10 @@ nav.tabs button{flex-shrink:0;white-space:nowrap}
   /* Ort-Fenster: ganzer Bildschirm, schließen mit × oben rechts */
   #panel{position:fixed;inset:0;top:0;width:100%;height:100%;border-radius:0;border-top:0;z-index:1600;padding-top:env(safe-area-inset-top)}
   body.panel-offen main{z-index:1700}
+  /* Fenster (Profil, Kundenprofil, Bestellung, Rundgang …): das ganze Fenster scrollt mit dem Finger, Knöpfe bleiben erreichbar */
+  #datenschutz,#rundgang,#bestell-dialog,#profil-dialog,#kp-dialog{display:block;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;
+    padding:12px 12px calc(24px + env(safe-area-inset-bottom))}
+  #datenschutz .rg-karte,#rundgang .rg-karte,#bestell-dialog .rg-karte,#profil-dialog .rg-karte,#kp-dialog .rg-karte{max-height:none;overflow:visible;margin:calc(8px + env(safe-area-inset-top)) auto 0}
   body.panel-offen header, body.panel-offen #leiste, body.panel-offen nav.tabs{visibility:hidden}
   #leiste select,.inline select,.feld select{height:auto;min-height:42px}
   /* iPhone vergrößert die Seite beim Tippen in Felder unter 16 px Schrift – deshalb 16 px */
@@ -568,7 +575,7 @@ table.modell td.treffer{background:var(--gold-hell);font-weight:700}
 </header>
 
 <div id="leiste">
-  <label class="suche-feld"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg><input type="search" id="suche" placeholder="Ort, Stadt oder Adresse suchen …" aria-label="Suchen"></label>
+  <label class="suche-feld"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg><input type="search" id="suche" placeholder="Ort, Stadt oder Adresse suchen …" aria-label="Suchen" enterkeyhint="search"><button type="button" id="suche-los" class="suche-los" aria-label="Suchen">Suchen</button></label>
   <div class="chips" id="status-chips"></div>
   <select id="f-betreuung"></select>
   <select id="f-art"></select>
@@ -1191,7 +1198,7 @@ async function googleKarte(key){
   const el = document.getElementById('karte');
   // mapId: 'DEMO_MAP_ID' reicht zum Testen; für die fertige App eigene Map-ID aus der Google Cloud Console
   const m = new Map(el, {center:{lat:51, lng:9.5}, zoom:6, mapId:'DEMO_MAP_ID', disableDefaultUI:true, zoomControl:true,
-    gestureHandling:'greedy', clickableIcons:false});   // Google-eigene Orte bewusst nicht anklickbar (Tageslimit schonen)
+    gestureHandling:'greedy', clickableIcons:true});   // beschriftete Google-Orte antippbar → eigene Ortskarte (Googles Infofenster wird unterdrückt)
   let orte = [], kand = {};
   const merc = lat => Math.log(Math.tan(Math.PI / 4 + lat * Math.PI / 360));
   const punkt = kl => { const d = document.createElement('div'); d.className = 'gpunkt ' + kl; return d; };
@@ -1227,7 +1234,7 @@ async function googleKarte(key){
     },
     kandidatWeg(id){ if (kand[id]) { kand[id].map = null; delete kand[id]; } },
     zentrieren(lat, lng, minZoom){ m.setCenter({lat, lng}); if (m.getZoom() < minZoom) m.setZoom(minZoom); },
-    onClick:cb => m.addListener('click', e => cb(e.latLng.lat(), e.latLng.lng())),
+    onClick:cb => m.addListener('click', e => { if (e.placeId) e.stop?.(); cb(e.latLng.lat(), e.latLng.lng(), e.placeId || null); }),
     panTo(lat, lng, zx, zy){
       const b = adapter.bounds(); if (!b) return;
       const W = el.clientWidth, H = el.clientHeight;
@@ -1325,14 +1332,17 @@ document.getElementById('f-betreuung').onchange = e => { F.betreuung = e.target.
 document.getElementById('f-art').onchange = e => { F.art = e.target.value; allesZeichnen(); };
 document.getElementById('f-meine').onclick = () => { F.meine = !F.meine; allesZeichnen(); };
 document.getElementById('f-ohne').onclick = () => { F.ohnePunkt = !F.ohnePunkt; if (F.ohnePunkt && ansicht === 'karte') ansichtWechseln('liste'); allesZeichnen(); };
-document.getElementById('suche').addEventListener('input', e => { F.text = e.target.value; markerZeichnen(); if (ansicht === 'liste') listeZeichnen(); });
+document.getElementById('suche').addEventListener('input', e => { F.text = e.target.value; markerZeichnen(); if (ansicht === 'liste') listeZeichnen();
+  document.getElementById('suche-los').classList.toggle('sichtbar', !!e.target.value.trim()); });
+document.getElementById('suche-los').addEventListener('click', e => { e.preventDefault();
+  const s = document.getElementById('suche'); s.dispatchEvent(new KeyboardEvent('keydown', {key:'Enter', bubbles:true})); s.blur(); });
 document.getElementById('suche').addEventListener('keydown', async e => {
   if (e.key !== 'Enter') return;
   const q = e.target.value.trim(); if (!q) return;
   const treffer = platzierenFuer ? [] : sichtbareCafes();
   if (treffer.length) {
     if (ansicht !== 'karte') ansichtWechseln('karte');
-    if (treffer.length === 1) { F.text = ''; e.target.value = ''; allesZeichnen(); if (hatPunkt(treffer[0])) K.zentrieren(treffer[0].lat, treffer[0].lng, 15); return cafeOeffnen(treffer[0].id); }
+    if (treffer.length === 1) { F.text = ''; e.target.value = ''; document.getElementById('suche-los').classList.remove('sichtbar'); allesZeichnen(); if (hatPunkt(treffer[0])) K.zentrieren(treffer[0].lat, treffer[0].lng, 15); return cafeOeffnen(treffer[0].id); }
     const mitPunkt = treffer.filter(hatPunkt);
     if (mitPunkt.length) K.fitPoints(mitPunkt.map(c => [c.lat, c.lng]), 15);
     if (mitPunkt.length < treffer.length) toast(`${treffer.length - mitPunkt.length} Treffer ohne Kartenpunkt – sie stehen in der Liste.`);
@@ -1342,7 +1352,7 @@ document.getElementById('suche').addEventListener('keydown', async e => {
   if (K.art === 'google') {
     ansichtWechseln('karte');
     const n = await googleSuche(q, false);
-    if (n) { F.text = ''; e.target.value = ''; allesZeichnen(); }
+    if (n) { F.text = ''; e.target.value = ''; document.getElementById('suche-los').classList.remove('sichtbar'); allesZeichnen(); }
     return;
   }
   // Ohne Google: Ort/Adresse über OpenStreetMap suchen
@@ -2806,10 +2816,22 @@ function modusZeigen(text, ohneKnopf){
   document.body.classList.add('neu-modus'); document.getElementById('modus').classList.remove('versteckt');
 }
 function modusEnde(){ neuModus = false; platzierenFuer = null; document.body.classList.remove('neu-modus'); document.getElementById('modus').classList.add('versteckt'); }
-document.getElementById('neu-knopf').onclick = () => { platzierenFuer = null; neuModus = true; modusZeigen('Tippe auf die Karte, wo der neue Ort liegt – oder such ihn oben', true); };
+document.getElementById('neu-knopf').onclick = () => { platzierenFuer = null; neuModus = true; modusZeigen(K && K.art === 'google' ? 'Tippe auf einen Ort auf der Karte (z.B. ein Café mit Namen) oder auf eine freie Stelle – oder such ihn oben' : 'Tippe auf die Karte, wo der neue Ort liegt – oder such ihn oben', true); };
 document.getElementById('modus-ende').onclick = modusEnde;
 document.getElementById('modus-ohne').onclick = () => { modusEnde(); cafeAnlegen(null, null); toast('Ort ohne Kartenpunkt angelegt – den Punkt kannst du jederzeit nachtragen.'); };
-function kartenKlick(lat, lng){ if (platzierenFuer) return punktSetzen(platzierenFuer, lat, lng); if (neuModus) cafeAnlegen(lat, lng); }
+function kartenKlick(lat, lng, placeId){
+  if (platzierenFuer) return punktSetzen(platzierenFuer, lat, lng);
+  // Beschrifteter Ort von Google angetippt (z.B. „Bio Supermarkt Wunstorf“) → schon bei uns? öffnen : Ortskarte mit „Als potenziell auf die Karte“
+  if (placeId) {
+    const eigen = D.cafes.find(c => c.google === placeId);
+    if (neuModus) modusEnde();
+    if (eigen) return cafeOeffnen(eigen.id);
+    const id = 'g:' + placeId;
+    if (!KAND.has(id)) KAND.set(id, {id, google:placeId, eigen:null, name:'', lat, lng, adresse:'', info:''});
+    return ortKarteOeffnen(id);
+  }
+  if (neuModus) cafeAnlegen(lat, lng);
+}
 
 // Kartenpunkt für einen vorhandenen Ort setzen (per Tippen auf die Karte oder über einen Suchtreffer)
 function platzierenStarten(c){
