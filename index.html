@@ -421,6 +421,7 @@ table.team th{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color
 .pf-bild{width:84px;height:84px;border-radius:50%;background:var(--creme) center/cover no-repeat;display:grid;place-items:center;font-size:26px;color:var(--kakao);flex:none;border:2px solid #fff;box-shadow:0 0 0 1px var(--linie)}
 #ich-avatar{cursor:pointer;background-size:cover;background-position:center}
 .willkommen-status{font-size:13px;color:var(--leise);margin-top:8px}
+.mail-zeile{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:6px;font-size:13px}
 
 /* Dokumente + Abgänge */
 .dok-zeile{align-items:center}
@@ -452,11 +453,14 @@ table.team th{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color
 .prov-zahlen b{font-size:17px}
 .prov-zahlen .gold{background:var(--gold-hell);border-color:#e6d49a}
 .prov-person{margin:12px 0 4px}
+.prov-zahlen.drei{grid-template-columns:repeat(3,1fr)}
+.prov-zahlen.drei b{font-size:22px}
+.rueck.gold{background:var(--gold-hell);border-color:#e6d49a;color:var(--kakao)}
 .prov-zahlen b small,.prov-zahlen div>small:last-child:not(:first-child){display:block;font-size:12px;color:var(--leise);font-weight:400}
 table.modell th.gruppe,table.modell td.gruppe{border-left:1px solid var(--linie)}
 table.modell td.treffer{background:var(--gold-hell);font-weight:700}
 .produkte .rueck{white-space:nowrap}
-@media (max-width:620px){ .prov-zahlen{grid-template-columns:1fr 1fr} .nur-breit{display:none} }
+@media (max-width:620px){ .prov-zahlen{grid-template-columns:1fr 1fr} .prov-zahlen.drei{grid-template-columns:1fr} .nur-breit{display:none} }
 </style>
 </head>
 <body>
@@ -805,7 +809,7 @@ async function datenLaden(){
     kontakt:x.kontakt, naechsterKontakt:x.naechster_kontakt || '', notiz:x.notiz,
     google:x.google || '', osm:x.osm || '', erstelltVon:x.erstellt_von || '',
     odooLead:x.odoo_lead || null, odooPhase:x.odoo_phase || '', odooDaten:x.odoo_daten || null,
-    willkommenGesendet:x.willkommen_gesendet || '', willkommenInfo:x.willkommen_info || '', kundenpflege:x.kundenpflege !== false,
+    willkommenGesendet:x.willkommen_gesendet || '', begruessungGesendet:x.begruessung_gesendet || '', willkommenInfo:x.willkommen_info || '', kundenpflege:x.kundenpflege !== false,
     besuche:(bNach[x.id] || []).map(y => ({id:y.id, datum:y.datum, person:y.person || '', notiz:y.notiz})),
     proben:(pNach[x.id] || []).map(y => ({id:y.id, datum:y.datum, sorte:y.sorte, menge:y.menge, anzahl:y.anzahl || 1, bestellung:y.bestellung, person:y.person || ''}))}));
   if (e.data) D.einstellungen = {arten:e.data.arten, sorten:e.data.sorten, wochen:e.data.wochen};
@@ -1505,10 +1509,26 @@ const prozent = n => Number(n).toLocaleString('de-DE') + ' %';
 let UMSAETZE = [], PROV_NOTIZ = false, provMonat = heute().slice(0, 7), RECHNER = {kg:10, phase:'erst', art:'geld'};
 const ZAHLUNG = {bezahlt:'<span class="rueck ja">bezahlt</span>', offen:'<span class="rueck offen">Rechnung offen</span>',
   'ohne Rechnung':'<span class="rueck offen">noch keine Rechnung</span>'};
+let PSTATUS = {};   // odoo_id → {status:'genehmigt'|'bezahlt', geld, kg, …}
 async function umsaetzeLaden(){
   if (DEMO || !sb) return;
-  const {data, error} = await sb.from('odoo_umsaetze').select('*').order('datum', {ascending:false});
-  UMSAETZE = error ? [] : data;
+  const [u, st] = await Promise.all([sb.from('odoo_umsaetze').select('*').order('datum', {ascending:false}), sb.from('provision_status').select('*')]);
+  UMSAETZE = u.error ? [] : u.data;
+  PSTATUS = st.error ? {} : Object.fromEntries(st.data.map(x => [x.odoo_id, x]));
+}
+// Stufe einer Provision: ausstehend (Kunde zahlt noch / bereit zur Freigabe) → genehmigt → bezahlt
+const hatProvision = u => Number(u.provision_geld) > 0 || Number(u.provision_kg) > 0;
+function provStufe(u){
+  const st = PSTATUS[u.odoo_id];
+  if (st) return {stufe:st.status, geld:Number(st.geld), kg:Number(st.kg), st};
+  return {stufe:'ausstehend', bereit:u.zahlung === 'bezahlt', geld:Number(u.provision_geld), kg:Number(u.provision_kg)};
+}
+const STUFE_TEXT = {ausstehend:'Ausstehend', genehmigt:'Genehmigt', bezahlt:'Bezahlt'};
+function stufeHtml(u){
+  const s = provStufe(u);
+  if (s.stufe === 'bezahlt') return `<span class="rueck ja">ausgezahlt ${s.st.ausgezahlt_am ? datumDe(s.st.ausgezahlt_am) : ''}</span>`;
+  if (s.stufe === 'genehmigt') return '<span class="rueck gold">genehmigt</span>';
+  return s.bereit ? '<span class="rueck offen">wartet auf Freigabe</span>' : '<span class="rueck offen">Kunde zahlt noch</span>';
 }
 // Demo: Beispiel-Aufträge für die Kunden aus den Demo-Daten, nach dem Modell gerechnet
 function demoUmsaetze(){
@@ -1536,6 +1556,53 @@ function turbo(teil){
   const stufe = [...MODELL.turbo].reverse().find(([ab]) => basis >= ab);
   return {basis, plus:stufe ? stufe[1] : 0, bonus:stufe ? r2(basis * stufe[1] / 100) : 0, naechste:MODELL.turbo.find(([ab]) => basis < ab)};
 }
+function provSummen(liste){
+  const z = {ausstehend:{geld:0, kg:0, wartet:0}, genehmigt:{geld:0, kg:0}, bezahlt:{geld:0, kg:0}};
+  liste.filter(hatProvision).forEach(u => { const s = provStufe(u); z[s.stufe].geld += s.geld; z[s.stufe].kg += s.kg;
+    if (s.stufe === 'ausstehend' && !s.bereit) z.ausstehend.wartet += s.geld + s.kg * MODELL.marktwertKg; });
+  return z;
+}
+function provUebersicht(leitung){
+  const alle = UMSAETZE.filter(u => !DEMO || leitung || u.betreuung === ich.id), z = provSummen(alle);
+  const kasten = (titel, w, unter = '') => `<div><small>${titel}</small><b>${provText(r2(w.geld), r2(w.kg))}</b>${unter}</div>`;
+  const personen = [...new Set(alle.filter(hatProvision).map(u => u.betreuung))];
+  return `<h3>Provisionsübersicht</h3>
+    <div class="prov-zahlen drei">
+      ${kasten('Ausstehend', z.ausstehend, z.ausstehend.wartet ? `<small>davon ≈ ${euro(z.ausstehend.wartet)} warten noch auf die Zahlung des Kunden</small>` : '')}
+      ${kasten('Genehmigt', z.genehmigt, '<small>freigegeben, wird ausgezahlt</small>')}
+      ${kasten('Bezahlt', z.bezahlt, '<small>schon ausgezahlt</small>')}
+    </div>
+    <p class="leise" style="font-size:13px;margin:4px 0 0"><b>Ausstehend</b> = aus bestätigten Aufträgen; sobald der Kunde bezahlt hat, gibt die Teamleitung sie frei.
+      <b>Genehmigt</b> = freigegeben, der Betrag steht fest. <b>Bezahlt</b> = ausgezahlt.</p>
+    ${leitung && personen.length ? `<div style="overflow-x:auto;margin-top:10px"><table class="produkte"><tr><th>Botschafter</th><th>Modell</th><th class="zahl">Ausstehend</th><th class="zahl">Genehmigt</th><th class="zahl">Bezahlt</th><th></th></tr>
+      ${personen.map(p => { const teil = alle.filter(u => u.betreuung === p), zz = provSummen(teil);
+        const bereit = teil.filter(u => hatProvision(u) && provStufe(u).stufe === 'ausstehend' && provStufe(u).bereit).length;
+        const offen = teil.filter(u => provStufe(u).stufe === 'genehmigt').length;
+        return `<tr><td>${esc(person(p)?.name || '–')}</td><td>${(PROFILE[p]?.auszahlung || teil[0].auszahlung) === 'kakao' ? 'Kakao' : 'Geld'}</td>
+          <td class="zahl">${provText(r2(zz.ausstehend.geld), r2(zz.ausstehend.kg))}</td><td class="zahl">${provText(r2(zz.genehmigt.geld), r2(zz.genehmigt.kg))}</td>
+          <td class="zahl">${provText(r2(zz.bezahlt.geld), r2(zz.bezahlt.kg))}</td>
+          <td style="white-space:nowrap">${bereit ? `<button class="knopf klein" data-prov-freigeben="${p}">${bereit} freigeben</button>` : ''}
+            ${offen ? `<button class="knopf gold klein" data-prov-auszahlen="${p}">Auszahlung erledigt</button>` : ''}</td></tr>`; }).join('')}
+    </table></div>` : ''}`;
+}
+function provAktionHtml(u){
+  if (!hatProvision(u)) return '';
+  const s = provStufe(u);
+  if (s.stufe === 'ausstehend') return s.bereit ? `<button class="link-knopf" data-prov-genehmigen="${u.odoo_id}">freigeben</button>` : '';
+  if (s.stufe === 'genehmigt') return `<button class="link-knopf" data-prov-zurueck="${u.odoo_id}">zurücknehmen</button>`;
+  return `<button class="link-knopf" data-prov-zurueck="${u.odoo_id}">doch nicht ausgezahlt</button>`;
+}
+// Teamleitung: freigeben / Auszahlung erledigt / zurücknehmen (in der Demo nur hier im Browser)
+async function provStatusSchreiben(zeilen, loeschen = []){
+  if (!DEMO) {
+    if (zeilen.length) { const {error} = await sb.from('provision_status').upsert(zeilen); if (error) return fehlerZeigen('Das ließ sich nicht speichern:', error.message), false; }
+    if (loeschen.length) { const {error} = await sb.from('provision_status').delete().in('odoo_id', loeschen); if (error) return fehlerZeigen('Das ließ sich nicht speichern:', error.message), false; }
+  }
+  zeilen.forEach(z => PSTATUS[z.odoo_id] = {...PSTATUS[z.odoo_id], ...z}); loeschen.forEach(id => delete PSTATUS[id]);
+  return true;
+}
+const genehmigtZeile = u => ({odoo_id:u.odoo_id, status:'genehmigt', betreuung:u.betreuung, geld:Number(u.provision_geld), kg:Number(u.provision_kg),
+  genehmigt_am:new Date().toISOString(), genehmigt_von:ich.id, ausgezahlt_am:null, ausgezahlt_von:null});
 function provisionZeichnen(){ document.getElementById('provision-inhalt').innerHTML = provisionAbschnitt(istLeitung()); }
 function provisionAbschnitt(leitung){
   if (DEMO && !UMSAETZE.length) UMSAETZE = demoUmsaetze();
@@ -1550,7 +1617,7 @@ function provisionAbschnitt(leitung){
   const personKopf = teil => { const t = turbo(teil);
     return `<div class="prov-person"><b>${esc(person(teil[0].betreuung)?.name || 'ohne Botschafter')}</b> · ${teil[0].auszahlung === 'kakao' ? 'Kakao-Modell' : 'Geld-Modell'} ·
       Provision ${provText(provSumme(teil.filter(bezahlt), u => u.provision_geld), provSumme(teil.filter(bezahlt), u => u.provision_kg))}
-      ${t.bonus ? `<span class="leise"> · Turbo-Bonus (Vorschlag): +${euro(t.bonus)}</span>` : ''}</div>`; };
+      ${t.bonus && istLeitung() ? `<span class="leise"> · Turbo-Bonus (Vorschlag): +${euro(t.bonus)}</span>` : ''}</div>`; };
   // Rechner
   const R = RECHNER, st = stufeVon(R.kg), rabatt = R.kg >= 5 ? MODELL.rabatt[st] : 0, p = provisionModell(R.kg, R.phase, R.art);
   const kundeNetto = R.kg * MODELL.listenpreisKg * (1 - rabatt / 100);
@@ -1560,6 +1627,8 @@ function provisionAbschnitt(leitung){
     <div class="hinweis" style="text-align:left;margin:-4px 0 8px">Gerechnet nach dem Provisionsmodell <b>„Geld vs. Kakao“</b> (angepasste Sätze) – die Regeln legt
       das Team noch endgültig fest. Grundlage ist die Menge <b>Rohkakao</b> (Kakaomasse und Kakaodrops) je Bestellung × ${euro(MODELL.listenpreisKg)} pro kg
       (Listenpreis der 1-kg-Packung, netto). Die Provision zählt, sobald die Rechnung bezahlt ist.</div>
+    ${provUebersicht(leitung)}
+    <h3 style="margin-top:20px">Aufträge nach Monat</h3>
     <div class="inline monat-wahl">
       <button class="knopf leise klein" data-prov-monat="-1" aria-label="Monat davor">‹</button>
       <b class="monat-name">${monatName(provMonat)}</b>
@@ -1569,16 +1638,17 @@ function provisionAbschnitt(leitung){
     <div class="prov-zahlen">
       <div><small>Rohkakao bestellt</small><b>${kgText(provSumme(liste, u => u.kakao_kg))}</b></div>
       <div><small>Umsatz netto</small><b>${euro(provSumme(liste, u => u.netto))}</b></div>
-      <div class="gold"><small>Provision (bezahlt)</small><b>${provText(provSumme(liste.filter(bezahlt), u => u.provision_geld), provSumme(liste.filter(bezahlt), u => u.provision_kg))}</b></div>
-      <div><small>kommt dazu, sobald bezahlt</small><b>${provText(provSumme(liste.filter(u => !bezahlt(u)), u => u.provision_geld), provSumme(liste.filter(u => !bezahlt(u)), u => u.provision_kg))}</b></div>
+      <div class="gold"><small>Provision aus diesem Monat</small><b>${provText(provSumme(liste, u => provStufe(u).geld), provSumme(liste, u => provStufe(u).kg))}</b></div>
+      <div><small>davon Kunde hat bezahlt</small><b>${provText(provSumme(liste.filter(bezahlt), u => provStufe(u).geld), provSumme(liste.filter(bezahlt), u => provStufe(u).kg))}</b></div>
     </div>
     ${!liste.length ? `<div class="leer">In diesem Monat gibt es noch keine bestätigten Aufträge${leitung ? '' : ' deiner Kunden'}.</div>`
       : personen.map(pp => { const teil = liste.filter(u => u.betreuung === pp); return personKopf(teil) + kundenTabelle(teil); }).join('')}
     ${liste.length ? `<details class="so-gehts" style="margin-top:8px"><summary>Aufträge im Einzelnen</summary>
-      <div style="overflow-x:auto"><table class="produkte"><tr><th>Datum</th><th>Auftrag</th><th>Kunde</th>${leitung ? '<th>Botschafter</th>' : ''}<th>Art</th><th class="zahl">Kakao</th><th class="zahl">Satz</th><th class="zahl">Provision</th><th>Zahlung</th></tr>
+      <div style="overflow-x:auto"><table class="produkte"><tr><th>Datum</th><th>Auftrag</th><th>Kunde</th>${leitung ? '<th>Botschafter</th>' : ''}<th>Art</th><th class="zahl">Kakao</th><th class="zahl">Satz</th><th class="zahl">Provision</th><th>Kunde</th><th>Provision</th>${leitung ? '<th></th>' : ''}</tr>
         ${liste.map(u => `<tr><td>${datumDe(u.datum)}</td><td>${esc(u.name)}</td><td>${esc(provKunde(u.ort_id))}</td>${leitung ? `<td>${esc(person(u.betreuung)?.name || '–')}</td>` : ''}
           <td>${esc(PHASEN[u.phase] || '–')}</td><td class="zahl">${kgText(u.kakao_kg)}</td><td class="zahl">${u.provision_satz ? prozent(u.provision_satz) : '–'}</td>
-          <td class="zahl">${provText(u.provision_geld, u.provision_kg)}</td><td>${ZAHLUNG[u.zahlung] || esc(u.zahlung)}</td></tr>`).join('')}
+          <td class="zahl">${provText(provStufe(u).geld, provStufe(u).kg)}</td><td>${ZAHLUNG[u.zahlung] || esc(u.zahlung)}</td><td>${hatProvision(u) ? stufeHtml(u) : '–'}</td>
+          ${leitung ? `<td>${provAktionHtml(u)}</td>` : ''}</tr>`).join('')}
       </table></div></details>` : ''}
 
     <h3 style="margin-top:22px">Das Provisionsmodell</h3>
@@ -1607,14 +1677,14 @@ function provisionAbschnitt(leitung){
       ${R.kg < 5 ? '<div class="hinweis" style="text-align:left">Unter 5 kg ist im Modell noch offen – gerechnet wie ab 5 kg, ohne Rabatt.</div>' : ''}
     </div>
 
-    <details class="so-gehts" style="margin-top:12px"><summary>Zusätzliche Hebel (Vorschläge, noch nicht entschieden)</summary>
+    ${leitung ? `<details class="so-gehts" style="margin-top:12px"><summary>Zusätzliche Hebel (Vorschläge, noch nicht entschieden · nur für die Teamleitung sichtbar)</summary>
       <ol>
         <li><b>Neukunden-Fixbonus:</b> einmalig z.B. 50–75 € beim ersten erfolgreichen B2B-Abschluss – unabhängig von der Menge.</li>
         <li><b>Turbo-Bonus (A, pro Botschafter):</b> auf den Netto-Monatsumsatz aus Bestellungen bis 39 kg –
           ${MODELL.turbo.map(([ab, plus]) => `ab ${euro(ab)} +${plus} %`).join(', ')} (auf den ganzen Betrag). In der Übersicht oben als „Turbo-Bonus (Vorschlag)“ mitgerechnet.</li>
         <li><b>Team-Bonus (B):</b> Team-Monatsumsatz ${MODELL.team.map(([ab, b]) => `ab ${euro(ab)} → ${euro(b)}`).join(', ')} je Botschafter.</li>
         <li><b>DB1-Untergrenze:</b> mindestens ca. 4 € pro kg für die Firma – Bestellungen ab 40 kg zählen deshalb nicht für den Turbo-Bonus.</li>
-      </ol></details>
+      </ol></details>` : ''}
     <details class="so-gehts"><summary>Versandkosten beim Kakao-Modell</summary>
       <p class="leise" style="margin:6px 0">Wer die Provision als Kakao nimmt, trägt Versand bzw. Abholung selbst (DHL national, inkl. MwSt.):</p>
       <table class="produkte">${MODELL.versand.map(([g, pr]) => `<tr><td>${g}</td><td class="zahl">${euro(pr)}</td></tr>`).join('')}</table></details>
@@ -1638,9 +1708,32 @@ document.getElementById('seite-provision').addEventListener('change', async e =>
   PROV_NOTIZ = an; toast(an ? 'Provisions-Notizen in Odoo: eingeschaltet ✓' : 'Provisions-Notizen in Odoo: ausgeschaltet');
 });
 document.getElementById('seite-provision').addEventListener('click', async e => {
-  const b = e.target.closest('[data-prov-monat],[data-prov-excel]'); if (!b) return;
+  const b = e.target.closest('[data-prov-monat],[data-prov-excel],[data-prov-genehmigen],[data-prov-zurueck],[data-prov-freigeben],[data-prov-auszahlen]'); if (!b) return;
   if (b.dataset.provMonat) { provMonat = monatPlus(provMonat, +b.dataset.provMonat); return provisionZeichnen(); }
   if ('provExcel' in b.dataset) return provisionExcel();
+  if (!istLeitung()) return;
+  const y = window.scrollY, fertig = t => { toast(t); provisionZeichnen(); window.scrollTo(0, y); };
+  if (b.dataset.provGenehmigen) {
+    const u = UMSAETZE.find(x => x.odoo_id === +b.dataset.provGenehmigen); if (!u) return;
+    if (await provStatusSchreiben([genehmigtZeile(u)])) fertig(`${u.name}: Provision freigegeben ✓`);
+  }
+  if (b.dataset.provFreigeben) {
+    const liste = UMSAETZE.filter(u => u.betreuung === b.dataset.provFreigeben && hatProvision(u) && provStufe(u).stufe === 'ausstehend' && provStufe(u).bereit);
+    if (!confirm(`${liste.length} Provision(en) von ${person(b.dataset.provFreigeben)?.name || ''} freigeben? Die Beträge stehen danach fest.`)) return;
+    if (await provStatusSchreiben(liste.map(genehmigtZeile))) fertig(`${liste.length} Provision(en) freigegeben ✓`);
+  }
+  if (b.dataset.provAuszahlen) {
+    const liste = UMSAETZE.filter(u => u.betreuung === b.dataset.provAuszahlen && provStufe(u).stufe === 'genehmigt');
+    const z = provSummen(liste).genehmigt;
+    if (!confirm(`Auszahlung an ${person(b.dataset.provAuszahlen)?.name || ''} erledigt?\n${provText(r2(z.geld), r2(z.kg)).replace(/<[^>]+>/g, '')} – ${liste.length} Auftrag/Aufträge werden als „bezahlt“ markiert (heute).`)) return;
+    const zeilen = liste.map(u => ({...PSTATUS[u.odoo_id], odoo_id:u.odoo_id, status:'bezahlt', ausgezahlt_am:heute(), ausgezahlt_von:ich.id}));
+    if (await provStatusSchreiben(zeilen)) fertig('Als ausgezahlt markiert ✓');
+  }
+  if (b.dataset.provZurueck) {
+    const id = +b.dataset.provZurueck, st = PSTATUS[id]; if (!st) return;
+    if (st.status === 'bezahlt') { if (await provStatusSchreiben([{...st, status:'genehmigt', ausgezahlt_am:null, ausgezahlt_von:null}])) fertig('Wieder auf „genehmigt“ gesetzt.'); }
+    else if (confirm('Freigabe zurücknehmen? Die Provision ist dann wieder „ausstehend“.') && await provStatusSchreiben([], [id])) fertig('Freigabe zurückgenommen.');
+  }
 });
 async function provisionExcel(){
   try {
@@ -1649,13 +1742,14 @@ async function provisionExcel(){
     const auftraege = liste.map(u => ({Datum:new Date(u.datum + 'T12:00'), Auftrag:u.name, Kunde:provKunde(u.ort_id),
       Botschafter:person(u.betreuung)?.name || '', Art:PHASEN[u.phase] || '', 'Rohkakao (kg)':Number(u.kakao_kg), 'Netto (€)':Number(u.netto),
       Modell:u.auszahlung === 'kakao' ? 'Kakao' : 'Geld', 'Satz (%)':Number(u.provision_satz), 'Provision (€)':Number(u.provision_geld),
-      'Provision (kg Kakao)':Number(u.provision_kg), Zahlung:u.zahlung}));
+      'Provision (kg Kakao)':Number(u.provision_kg), 'Zahlung Kunde':u.zahlung, 'Provision Stand':hatProvision(u) ? STUFE_TEXT[provStufe(u).stufe] : '',
+      'Ausgezahlt am':PSTATUS[u.odoo_id]?.ausgezahlt_am ? new Date(PSTATUS[u.odoo_id].ausgezahlt_am + 'T12:00') : ''}));
     const proPerson = [...new Set(liste.map(u => u.betreuung))].map(p => { const t = liste.filter(u => u.betreuung === p), b = t.filter(bezahlt), tb = turbo(t);
       return {Botschafter:person(p)?.name || '', Modell:t[0].auszahlung === 'kakao' ? 'Kakao' : 'Geld', Aufträge:t.length,
         'Rohkakao (kg)':r2(provSumme(t, u => u.kakao_kg)), 'Netto (€)':r2(provSumme(t, u => u.netto)),
         'Provision bezahlt (€)':r2(provSumme(b, u => u.provision_geld)), 'Provision bezahlt (kg Kakao)':r2(provSumme(b, u => u.provision_kg)),
-        'Turbo-Bonus Vorschlag (€)':tb.bonus}; });
-    [['Übersicht', proPerson, [20, 10, 10, 14, 12, 20, 24, 22]], ['Aufträge', auftraege, [12, 10, 26, 18, 28, 14, 12, 9, 9, 14, 18, 14]]].forEach(([titel, zeilen, breiten]) => {
+        ...(istLeitung() ? {'Turbo-Bonus Vorschlag (€)':tb.bonus} : {})}; });
+    [['Übersicht', proPerson, [20, 10, 10, 14, 12, 20, 24, 22]], ['Aufträge', auftraege, [12, 10, 26, 18, 28, 14, 12, 9, 9, 14, 18, 14, 16, 14]]].forEach(([titel, zeilen, breiten]) => {
       const ws = XLSX.utils.json_to_sheet(zeilen.length ? zeilen : [{'':'(keine Aufträge)'}], {cellDates:true, dateNF:'dd.mm.yyyy'});
       ws['!cols'] = breiten.map(w => ({wch:w})); XLSX.utils.book_append_sheet(mappe, ws, titel); });
     XLSX.writeFile(mappe, `provision-${provMonat}.xlsx`);
@@ -1759,14 +1853,33 @@ async function odooFehlertext(error){
   try { const j = await error.context?.json?.(); if (j?.fehler) text = j.fehler; } catch(e){}
   return text;
 }
-function willkommenStatusHtml(c){
-  if (c.status !== 'kunde' && !c.willkommenGesendet) return '';
-  const vorschau = !DEMO && (istLeitung() || c.betreuung === ich.id) ? ` <button class="link-knopf" data-akt="willkommen-vorschau">Flyer-Vorschau</button>` : '';
-  const text = c.willkommenGesendet ? `✉ Willkommensmail gesendet am ${datumDe(String(c.willkommenGesendet).slice(0, 10))}`
-    : c.willkommenInfo ? `✉ Willkommensmail noch nicht gesendet: ${esc(c.willkommenInfo)}`
-    : WILLKOMMEN.an ? '✉ Die Willkommensmail geht nach der ersten bestätigten Bestellung automatisch raus.'
-    : '✉ Willkommensmail: automatischer Versand ist noch ausgeschaltet.';
-  return `<div class="willkommen-status">${text}${vorschau}</div>`;
+// Zwei Mails an den Kunden – per Knopf, jederzeit erneut sendbar (Wunsch David, 16.10.2026)
+const MAILS = {begruessung:{titel:'Begrüßungsmail', zweck:'nach dem ersten Besuch – Danke fürs Kennenlernen', feld:'begruessungGesendet'},
+               willkommen:{titel:'Willkommen in der Familie', zweck:'nach der ersten Bestellung – mit persönlichem Willkommens-Flyer', feld:'willkommenGesendet'}};
+function mailKnoepfeHtml(c){
+  const darf = istLeitung() || c.betreuung === ich.id;
+  if (!darf || !c.betreuung) return '';
+  const zeile = art => { const m = MAILS[art], am = c[m.feld];
+    return `<div class="mail-zeile"><button class="knopf klein ${am ? 'leise' : ''}" data-akt="mail-${art}">✉ ${m.titel}${am ? ' erneut senden' : ' senden'}</button>
+      <span class="leise">${am ? `✓ gesendet am ${datumDe(String(am).slice(0, 10))}` : m.zweck}</span></div>`; };
+  return `<div class="mails"><h4 style="margin:14px 0 6px">Mails an den Kunden</h4>
+    ${c.email ? '' : '<div class="fehlt" style="margin-bottom:6px">Für die Mails fehlt noch die E-Mail-Adresse der Ansprechperson.</div>'}
+    ${zeile('begruessung')}${zeile('willkommen')}
+    ${!DEMO ? '<button class="link-knopf" data-akt="willkommen-vorschau" style="padding:0">Flyer-Vorschau ansehen</button>' : ''}</div>`;
+}
+async function mailSendenKnopf(c, art, knopf){
+  const m = MAILS[art], am = c[m.feld];
+  if (!c.email) return toast('Magst du zuerst die E-Mail-Adresse der Ansprechperson eintragen?');
+  const frage = am ? `„${m.titel}“ wurde am ${datumDe(String(am).slice(0, 10))} schon gesendet. Noch einmal an ${c.email} senden?`
+                   : `„${m.titel}“ jetzt an ${c.email} senden?`;
+  if (!confirm(frage)) return;
+  if (DEMO) { c[m.feld] = new Date().toISOString(); panelZeichnen(c); return toast(`Demo: „${m.titel}“ wäre jetzt an ${c.email} gegangen ✓`); }
+  knopf.disabled = true; knopf.textContent = 'Sendet …';
+  const {data, error} = await sb.functions.invoke('odoo-abgleich', {body:{aktion:'mail_senden', ort_id:c.id, art}});
+  const fehler = error ? await odooFehlertext(error) : data?.fehler;
+  if (fehler) { panelZeichnen(c); return fehlerZeigen(`„${m.titel}“ ließ sich nicht senden:`, fehler); }
+  c[m.feld] = data.gesendet; panelZeichnen(c);
+  toast(`„${m.titel}“ ist unterwegs zu ${c.email} ✓`);
 }
 async function willkommenVorschau(ortId){
   const fenster = window.open('', '_blank');
@@ -1780,36 +1893,23 @@ async function willkommenVorschau(ortId){
 function willkommenAbschnitt(){
   const orte = D.cafes.filter(c => c.betreuung).sort((a, b) => (a.status === 'kunde' ? 0 : 1) - (b.status === 'kunde' ? 0 : 1) || a.name.localeCompare(b.name, 'de'));
   const ohneProfil = D.team.filter(p => !profilFertig(p.id)).map(p => p.name);
-  const gesendet = D.cafes.filter(c => c.willkommenGesendet).sort((a, b) => String(b.willkommenGesendet).localeCompare(String(a.willkommenGesendet))).slice(0, 8);
-  const probleme = D.cafes.filter(c => !c.willkommenGesendet && c.willkommenInfo);
-  return `<h3 id="willkommen-bereich">Willkommensmail</h3>
-    <div class="hinweis" style="text-align:left;margin:-4px 0 8px">Nach der <b>ersten bestätigten Bestellung</b> eines Kunden schickt Odoo automatisch eine persönliche
-      Willkommensmail – im Namen des Botschafters, mit dem Willkommens-Flyer und den Dokumenten, die unter „Dokumente“ für die Willkommensmail markiert sind
-      (große Dateien als Link). Antworten gehen an die Mayamunay-Adresse aus dem Botschafter-Profil. Jeder Kunde bekommt sie nur einmal, und sie steht in Odoo am Kunden und am Lead.</div>
-    <label style="display:flex;align-items:flex-start;gap:8px;font-size:14px"><input type="checkbox" id="willkommen-an" style="flex:0 0 auto;margin-top:3px" ${WILLKOMMEN.an ? 'checked' : ''} ${DEMO ? 'disabled' : ''}>
-      <span><b>Automatischer Versand</b> ${WILLKOMMEN.an && WILLKOMMEN.ab ? `– eingeschaltet seit ${datumDe(String(WILLKOMMEN.ab).slice(0, 10))} (zählt Bestellungen ab dann)` : '– ausgeschaltet'}</span></label>
+  const zuletzt = D.cafes.flatMap(c => [['Begrüßung', c.begruessungGesendet], ['Willkommen', c.willkommenGesendet]].filter(x => x[1]).map(([a, d]) => ({c, a, d})))
+    .sort((x, y) => String(y.d).localeCompare(String(x.d))).slice(0, 8);
+  return `<h3 id="willkommen-bereich">Mails an Kunden</h3>
+    <div class="hinweis" style="text-align:left;margin:-4px 0 8px">Am Ort gibt es zwei Knöpfe: <b>Begrüßungsmail</b> (nach dem ersten Besuch – Danke fürs Kennenlernen)
+      und <b>Willkommen in der Familie</b> (nach der ersten Bestellung – mit persönlichem Willkommens-Flyer und den Dokumenten, die unter „Dokumente“ dafür markiert sind).
+      Odoo verschickt im Namen des Botschafters, Antworten gehen an die Mayamunay-Adresse aus dem Profil. Am Ort steht danach „gesendet am …“; erneut senden geht jederzeit.</div>
     ${ohneProfil.length ? `<div class="fehlt" style="margin-top:8px">Profil (Vorname + Mayamunay-Adresse) fehlt noch bei: ${ohneProfil.map(esc).join(', ')} – jede Person trägt es selbst über das runde Symbol oben rechts ein.</div>` : ''}
     <div class="neu-box" style="margin-top:10px"><b>Testlauf</b> <span class="leise" style="font-size:13px">(geht nur an die Testadresse, der Kunde bekommt nichts)</span>
       <div class="inline" style="margin-top:8px"><select id="wt-ort" style="min-width:180px">${orte.map(c => `<option value="${c.id}">${esc(c.name)} · ${esc(person(c.betreuung)?.name || '')}</option>`).join('')}</select>
+        <select id="wt-art"><option value="begruessung">Begrüßungsmail</option><option value="willkommen">Willkommen in der Familie</option></select>
         <input id="wt-an" type="email" placeholder="Testadresse" style="min-width:200px">
         <button class="knopf klein" data-wt="senden" ${DEMO ? 'disabled' : ''}>Testmail senden</button>
         <button class="knopf leise klein" data-wt="vorschau" ${DEMO ? 'disabled' : ''}>Flyer-Vorschau</button></div></div>
     <div class="inline" style="margin-top:10px;align-items:center;font-size:14px">Absender, wenn Odoo für die Adresse des Botschafters keinen eigenen Mailserver kennt:
       <input id="wt-absender" type="email" value="${esc(WILLKOMMEN.absender)}" style="min-width:200px" ${DEMO ? 'disabled' : ''}><button class="knopf leise klein" data-wt="absender" ${DEMO ? 'disabled' : ''}>Speichern</button></div>
-    ${probleme.length ? `<div class="fehlt" style="margin-top:8px"><b>Noch nicht gesendet:</b><br>${probleme.map(c => `${esc(c.name)} – ${esc(c.willkommenInfo)}`).join('<br>')}</div>` : ''}
-    ${gesendet.length ? `<div class="leise" style="margin-top:8px;font-size:13px"><b>Zuletzt gesendet:</b> ${gesendet.map(c => `${esc(c.name)} (${datumDe(String(c.willkommenGesendet).slice(0, 10))})`).join(' · ')}</div>` : ''}`;
+    ${zuletzt.length ? `<div class="leise" style="margin-top:8px;font-size:13px"><b>Zuletzt gesendet:</b> ${zuletzt.map(x => `${esc(x.c.name)} – ${x.a} (${datumDe(String(x.d).slice(0, 10))})`).join(' · ')}</div>` : ''}`;
 }
-document.getElementById('seite-einstellungen').addEventListener('change', async e => {
-  if (e.target.id !== 'willkommen-an' || !istLeitung() || DEMO) return;
-  const an = e.target.checked;
-  if (an && !confirm('Automatischen Versand einschalten? Ab jetzt bekommt jeder Kunde nach seiner ersten bestätigten Bestellung die Willkommensmail.')) { e.target.checked = false; return; }
-  const neu = an ? {willkommen_an:true, willkommen_ab:new Date().toISOString()} : {willkommen_an:false};
-  const {data, error} = await sb.from('konfig').update(neu).eq('id', 1).select('willkommen_an,willkommen_ab');
-  if (error || !data?.length) { e.target.checked = !an; return fehlerZeigen('Das ließ sich nicht speichern:', error?.message || 'keine Berechtigung'); }
-  WILLKOMMEN.an = data[0].willkommen_an; WILLKOMMEN.ab = data[0].willkommen_ab || '';
-  toast(an ? 'Willkommensmail: automatischer Versand eingeschaltet ✓' : 'Willkommensmail: ausgeschaltet'); einstellungenZeichnen();
-  setTimeout(() => document.getElementById('willkommen-bereich')?.scrollIntoView({block:'start'}), 30);
-});
 document.getElementById('seite-einstellungen').addEventListener('click', async e => {
   const a = e.target.closest('[data-wt]')?.dataset.wt; if (!a || !istLeitung() || DEMO) return;
   const ortId = document.getElementById('wt-ort')?.value;
@@ -1826,7 +1926,7 @@ document.getElementById('seite-einstellungen').addEventListener('click', async e
     if (!ortId) return toast('Magst du zuerst einen Ort wählen?');
     if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(an)) return toast('Magst du eine Testadresse eintragen?');
     const knopf = e.target.closest('[data-wt]'); knopf.disabled = true; knopf.textContent = 'Sendet …';
-    const {data, error} = await sb.functions.invoke('odoo-abgleich', {body:{aktion:'willkommen_test', ort_id:ortId, an}});
+    const {data, error} = await sb.functions.invoke('odoo-abgleich', {body:{aktion:'mail_senden', art:document.getElementById('wt-art').value, ort_id:ortId, an}});
     knopf.disabled = false; knopf.textContent = 'Testmail senden';
     const fehler = error ? await odooFehlertext(error) : data?.fehler;
     if (fehler) return fehlerZeigen('Die Testmail ließ sich nicht senden:', fehler);
@@ -2070,7 +2170,7 @@ function panelZeichnen(c){
       <h4>Bestellungen</h4>
       <div id="bestell-liste">${bestellListeHtml(c)}</div>
       <button class="knopf gold klein" data-akt="bestellen" style="margin-top:8px">🛒 Bestellung aufgeben</button>
-      ${willkommenStatusHtml(c)}
+      ${mailKnoepfeHtml(c)}
       ${c.status === 'kunde' && c.betreuung ? `<label style="display:flex;align-items:flex-start;gap:8px;font-size:13px;margin-top:8px"><input type="checkbox" data-f="kundenpflege" style="flex:0 0 auto;margin-top:2px" ${c.kundenpflege !== false ? 'checked' : ''} ${dis}>
         <span>Kunde wird aktiv betreut <span class="leise">(Folgeaufträge mit Kundenpflege – höhere Provision)</span></span></label>` : ''}
     </div>
@@ -2206,6 +2306,7 @@ panel.addEventListener('click', e => {
   }
   if (akt === 'bestellen') return bestellDialogOeffnen(c);
   if (akt === 'willkommen-vorschau') return willkommenVorschau(c.id);
+  if (akt === 'mail-begruessung' || akt === 'mail-willkommen') return mailSendenKnopf(c, akt.slice(5), b);
   if (akt === 'antrag') return antragStellen(c);
   if (akt === 'antrag-zurueck') return antragEntfernen(b.dataset.id, 'zurueckgezogen');
   if (akt === 'antrag-nein') return antragEntfernen(b.dataset.id, 'abgelehnt');
