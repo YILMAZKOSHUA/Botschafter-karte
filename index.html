@@ -417,6 +417,13 @@ table.team th{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color
 #bestell-dialog.versteckt{display:none!important}
 #profil-dialog{position:fixed;inset:0;background:rgba(43,33,27,.45);z-index:2550;display:grid;place-items:center;padding:16px}
 #profil-dialog.versteckt{display:none!important}
+#kp-dialog{position:fixed;inset:0;background:rgba(43,33,27,.45);z-index:2550;display:grid;place-items:center;padding:16px}
+#kp-dialog.versteckt{display:none!important}
+.kp-foto{width:100%;max-height:220px;object-fit:cover;border-radius:12px;display:block;margin:6px 0;background:var(--creme)}
+.kp-mini{display:flex;gap:10px;align-items:center}
+.kp-mini img{width:64px;height:64px;object-fit:cover;border-radius:10px;flex:none}
+.shop-karte{display:grid;grid-template-columns:96px 1fr;gap:12px;background:#fff;border:1px solid var(--linie);border-radius:12px;padding:10px;margin-bottom:8px}
+.shop-karte img,.shop-karte .leer-bild{width:96px;height:96px;object-fit:cover;border-radius:10px;background:var(--creme);display:grid;place-items:center;font-size:28px}
 .pf-foto{display:flex;gap:14px;align-items:center;margin:10px 0 14px}
 .pf-bild{width:84px;height:84px;border-radius:50%;background:var(--creme) center/cover no-repeat;display:grid;place-items:center;font-size:26px;color:var(--kakao);flex:none;border:2px solid #fff;box-shadow:0 0 0 1px var(--linie)}
 #ich-avatar{cursor:pointer;background-size:cover;background-position:center}
@@ -424,6 +431,24 @@ table.team th{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color
 .auftrag-chips{margin-top:4px;display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:12px}
 .auftrag-chips a{color:var(--kakao)}
 .rueck.storno{background:#f6e3e0;color:#8a2f22}
+.thema-zeile{cursor:pointer}
+.kat{display:inline-block;font-size:11px;border-radius:999px;padding:1px 8px;margin-right:4px;background:var(--creme);color:var(--kakao)}
+.kat-frage{background:#e8f0f6;color:#2c5a7a}.kat-event{background:#f3eadb;color:#8a5a1a}.kat-faq{background:var(--gold-hell);color:var(--kakao)}
+.kat-feedback{background:#eef4ea;color:#2f6a3d}
+.neu-punkt{font-size:11px;background:#c0392b;color:#fff;border-radius:999px;padding:1px 7px;margin-left:4px;vertical-align:middle}
+.thema-kopf{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:flex-start;margin-bottom:10px}
+.beitrag{display:flex;gap:10px;margin-bottom:10px}
+.beitrag-inhalt{flex:1;background:#fff;border:1px solid var(--linie);border-radius:12px;padding:8px 12px;font-size:14px}
+.beitrag.eigen .beitrag-inhalt{background:var(--gold-hell);border-color:#e6d49a}
+.beitrag-kopf{display:flex;gap:6px;align-items:center;font-size:13px;margin-bottom:3px}
+.beitrag-kopf .weg{margin-left:auto}
+.mini-avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#5a4337,#3b2a22);color:#f3e7c4;display:grid;place-items:center;font-size:12px;font-weight:700;flex:none}
+.chat-verlauf{display:flex;flex-direction:column;gap:6px;max-height:55vh;overflow:auto;padding:4px 2px 8px}
+.blase{max-width:80%;background:#fff;border:1px solid var(--linie);border-radius:14px 14px 14px 4px;padding:8px 12px;font-size:14px;align-self:flex-start}
+.blase.eigen{align-self:flex-end;background:var(--gold-hell);border-color:#e6d49a;border-radius:14px 14px 4px 14px}
+.blase-zeit{font-size:11px;color:var(--leise);margin-top:2px}
+.chat-eingabe{display:flex;gap:8px;align-items:flex-end;margin-top:8px}
+.chat-eingabe textarea{flex:1}
 .mail-zeile{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:6px;font-size:13px}
 
 /* Dokumente + Abgänge */
@@ -440,6 +465,10 @@ table.team th{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color
 .abgang-tag.erledigt{opacity:.75}
 .link-knopf{border:0;background:none;color:var(--kakao);text-decoration:underline;font-size:12px;padding:0 0 0 6px}
 @media (max-width:760px){ nav.tabs button span:not(.badge){font-size:10px} }
+/* Acht Reiter: auf mittelbreiten Bildschirmen enger, dazwischen nur Symbole (Name als Tooltip) */
+@media (min-width:761px) and (max-width:1280px){ nav.tabs button{padding:8px 9px;gap:6px;font-size:13px} }
+@media (min-width:761px) and (max-width:1060px){ nav.tabs button > span:last-child:not(.tab-sym){display:none} nav.tabs button{padding:9px 11px} }
+@media (max-width:420px){ nav.tabs button span:not(.badge){font-size:9px;letter-spacing:-.1px} nav.tabs{padding-left:2px;padding-right:2px} }
 .so-gehts{background:#fff;border:1px solid var(--linie);border-radius:12px;padding:8px 12px;margin:0 0 10px;font-size:14px}
 .so-gehts summary{cursor:pointer;font-weight:600;color:var(--kakao)}
 .so-gehts ol{margin:8px 0 6px;padding-left:20px}
@@ -510,6 +539,7 @@ table.modell td.treffer{background:var(--gold-hell);font-weight:700}
     <button data-view="erinnerungen"><span class="tab-sym"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 8-3 8h18s-3-1-3-8"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg><span class="badge" id="badge"></span></span><span>Erinnerungen</span></button>
     <button data-view="proben"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2.6C17.4 5 19.6 9.8 19 14.6c-.6 4.6-3.8 7.2-7 7.8-3.2-.6-6.4-3.2-7-7.8C4.4 9.8 6.6 5 12 2.6z"/><path d="M12 4.5v16M8.8 6c-1.6 4.2-1.4 10.4 1 14M15.2 6c1.6 4.2 1.4 10.4-1 14"/></svg><span>Proben</span></button>
     <button data-view="dokumente"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h6"/></svg><span>Dokumente</span></button>
+    <button data-view="austausch"><span class="tab-sym"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20.5l1.4-4.6A8 8 0 1 1 21 12z"/><path d="M8.5 11h7M8.5 14h4"/></svg><span class="badge" id="badge-austausch" style="display:none"></span></span><span>Austausch</span></button>
     <button data-view="provision"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5a4 4 0 1 0 0 7M7 10.5h6M7 13.5h6"/></svg><span>Provision</span></button>
     <button data-view="einstellungen" id="tab-einst"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8"/></svg><span>Team</span></button>
   </nav>
@@ -545,6 +575,7 @@ table.modell td.treffer{background:var(--gold-hell);font-weight:700}
   <section class="seite versteckt" id="seite-erinnerungen"><div class="seite-inhalt" id="erinnerungen-inhalt"></div></section>
   <section class="seite versteckt" id="seite-proben"><div class="seite-inhalt" id="proben-inhalt"></div></section>
   <section class="seite versteckt" id="seite-dokumente"><div class="seite-inhalt" id="dokumente-inhalt"></div></section>
+  <section class="seite versteckt" id="seite-austausch"><div class="seite-inhalt" id="austausch-inhalt"></div></section>
   <section class="seite versteckt" id="seite-provision"><div class="seite-inhalt" id="provision-inhalt"></div></section>
   <section class="seite versteckt" id="seite-einstellungen"><div class="seite-inhalt" id="einst-inhalt"></div></section>
 
@@ -552,6 +583,13 @@ table.modell td.treffer{background:var(--gold-hell);font-weight:700}
 </main>
 
 <div id="toast"></div>
+<div id="kp-dialog" class="versteckt" role="dialog" aria-modal="true" aria-labelledby="kp-titel">
+  <div class="rg-karte">
+    <div class="rg-kopf"><span class="leise">Kundenprofil</span><button class="rg-zu" data-kp="zu" aria-label="Schließen">×</button></div>
+    <h2 id="kp-titel"></h2>
+    <div id="kp-inhalt"></div>
+  </div>
+</div>
 <div id="profil-dialog" class="versteckt" role="dialog" aria-modal="true" aria-labelledby="pf-titel">
   <div class="rg-karte">
     <div class="rg-kopf"><span class="leise">Für deine Kunden</span><button class="rg-zu" data-pf="zu" aria-label="Schließen">×</button></div>
@@ -772,10 +810,11 @@ const ortZeile = c => ({id:c.id, name:c.name || '', adresse:c.adresse || '', sta
   lat:c.lat, lng:c.lng, status:c.status, betreuung:c.betreuung || null, art:c.art || [], zeremonie:!!c.zeremonie, event:!!c.event,
   ansprechperson:c.ansprechperson || '', vorname:c.vorname || '', nachname:c.nachname || '', telefon:c.telefon || '', email:c.email || '',
   kontakt:c.kontakt || '', naechster_kontakt:c.naechsterKontakt || null, notiz:c.notiz || '',
-  google:c.google || null, osm:c.osm || null, erstellt_von:c.erstelltVon || null, kundenpflege:c.kundenpflege !== false});
+  google:c.google || null, osm:c.osm || null, erstellt_von:c.erstelltVon || null, kundenpflege:c.kundenpflege !== false,
+  verkaufsstelle:!!c.verkaufsstelle, shop_text:c.shopText || '', shop_foto:c.shopFoto || ''});
 const besuchZeile = (b, ortId) => ({id:b.id, ort_id:ortId, datum:b.datum, person:b.person || null, notiz:b.notiz});
 const probeZeile = (p, ortId) => ({id:p.id, ort_id:ortId, datum:p.datum, sorte:p.sorte, menge:p.menge || '', anzahl:Math.max(1, +p.anzahl || 1), bestellung:p.bestellung, person:p.person || null});
-const ausgabeZeile = a => ({id:a.id, person:a.person || null, datum:a.datum, sorte:a.sorte, anzahl:Math.max(1, +a.anzahl || 1), notiz:a.notiz || '', erfasst_von:a.erfasstVon || null});
+const ausgabeZeile = a => ({id:a.id, person:a.person || null, datum:a.datum, sorte:a.sorte, menge:a.menge || '', anzahl:Math.max(1, +a.anzahl || 1), notiz:a.notiz || '', erfasst_von:a.erfasstVon || null});
 const teamZeile = p => ({id:p.id, email:(p.email || '').trim(), name:p.name, rolle:p.rolle, region:p.region || '', odoo_nutzer:p.odooNutzer || null});
 const einstZeile = () => ({arten:D.einstellungen.arten, sorten:D.einstellungen.sorten, wochen:D.einstellungen.wochen});
 
@@ -813,6 +852,7 @@ async function datenLaden(){
     google:x.google || '', osm:x.osm || '', erstelltVon:x.erstellt_von || '',
     odooLead:x.odoo_lead || null, odooPhase:x.odoo_phase || '', odooDaten:x.odoo_daten || null,
     willkommenGesendet:x.willkommen_gesendet || '', begruessungGesendet:x.begruessung_gesendet || '', willkommenInfo:x.willkommen_info || '', kundenpflege:x.kundenpflege !== false,
+    verkaufsstelle:!!x.verkaufsstelle, shopText:x.shop_text || '', shopFoto:x.shop_foto || '',
     besuche:(bNach[x.id] || []).map(y => ({id:y.id, datum:y.datum, person:y.person || '', notiz:y.notiz})),
     proben:(pNach[x.id] || []).map(y => ({id:y.id, datum:y.datum, sorte:y.sorte, menge:y.menge, anzahl:y.anzahl || 1, bestellung:y.bestellung, person:y.person || ''}))}));
   if (e.data) D.einstellungen = {arten:e.data.arten, sorten:e.data.sorten, wochen:e.data.wochen};
@@ -821,7 +861,7 @@ async function datenLaden(){
   WILLKOMMEN = {an:!!k.data?.willkommen_an, ab:k.data?.willkommen_ab || '', absender:k.data?.mail_absender || 'info@mayamunay.com'};
   // Erhaltene Proben (Tabelle fehlt, solange schema.sql noch nicht neu ausgeführt ist)
   const au = await sb.from('proben_ausgabe').select('*').order('datum');
-  D.ausgaben = au.error ? [] : au.data.map(x => ({id:x.id, person:x.person || '', datum:x.datum, sorte:x.sorte, anzahl:x.anzahl, notiz:x.notiz, erfasstVon:x.erfasst_von || ''}));
+  D.ausgaben = au.error ? [] : au.data.map(x => ({id:x.id, person:x.person || '', datum:x.datum, sorte:x.sorte, menge:x.menge || '', anzahl:x.anzahl, notiz:x.notiz, erfasstVon:x.erfasst_von || ''}));
   standMerken();
   // Anträge zum Entfernen (Tabelle fehlt, solange schema.sql noch nicht neu ausgeführt ist)
   const an = await sb.from('entfernen_antraege').select('*').order('erstellt');
@@ -1306,9 +1346,9 @@ document.getElementById('tabs').onclick = e => { const b = e.target.closest('[da
 function ansichtWechseln(v){
   ansicht = v;
   document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('aktiv', b.dataset.view === v));
-  ['liste','erinnerungen','proben','dokumente','provision','einstellungen'].forEach(s => document.getElementById('seite-'+s).classList.toggle('versteckt', s !== v));
+  ['liste','erinnerungen','proben','dokumente','austausch','provision','einstellungen'].forEach(s => document.getElementById('seite-'+s).classList.toggle('versteckt', s !== v));
   ['karten-knoepfe','legende'].forEach(id => document.getElementById(id).classList.toggle('versteckt', v !== 'karte'));
-  document.getElementById('leiste').classList.toggle('versteckt', ['einstellungen', 'erinnerungen', 'proben', 'dokumente', 'provision'].includes(v));
+  document.getElementById('leiste').classList.toggle('versteckt', ['einstellungen', 'erinnerungen', 'proben', 'dokumente', 'austausch', 'provision'].includes(v));
   obenSetzen();
   if (v === 'karte') setTimeout(() => K && K.resize(), 50);
   if (v === 'liste') listeZeichnen();
@@ -1317,6 +1357,7 @@ function ansichtWechseln(v){
   if (v === 'proben') probenZeichnen();
   if (v === 'dokumente') dokumenteZeichnen();
   if (v === 'provision') provisionZeichnen();
+  if (v === 'austausch') austauschOeffnen();
 }
 function obenSetzen(){
   const kopf = document.querySelector('header').offsetHeight;
@@ -1452,22 +1493,30 @@ async function abgaengeLaden(){
     sb.from('shopify_erledigt').select('*')]);
   ABGAENGE = a.error ? [] : a.data; SHOPIFY_ERLEDIGT = e.error ? [] : e.data;
 }
+// Wochen von Montag bis Sonntag (Kalenderwoche nach ISO)
+const montagVon = t => { const d = new Date(t + 'T12:00:00'); d.setDate(d.getDate() - (d.getDay() + 6) % 7); return d.toISOString().slice(0, 10); };
+const plusTage = (t, n) => { const d = new Date(t + 'T12:00:00'); d.setDate(d.getDate() + n); return d.toISOString().slice(0, 10); };
+const kwVon = t => { const d = new Date(t + 'T12:00:00'); d.setDate(d.getDate() + 3 - (d.getDay() + 6) % 7);
+  const j = new Date(d.getFullYear(), 0, 4); return 1 + Math.round(((d - j) / 864e5 - 3 + (j.getDay() + 6) % 7) / 7); };
+// Rohkakao je Packung aus dem Produktnamen, z.B. „(250 g)“, „(1 KG)“ – nur Kakaomasse/Kakaodrops
+const rohkakaoKg = name => { if (!/kakaomasse|kakaodrops/i.test(name)) return 0;
+  const m = [...String(name).matchAll(/(\d+(?:[.,]\d+)?)\s*(kg|g)\b/gi)].at(-1); if (!m) return 0;
+  const n = Number(m[1].replace(',', '.')); return m[2].toLowerCase() === 'kg' ? n : n / 1000; };
+function abgaengeWochen(){
+  const wochen = {};
+  for (const z of ABGAENGE) {
+    const w = (wochen[montagVon(z.tag)] = wochen[montagVon(z.tag)] || {tage:new Set(), produkte:{}});
+    w.tage.add(z.tag);
+    const p = (w.produkte[z.odoo_id] = w.produkte[z.odoo_id] || {name:z.name, code:z.code, menge:0, auftraege:new Set()});
+    p.menge += Number(z.menge); String(z.auftraege || '').split(',').map(x => x.trim()).filter(Boolean).forEach(a => p.auftraege.add(a));
+  }
+  return Object.entries(wochen).sort((a, b) => b[0].localeCompare(a[0])).map(([montag, w]) => ({montag, tage:[...w.tage].sort(),
+    produkte:Object.values(w.produkte).sort((a, b) => a.name.localeCompare(b.name, 'de')).map(p => ({...p, auftraege:[...p.auftraege].sort()}))}));
+}
+let abgangAnsicht = 'woche';
 function abgaengeAbschnitt(){
-  const tage = [...new Set(ABGAENGE.map(x => x.tag))];
-  return `<h3 id="abgaenge-bereich">B2B-Abgänge für Shopify</h3>
-    <div class="hinweis" style="text-align:left;margin:-4px 0 8px">Bis zum Umstieg auf Odoo: Diese Mengen gingen in bestätigten Odoo-Aufträgen raus
-      und werden in Shopify abgebucht. Danach den Tag abhaken – so sieht das ganze Team, was schon erledigt ist. (Letzte 30 Tage)</div>
-    <details class="so-gehts"><summary>So geht's – Schritt für Schritt</summary>
-      <ol>
-        <li>Unten steht für jeden Tag, welche Produkte in <b>bestätigten Odoo-Aufträgen</b> rausgegangen sind – mit Artikelnummer, Menge und Auftragsnummern.</li>
-        <li>In <b>Shopify</b>: Produkte → Produkt über die Artikelnummer (SKU) suchen → Variante öffnen → beim <b>Lagerbestand</b> die Menge abziehen → speichern. Für jede Zeile des Tages.</li>
-        <li>Zurück hier beim Tag auf <b>„In Shopify abgebucht ✓“</b> tippen – dann ist er für alle erledigt, mit deinem Namen.</li>
-      </ol>
-      <p class="leise">Offene Angebote erscheinen erst, wenn sie in Odoo bestätigt sind. Zu früh abgehakt? „rückgängig“ tippen.
-        Wird ein Auftrag in Odoo storniert, fällt er hier heraus – war der Tag schon abgehakt, die Menge in Shopify wieder dazubuchen.
-        Nach dem Umstieg auf Odoo fällt dieser Schritt weg.</p>
-    </details>
-    ${tage.map(t => { const er = SHOPIFY_ERLEDIGT.find(x => x.tag === t), zeilen = ABGAENGE.filter(x => x.tag === t);
+  const grenze = tag(-30), tage = [...new Set(ABGAENGE.map(x => x.tag))].filter(t => t >= grenze);
+  const tagesListe = tage.map(t => { const er = SHOPIFY_ERLEDIGT.find(x => x.tag === t), zeilen = ABGAENGE.filter(x => x.tag === t);
       return `<div class="abgang-tag ${er ? 'erledigt' : ''}"><div class="inline" style="justify-content:space-between;align-items:center">
           <b>${datumDe(t)}</b>
           ${er ? `<span class="rueck ja">✓ in Shopify abgebucht · ${esc(person(er.person)?.name || '')}
@@ -1475,17 +1524,64 @@ function abgaengeAbschnitt(){
                : `<button class="knopf gold klein" data-abgang-ok="${t}">In Shopify abgebucht ✓</button>`}</div>
         <table class="produkte" style="margin-top:6px"><tr><th>Produkt</th><th>Art.-Nr.</th><th class="zahl">Menge</th><th>Aufträge</th></tr>
           ${zeilen.map(z => `<tr><td>${esc(z.name)}</td><td>${esc(z.code)}</td><td class="zahl"><b>${Number(z.menge).toLocaleString('de-DE')}</b></td><td class="leise">${esc(z.auftraege)}</td></tr>`).join('')}
-        </table></div>`; }).join('') || '<div class="leer">In den letzten 30 Tagen gab es keine bestätigten Aufträge in Odoo.</div>'}`;
+        </table></div>`; }).join('') || '<div class="leer">In den letzten 30 Tagen gab es keine bestätigten Aufträge in Odoo.</div>';
+  const wochenListe = abgaengeWochen().map(w => {
+    const offen = w.tage.filter(t => !SHOPIFY_ERLEDIGT.some(x => x.tag === t));
+    const stueck = w.produkte.reduce((n, p) => n + p.menge, 0), kg = w.produkte.reduce((n, p) => n + rohkakaoKg(p.name) * p.menge, 0);
+    return `<div class="abgang-tag ${offen.length ? '' : 'erledigt'}"><div class="inline" style="justify-content:space-between;align-items:center">
+        <div><b>KW ${kwVon(w.montag)}</b> <span class="leise">· ${datumDe(w.montag)} – ${datumDe(plusTage(w.montag, 6))}</span><br>
+          <span class="leise" style="font-size:13px">${stueck.toLocaleString('de-DE')} Stück${kg ? ` · davon ${kg.toLocaleString('de-DE', {maximumFractionDigits:2})} kg Rohkakao` : ''} · ${w.produkte.length} ${w.produkte.length === 1 ? 'Produkt' : 'Produkte'}</span></div>
+        <div class="inline" style="gap:6px;align-items:center">
+          ${offen.length ? `<button class="knopf gold klein" data-abgang-woche="${w.montag}">Woche abgebucht ✓</button>` : '<span class="rueck ja">✓ ganze Woche in Shopify abgebucht</span>'}
+          <button class="knopf leise klein" data-abgang-excel="${w.montag}">⬇︎ Excel</button></div></div>
+      ${offen.length && offen.length < w.tage.length ? `<div class="leise" style="font-size:12px;margin-top:4px">${w.tage.length - offen.length} von ${w.tage.length} Tagen schon abgebucht – offen: ${offen.map(datumDe).join(', ')}</div>` : ''}
+      <table class="produkte" style="margin-top:6px"><tr><th>Produkt</th><th>Art.-Nr.</th><th class="zahl">Summe</th><th>Aufträge</th></tr>
+        ${w.produkte.map(p => `<tr><td>${esc(p.name)}</td><td>${esc(p.code)}</td><td class="zahl"><b>${p.menge.toLocaleString('de-DE')}</b></td><td class="leise">${esc(p.auftraege.join(', '))}</td></tr>`).join('')}
+      </table></div>`; }).join('') || '<div class="leer">In den letzten Wochen gab es keine bestätigten Aufträge in Odoo.</div>';
+  return `<h3 id="abgaenge-bereich">B2B-Abgänge für Shopify</h3>
+    <div class="hinweis" style="text-align:left;margin:-4px 0 8px">Bis zum Umstieg auf Odoo: Diese Mengen gingen in bestätigten Odoo-Aufträgen raus
+      und werden in Shopify abgebucht. Danach abhaken – so sieht das ganze Team, was schon erledigt ist.</div>
+    <div class="chips" style="margin:0 0 10px">
+      <button class="chip${abgangAnsicht === 'woche' ? ' an' : ''}" data-abgang-ansicht="woche">Wochensummen (8 Wochen)</button>
+      <button class="chip${abgangAnsicht === 'tag' ? ' an' : ''}" data-abgang-ansicht="tag">Einzelne Tage (30 Tage)</button></div>
+    <details class="so-gehts"><summary>So geht's – Schritt für Schritt</summary>
+      <ol>
+        <li>In den <b>Wochensummen</b> steht für jede Kalenderwoche, wie viel von jedem Produkt in <b>bestätigten Odoo-Aufträgen</b> rausgegangen ist – zusammengezählt, mit Artikelnummer und Auftragsnummern. Unter „Einzelne Tage“ siehst du dasselbe Tag für Tag.</li>
+        <li>In <b>Shopify</b>: Produkte → Produkt über die Artikelnummer (SKU) suchen → Variante öffnen → beim <b>Lagerbestand</b> die Summe abziehen → speichern. Für jede Zeile.</li>
+        <li>Zurück hier auf <b>„Woche abgebucht ✓“</b> tippen (oder in der Tagesansicht einzelne Tage) – dann ist es für alle erledigt, mit deinem Namen.</li>
+      </ol>
+      <p class="leise">Offene Angebote erscheinen erst, wenn sie in Odoo bestätigt sind. Zu früh abgehakt? In der Tagesansicht „rückgängig“ tippen.
+        Wird ein Auftrag in Odoo storniert, fällt er hier heraus – war er schon abgehakt, die Menge in Shopify wieder dazubuchen.
+        Mit „⬇︎ Excel“ gibt es die Wochensumme als Tabelle. Nach dem Umstieg auf Odoo fällt dieser Schritt weg.</p>
+    </details>
+    ${abgangAnsicht === 'woche' ? wochenListe : tagesListe}`;
 }
 document.getElementById('seite-einstellungen').addEventListener('click', async e => {
-  const ok = e.target.closest('[data-abgang-ok]')?.dataset.abgangOk, zurueck = e.target.closest('[data-abgang-zurueck]')?.dataset.abgangZurueck;
-  if (!ok && !zurueck) return;
-  const {error} = ok ? await sb.from('shopify_erledigt').insert({tag:ok, person:ich.id})
-    : await sb.from('shopify_erledigt').delete().eq('tag', zurueck);
+  const b = e.target.closest('[data-abgang-ansicht],[data-abgang-ok],[data-abgang-zurueck],[data-abgang-woche],[data-abgang-excel]'); if (!b) return;
+  const zuAbgaengen = () => setTimeout(() => document.getElementById('abgaenge-bereich')?.scrollIntoView({block:'start'}), 30);
+  if (b.dataset.abgangAnsicht) { abgangAnsicht = b.dataset.abgangAnsicht; einstellungenZeichnen(); return zuAbgaengen(); }
+  if (b.dataset.abgangExcel) return abgangWocheExcel(b.dataset.abgangExcel);
+  const ok = b.dataset.abgangOk, zurueck = b.dataset.abgangZurueck, woche = b.dataset.abgangWoche;
+  let error;
+  if (woche) {
+    const tage = abgaengeWochen().find(w => w.montag === woche)?.tage.filter(t => !SHOPIFY_ERLEDIGT.some(x => x.tag === t)) || [];
+    if (!tage.length) return;
+    ({error} = await sb.from('shopify_erledigt').insert(tage.map(t => ({tag:t, person:ich.id}))));
+  } else ({error} = ok ? await sb.from('shopify_erledigt').insert({tag:ok, person:ich.id})
+    : await sb.from('shopify_erledigt').delete().eq('tag', zurueck));
   if (error && !/duplicate/i.test(error.message)) return fehlerZeigen('Das hat nicht geklappt:', error.message);
-  await abgaengeLaden(); einstellungenZeichnen();
-  setTimeout(() => document.getElementById('abgaenge-bereich')?.scrollIntoView({block:'start'}), 30);
+  await abgaengeLaden(); einstellungenZeichnen(); zuAbgaengen();
 });
+async function abgangWocheExcel(montag){
+  try {
+    const w = abgaengeWochen().find(x => x.montag === montag); if (!w) return;
+    if (!window.XLSX) await skriptLaden('https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js');
+    const ws = XLSX.utils.json_to_sheet(w.produkte.map(p => ({Produkt:p.name, 'Art.-Nr.':p.code, Summe:p.menge, Aufträge:p.auftraege.join(', ')})));
+    ws['!cols'] = [{wch:48}, {wch:28}, {wch:8}, {wch:40}];
+    const mappe = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(mappe, ws, `KW ${kwVon(montag)}`);
+    XLSX.writeFile(mappe, `b2b-abgaenge-kw${kwVon(montag)}-${montag.slice(0, 4)}.xlsx`);
+  } catch (err) { fehlerZeigen('Die Excel-Datei ließ sich nicht erstellen:', err.message || String(err)); }
+}
 
 /* ---------- Provision: Modell „Geld vs. Kakao“ (Präsentation Okt. 2026, angepasste Sätze) ---------- */
 // Die Brücke rechnet echte Aufträge aus Odoo nach diesem Modell (Tabelle „odoo_umsaetze“). Hier: Liste, Rechner, Übersicht.
@@ -1952,6 +2048,310 @@ async function bestellungenLaden(){
   if (!error) D.bestellungen = data.map(x => ({id:x.id, ortId:x.ort_id, person:x.person || '', positionen:x.positionen || [], notiz:x.notiz,
     status:x.status, odooName:x.odoo_name, odooStatus:x.odoo_status, summe:x.summe, fehler:x.fehler, erstellt:x.erstellt}));
 }
+/* ---------- Austausch im Team: Forum mit Themen + direkter Chat (Wunsch David, 16.10.2026) ---------- */
+const KATEGORIEN = {frage:'Frage', event:'Eventplanung', faq:'FAQ', feedback:'Feedback', allgemein:'Allgemein'};
+let FORUM = {themen:[], beitraege:[], gelesen:{}}, CHAT = [], austauschGeladen = false;
+let austauschAnsicht = 'forum', themaOffen = null, chatMit = null, forumFilter = 'alle', neuesThemaOffen = false, austauschKanal = null;
+function demoAustausch(){
+  const t = (tageZurueck, std) => { const d = new Date(); d.setDate(d.getDate() - tageZurueck); d.setHours(std, 15, 0, 0); return d.toISOString(); };
+  const lena = D.team.find(p => p.name === 'Lena')?.id, mira = D.team.find(p => p.name === 'Mira')?.id;
+  FORUM.themen = [
+    {id:'f1', titel:'Wie bereitet ihr den Kakao für Cafés vor?', kategorie:'frage', erstellt_von:lena, erstellt:t(3, 10), zuletzt:t(0, 9), angeheftet:false},
+    {id:'f2', titel:'Kakao-Zeremonie im Herzraum Café – Termin finden', kategorie:'event', erstellt_von:mira, erstellt:t(5, 18), zuletzt:t(4, 12), angeheftet:false},
+    {id:'f3', titel:'FAQ: Welche Proben nehme ich zum Erstbesuch mit?', kategorie:'faq', erstellt_von:ich.id, erstellt:t(9, 11), zuletzt:t(9, 11), angeheftet:true},
+  ];
+  FORUM.beitraege = [
+    {id:'b1', thema_id:'f1', person:lena, text:'Ich zeige meistens 20 g in 200 ml Hafermilch. Wie macht ihr das?', erstellt:t(3, 10)},
+    {id:'b2', thema_id:'f1', person:mira, text:'Bei mir 25 g und eine Prise Zimt – kommt super an!', erstellt:t(0, 9)},
+    {id:'b3', thema_id:'f2', person:mira, text:'Wer hätte Lust, im November eine Zeremonie mitzugestalten?', erstellt:t(5, 18)},
+    {id:'b4', thema_id:'f3', person:ich.id, text:'Bewährt haben sich: 2 × ALOHA 33 g, 1 × KUKULKAN 33 g, Postkarten-Set und der Vorstellungs-Flyer.', erstellt:t(9, 11)},
+  ];
+  CHAT = [{id:'c1', von:lena, an:ich.id, text:'Hi! Magst du mir morgen die Proben für Hannover mitbringen?', erstellt:t(0, 8), gelesen:null},
+          {id:'c2', von:ich.id, an:mira, text:'Danke für deine Hilfe beim Pop-up!', erstellt:t(2, 17), gelesen:t(2, 18)}];
+}
+async function austauschLaden(){
+  if (DEMO) { if (!austauschGeladen) demoAustausch(); austauschGeladen = true; return; }
+  if (!sb) return;
+  const [th, be, ge, ch] = await Promise.all([sb.from('forum_themen').select('*').order('zuletzt', {ascending:false}),
+    sb.from('forum_beitraege').select('*').order('erstellt'), sb.from('forum_gelesen').select('*'),
+    sb.from('chat_nachrichten').select('*').order('erstellt')]);
+  if (th.error) return;   // Tabellen fehlen noch (schema.sql nicht ausgeführt)
+  FORUM = {themen:th.data, beitraege:be.data || [], gelesen:Object.fromEntries((ge.data || []).map(g => [g.thema_id, g.bis]))};
+  CHAT = ch.data || []; austauschGeladen = true;
+  if (!austauschKanal) {   // Live: neue Nachrichten und Beiträge sofort zeigen
+    austauschKanal = sb.channel('austausch')
+      .on('postgres_changes', {event:'INSERT', schema:'public', table:'chat_nachrichten'}, ({new:n}) => { if (!CHAT.some(x => x.id === n.id)) CHAT.push(n); austauschNeu(); })
+      .on('postgres_changes', {event:'INSERT', schema:'public', table:'forum_beitraege'}, async ({new:n}) => {
+        if (!FORUM.beitraege.some(x => x.id === n.id)) FORUM.beitraege.push(n);
+        if (!FORUM.themen.some(t => t.id === n.thema_id)) { const {data} = await sb.from('forum_themen').select('*').eq('id', n.thema_id).maybeSingle(); if (data) FORUM.themen.push(data); }
+        const t = FORUM.themen.find(x => x.id === n.thema_id); if (t) t.zuletzt = n.erstellt;
+        austauschNeu(); })
+      .subscribe();
+  }
+}
+function austauschNeu(){ austauschBadge(); if (ansicht === 'austausch') { austauschZeichnen(); if (themaOffen || chatMit) gelesenMarkieren(); } }
+const themaNeu = t => { const letzter = FORUM.beitraege.filter(b => b.thema_id === t.id).at(-1);
+  return letzter && letzter.person !== ich.id && (!FORUM.gelesen[t.id] || FORUM.gelesen[t.id] < letzter.erstellt); };
+const chatUngelesen = (von = null) => CHAT.filter(m => m.an === ich.id && !m.gelesen && (!von || m.von === von)).length;
+function austauschBadge(){
+  const n = (ich ? chatUngelesen() + FORUM.themen.filter(themaNeu).length : 0), b = document.getElementById('badge-austausch');
+  if (b) { b.textContent = n; b.style.display = n ? '' : 'none'; }
+}
+const vorWann = iso => { const m = Math.round((Date.now() - Date.parse(iso)) / 60000);
+  return m < 1 ? 'gerade eben' : m < 60 ? `vor ${m} Min.` : m < 1440 ? `vor ${Math.round(m / 60)} Std.` : m < 2880 ? 'gestern' : datumDe(String(iso).slice(0, 10)); };
+const textHtml = t => esc(t).replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener">$1</a>').replace(/\n/g, '<br>');
+const kuerzel = id => (person(id)?.name || '?').split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase();
+async function gelesenMarkieren(){
+  const jetzt = new Date().toISOString();
+  if (themaOffen && austauschAnsicht === 'forum') {
+    FORUM.gelesen[themaOffen] = jetzt;
+    if (!DEMO) await sb.from('forum_gelesen').upsert({person:ich.id, thema_id:themaOffen, bis:jetzt});
+  }
+  if (chatMit && austauschAnsicht === 'chat') {
+    const offen = CHAT.filter(m => m.an === ich.id && m.von === chatMit && !m.gelesen);
+    if (offen.length) { offen.forEach(m => m.gelesen = jetzt);
+      if (!DEMO) await sb.from('chat_nachrichten').update({gelesen:jetzt}).in('id', offen.map(m => m.id)); }
+  }
+  austauschBadge();
+}
+async function austauschOeffnen(){ await austauschLaden(); austauschZeichnen(); gelesenMarkieren(); }
+function austauschZeichnen(){
+  const el = document.getElementById('austausch-inhalt'), leitung = istLeitung();
+  if (!DEMO && !austauschGeladen) { el.innerHTML = '<h2>Austausch</h2><div class="leer">Lädt … (Falls das so bleibt: bitte einmal die neue schema.sql in Supabase ausführen.)</div>'; return; }
+  const neuForum = FORUM.themen.filter(themaNeu).length, neuChat = chatUngelesen();
+  const kopf = `<div class="liste-kopf"><h2>Austausch</h2></div>
+    <div class="chips" style="margin:0 0 12px"><button class="chip${austauschAnsicht === 'forum' ? ' an' : ''}" data-aus-ansicht="forum">💬 Forum${neuForum ? ` <small>${neuForum} neu</small>` : ''}</button>
+      <button class="chip${austauschAnsicht === 'chat' ? ' an' : ''}" data-aus-ansicht="chat">✉ Nachrichten${neuChat ? ` <small>${neuChat} neu</small>` : ''}</button></div>`;
+  if (austauschAnsicht === 'chat') { el.innerHTML = kopf + chatHtml(); const v = document.getElementById('chat-verlauf'); if (v) v.scrollTop = v.scrollHeight; return; }
+  if (themaOffen) {
+    const t = FORUM.themen.find(x => x.id === themaOffen);
+    if (!t) { themaOffen = null; return austauschZeichnen(); }
+    const beitraege = FORUM.beitraege.filter(b => b.thema_id === t.id);
+    const darfThema = leitung || t.erstellt_von === ich.id;
+    el.innerHTML = kopf + `<button class="link-knopf" data-aus-zurueck style="padding:0 0 8px">← alle Themen</button>
+      <div class="thema-kopf"><div><span class="kat kat-${t.kategorie}">${KATEGORIEN[t.kategorie]}</span>${t.angeheftet ? ' <span class="leise">📌 angeheftet</span>' : ''}
+        <h3 style="margin:6px 0 2px">${esc(t.titel)}</h3><div class="leise" style="font-size:12px">gestartet von ${esc(person(t.erstellt_von)?.name || '?')} · ${zeitDe(t.erstellt)}</div></div>
+        <div class="inline" style="gap:6px">${leitung ? `<button class="knopf leise klein" data-aus-anheften>${t.angeheftet ? 'Lösen' : '📌 Anheften'}</button>` : ''}
+          ${darfThema ? '<button class="knopf rot klein" data-aus-thema-weg>Thema löschen</button>' : ''}</div></div>
+      <div class="beitraege">${beitraege.map(b => `<div class="beitrag ${b.person === ich.id ? 'eigen' : ''}"><span class="mini-avatar">${kuerzel(b.person)}</span>
+        <div class="beitrag-inhalt"><div class="beitrag-kopf"><b>${esc(person(b.person)?.name || '?')}</b> <span class="leise">${vorWann(b.erstellt)}</span>
+          ${b.person === ich.id || leitung ? `<button class="weg" data-aus-beitrag-weg="${b.id}" title="Beitrag löschen" aria-label="Beitrag löschen">×</button>` : ''}</div>
+          <div>${textHtml(b.text)}</div></div></div>`).join('') || '<div class="leer">Noch keine Beiträge.</div>'}</div>
+      <div class="neu-box" style="margin-top:10px"><textarea id="aus-antwort" rows="3" placeholder="Deine Antwort …" style="width:100%"></textarea>
+        <div class="inline" style="justify-content:flex-end;margin-top:6px"><button class="knopf gold klein" data-aus-antworten>Antworten</button></div></div>`;
+    return;
+  }
+  const liste = FORUM.themen.filter(t => forumFilter === 'alle' || t.kategorie === forumFilter)
+    .sort((a, b) => (b.angeheftet - a.angeheftet) || String(b.zuletzt).localeCompare(String(a.zuletzt)));
+  el.innerHTML = kopf + `<div class="inline" style="justify-content:space-between;align-items:center;margin-bottom:8px">
+      <div class="chips">${[['alle', 'Alle'], ...Object.entries(KATEGORIEN)].map(([k, v]) => `<button class="chip${forumFilter === k ? ' an' : ''}" data-aus-filter="${k}">${v}</button>`).join('')}</div>
+      <button class="knopf gold klein" data-aus-neu>＋ Neues Thema</button></div>
+    ${neuesThemaOffen ? `<div class="neu-box" style="margin-bottom:10px">
+      <input id="aus-titel" maxlength="200" placeholder="Worum geht's? z.B. „Zeremonie im November – wer ist dabei?“" style="width:100%">
+      <div class="inline" style="margin:6px 0"><select id="aus-kat">${Object.entries(KATEGORIEN).map(([k, v]) => `<option value="${k}" ${forumFilter === k ? 'selected' : ''}>${v}</option>`).join('')}</select>
+        ${leitung ? '<label style="font-size:13px"><input type="checkbox" id="aus-anheften"> oben anheften</label>' : ''}</div>
+      <textarea id="aus-text" rows="4" placeholder="Dein erster Beitrag …" style="width:100%"></textarea>
+      <div class="inline" style="justify-content:flex-end;margin-top:6px"><button class="knopf leise klein" data-aus-neu>Abbrechen</button><button class="knopf gold klein" data-aus-starten>Thema starten</button></div></div>` : ''}
+    <div class="karten-liste">${liste.map(t => { const n = FORUM.beitraege.filter(b => b.thema_id === t.id).length;
+      return `<div class="cafe-karte thema-zeile" data-aus-thema="${t.id}"><div class="info">
+        <div class="name">${t.angeheftet ? '📌 ' : ''}${esc(t.titel)} ${themaNeu(t) ? '<span class="neu-punkt">neu</span>' : ''}</div>
+        <div class="klein"><span class="kat kat-${t.kategorie}">${KATEGORIEN[t.kategorie]}</span> von ${esc(person(t.erstellt_von)?.name || '?')} · ${n} ${n === 1 ? 'Beitrag' : 'Beiträge'} · zuletzt ${vorWann(t.zuletzt)}</div></div></div>`; }).join('')
+      || '<div class="leer">Hier gibt es noch kein Thema – magst du eins starten?</div>'}</div>`;
+}
+function chatHtml(){
+  const andere = D.team.filter(p => p.id !== ich.id);
+  if (!chatMit) {
+    const zeilen = andere.map(p => { const verlauf = CHAT.filter(m => (m.von === p.id && m.an === ich.id) || (m.an === p.id && m.von === ich.id)), letzte = verlauf.at(-1);
+      return {p, letzte, neu:chatUngelesen(p.id)}; }).sort((a, b) => String(b.letzte?.erstellt || '').localeCompare(String(a.letzte?.erstellt || '')) || a.p.name.localeCompare(b.p.name, 'de'));
+    return `<div class="karten-liste">${zeilen.map(z => `<div class="cafe-karte thema-zeile" data-aus-chat="${z.p.id}"><span class="mini-avatar">${kuerzel(z.p.id)}</span>
+      <div class="info"><div class="name">${esc(z.p.name)} ${z.neu ? `<span class="neu-punkt">${z.neu} neu</span>` : ''}</div>
+        <div class="klein">${z.letzte ? `${z.letzte.von === ich.id ? 'Du: ' : ''}${esc(z.letzte.text.slice(0, 70))}${z.letzte.text.length > 70 ? ' …' : ''} · ${vorWann(z.letzte.erstellt)}` : '<span class="leise">Noch keine Nachricht</span>'}</div></div></div>`).join('')
+      || '<div class="leer">Noch niemand im Team.</div>'}</div>`;
+  }
+  const verlauf = CHAT.filter(m => (m.von === chatMit && m.an === ich.id) || (m.an === chatMit && m.von === ich.id));
+  return `<button class="link-knopf" data-aus-zurueck style="padding:0 0 8px">← alle Nachrichten</button>
+    <h3 style="margin:0 0 8px">${esc(person(chatMit)?.name || '?')}</h3>
+    <div class="chat-verlauf" id="chat-verlauf">${verlauf.map(m => `<div class="blase ${m.von === ich.id ? 'eigen' : ''}">${textHtml(m.text)}
+      <div class="blase-zeit">${zeitDe(m.erstellt)}${m.von === ich.id && m.gelesen ? ' · gelesen' : ''}</div></div>`).join('') || '<div class="leer">Schreib die erste Nachricht.</div>'}</div>
+    <div class="chat-eingabe"><textarea id="aus-nachricht" rows="2" placeholder="Nachricht an ${esc(person(chatMit)?.name || '')} … (Enter = senden)"></textarea>
+      <button class="knopf gold" data-aus-senden>Senden</button></div>`;
+}
+async function austauschSchreiben(tabelle, zeile){
+  if (DEMO) return {...zeile, id:uid(), erstellt:new Date().toISOString()};
+  const {data, error} = await sb.from(tabelle).insert(zeile).select().single();
+  if (error) { fehlerZeigen('Das ließ sich nicht speichern:', error.message); return null; }
+  return data;
+}
+async function nachrichtSenden(){
+  const feld = document.getElementById('aus-nachricht'), text = feld?.value.trim(); if (!text) return;
+  feld.value = '';
+  const m = await austauschSchreiben('chat_nachrichten', {von:ich.id, an:chatMit, text}); if (!m) { feld.value = text; return; }
+  if (!CHAT.some(x => x.id === m.id)) CHAT.push(m); austauschZeichnen(); document.getElementById('aus-nachricht')?.focus();
+}
+document.getElementById('seite-austausch').addEventListener('keydown', e => {
+  if (e.target.id === 'aus-nachricht' && e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); nachrichtSenden(); }
+});
+document.getElementById('seite-austausch').addEventListener('click', async e => {
+  const b = e.target.closest('[data-aus-ansicht],[data-aus-zurueck],[data-aus-filter],[data-aus-neu],[data-aus-starten],[data-aus-thema],[data-aus-antworten],[data-aus-beitrag-weg],[data-aus-thema-weg],[data-aus-anheften],[data-aus-chat],[data-aus-senden]');
+  if (!b) return;
+  const d = b.dataset;
+  if (d.ausAnsicht) { austauschAnsicht = d.ausAnsicht; themaOffen = null; chatMit = null; return austauschZeichnen(); }
+  if ('ausZurueck' in d) { themaOffen = null; chatMit = null; return austauschZeichnen(); }
+  if (d.ausFilter) { forumFilter = d.ausFilter; return austauschZeichnen(); }
+  if ('ausNeu' in d) { neuesThemaOffen = !neuesThemaOffen; austauschZeichnen(); return document.getElementById('aus-titel')?.focus(); }
+  if (d.ausThema) { themaOffen = d.ausThema; austauschZeichnen(); window.scrollTo(0, 0); return gelesenMarkieren(); }
+  if (d.ausChat) { chatMit = d.ausChat; austauschZeichnen(); gelesenMarkieren(); return document.getElementById('aus-nachricht')?.focus(); }
+  if ('ausSenden' in d) return nachrichtSenden();
+  if ('ausStarten' in d) {
+    const titel = document.getElementById('aus-titel').value.trim(), text = document.getElementById('aus-text').value.trim();
+    if (!titel) return toast('Magst du einen Titel eintragen?'); if (!text) return toast('Magst du einen ersten Beitrag schreiben?');
+    const t = await austauschSchreiben('forum_themen', {titel, kategorie:document.getElementById('aus-kat').value, erstellt_von:ich.id,
+      angeheftet:!!document.getElementById('aus-anheften')?.checked}); if (!t) return;
+    if (DEMO) t.zuletzt = t.erstellt;
+    FORUM.themen.push(t);
+    const bt = await austauschSchreiben('forum_beitraege', {thema_id:t.id, person:ich.id, text}); if (bt && !FORUM.beitraege.some(x => x.id === bt.id)) FORUM.beitraege.push(bt);
+    t.zuletzt = bt?.erstellt || t.zuletzt; neuesThemaOffen = false; themaOffen = t.id; austauschZeichnen(); gelesenMarkieren();
+    return toast('Thema gestartet ✓');
+  }
+  if ('ausAntworten' in d) {
+    const feld = document.getElementById('aus-antwort'), text = feld.value.trim(); if (!text) return;
+    const bt = await austauschSchreiben('forum_beitraege', {thema_id:themaOffen, person:ich.id, text}); if (!bt) return;
+    if (!FORUM.beitraege.some(x => x.id === bt.id)) FORUM.beitraege.push(bt);
+    const t = FORUM.themen.find(x => x.id === themaOffen); if (t) t.zuletzt = bt.erstellt;
+    austauschZeichnen(); return gelesenMarkieren();
+  }
+  if (d.ausBeitragWeg) {
+    if (!confirm('Diesen Beitrag löschen?')) return;
+    if (!DEMO) { const {error} = await sb.from('forum_beitraege').delete().eq('id', d.ausBeitragWeg); if (error) return fehlerZeigen('Das ließ sich nicht löschen:', error.message); }
+    FORUM.beitraege = FORUM.beitraege.filter(x => x.id !== d.ausBeitragWeg); return austauschZeichnen();
+  }
+  if ('ausThemaWeg' in d) {
+    if (!confirm('Das ganze Thema mit allen Beiträgen löschen?')) return;
+    if (!DEMO) { const {error} = await sb.from('forum_themen').delete().eq('id', themaOffen); if (error) return fehlerZeigen('Das ließ sich nicht löschen:', error.message); }
+    FORUM.themen = FORUM.themen.filter(x => x.id !== themaOffen); FORUM.beitraege = FORUM.beitraege.filter(x => x.thema_id !== themaOffen);
+    themaOffen = null; return austauschZeichnen();
+  }
+  if ('ausAnheften' in d) {
+    const t = FORUM.themen.find(x => x.id === themaOffen); if (!t) return;
+    if (!DEMO) { const {error} = await sb.from('forum_themen').update({angeheftet:!t.angeheftet}).eq('id', t.id); if (error) return fehlerZeigen('Das ließ sich nicht speichern:', error.message); }
+    t.angeheftet = !t.angeheftet; return austauschZeichnen();
+  }
+});
+
+/* ---------- Kundenprofil + Verkaufsstelle (für mayamunay.com/pages/kakaoshops) ---------- */
+const KUNDENFOTO = {};
+async function kundenFotoUrl(c){
+  if (!c.shopFoto) return '';
+  if (DEMO || /^blob:/.test(c.shopFoto)) return c.shopFoto;
+  if (KUNDENFOTO[c.id]?.pfad === c.shopFoto) return KUNDENFOTO[c.id].url;
+  const {data} = await sb.storage.from('kundenbilder').createSignedUrl(c.shopFoto.split('?')[0], 3600);
+  KUNDENFOTO[c.id] = {pfad:c.shopFoto, url:data?.signedUrl || ''};
+  return KUNDENFOTO[c.id].url;
+}
+const mapsLink = c => c.google ? `https://www.google.com/maps/place/?q=place_id:${encodeURIComponent(c.google)}`
+  : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent([c.name, c.adresse, c.stadt, c.land].filter(Boolean).join(', '))}`;
+function kundenprofilHtml(c, dis){
+  const darf = !dis;
+  setTimeout(async () => { const url = await kundenFotoUrl(c), el = document.getElementById('kp-mini-bild'); if (el && url) el.src = url; }, 0);
+  return `<div class="abschnitt"><h4>Kundenprofil</h4>
+    <div class="kp-mini">${c.shopFoto ? '<img id="kp-mini-bild" alt="">' : ''}<div style="font-size:13px">
+      ${c.verkaufsstelle ? '<span class="rueck ja">🛍️ Kakaoshop – hier gibt es unseren Kakao</span>' : '<span class="leise">Noch nicht als Kakaoshop markiert.</span>'}
+      ${c.shopText ? `<div class="leise" style="margin-top:4px">${esc(c.shopText.slice(0, 140))}${c.shopText.length > 140 ? ' …' : ''}</div>` : ''}</div></div>
+    ${darf ? '<button class="knopf leise klein" data-akt="kundenprofil" style="margin-top:8px">Kundenprofil bearbeiten</button>' : ''}</div>`;
+}
+let kpFoto = null, kpOrt = null;
+async function kundenprofilOeffnen(c, neu){
+  kpOrt = c; kpFoto = null;
+  document.getElementById('kp-titel').textContent = neu ? `🌳 Wundervoll – ${c.name || 'ein neuer Kunde'}!` : c.name || 'Kundenprofil';
+  const url = await kundenFotoUrl(c);
+  document.getElementById('kp-inhalt').innerHTML = `
+    ${neu ? '<p class="leise" style="margin-top:-4px">Magst du das Kundenprofil ergänzen? Gibt es bei euch unseren Kakao zu kaufen, kommt der Ort auf unsere Kakaoshop-Seite.</p>' : ''}
+    <label style="display:flex;align-items:flex-start;gap:8px;margin:6px 0 10px"><input type="checkbox" id="kp-verkauf" style="flex:0 0 auto;margin-top:3px" ${c.verkaufsstelle ? 'checked' : ''}>
+      <span><b>Hier gibt es unseren Kakao zu kaufen</b><br><span class="leise" style="font-size:13px">für mayamunay.com/pages/kakaoshops</span></span></label>
+    <img class="kp-foto" id="kp-bild" alt="" ${url ? `src="${url}"` : 'style="display:none"'}>
+    <div class="inline" style="gap:8px"><label class="knopf leise klein" style="cursor:pointer">${url ? 'Anderes Foto wählen' : 'Foto wählen'}<input type="file" id="kp-datei" accept="image/*" hidden></label>
+      ${url ? '<button class="knopf leise klein" data-kp="foto-weg">Foto entfernen</button>' : ''}<span class="leise" style="font-size:12px">z.B. Theke, Regal oder Eingang</span></div>
+    <label class="feld" style="margin-top:10px">Kurze Beschreibung <small>(für die Website)</small>
+      <textarea id="kp-text" maxlength="400" rows="3" placeholder="z.B. Kakaobar und Yogastudio im Herzen von Leipzig – hier gibt es ALOHA und KUKULKAN zum Mitnehmen.">${esc(c.shopText)}</textarea></label>
+    <label class="feld">Website / Instagram<input id="kp-web" value="${esc(c.kontakt || '')}" placeholder="z.B. www.beispiel.de oder @beispiel"></label>
+    <div class="leise" style="font-size:12px">Adresse und Standort-Link kommen aus den Angaben zum Ort.</div>
+    <div class="inline" style="justify-content:flex-end;margin-top:12px">
+      <button class="knopf leise" data-kp="zu">${neu ? 'Später' : 'Abbrechen'}</button><button class="knopf gold" data-kp="speichern">Speichern</button></div>`;
+  document.getElementById('kp-dialog').classList.remove('versteckt');
+}
+// Foto verkleinern (längste Seite 1600 px, JPEG) – reicht für Website und spart Platz
+async function bildVerkleinern(datei, max = 1600){
+  const bild = await createImageBitmap(datei), f = Math.min(1, max / Math.max(bild.width, bild.height));
+  const c = document.createElement('canvas'); c.width = Math.round(bild.width * f); c.height = Math.round(bild.height * f);
+  c.getContext('2d').drawImage(bild, 0, 0, c.width, c.height);
+  return await new Promise(ok => c.toBlob(ok, 'image/jpeg', 0.85));
+}
+document.getElementById('kp-dialog').addEventListener('change', async e => {
+  if (e.target.id !== 'kp-datei' || !e.target.files?.[0]) return;
+  try { kpFoto = await bildVerkleinern(e.target.files[0]); } catch (err) { return toast('Dieses Bild ließ sich nicht lesen – magst du ein JPG oder PNG wählen?'); }
+  const el = document.getElementById('kp-bild'); el.src = URL.createObjectURL(kpFoto); el.style.display = '';
+});
+document.getElementById('kp-dialog').addEventListener('click', async e => {
+  const a = e.target.closest('[data-kp]')?.dataset.kp, c = kpOrt;
+  if (a === 'zu' || e.target.id === 'kp-dialog') return document.getElementById('kp-dialog').classList.add('versteckt');
+  if (a === 'foto-weg') { kpFoto = 'weg'; const el = document.getElementById('kp-bild'); el.removeAttribute('src'); el.style.display = 'none'; return; }
+  if (a !== 'speichern' || !c) return;
+  const knopf = e.target.closest('[data-kp]'); knopf.disabled = true;
+  try {
+    if (kpFoto === 'weg') { if (!DEMO && c.shopFoto) await sb.storage.from('kundenbilder').remove([c.shopFoto.split('?')[0]]); c.shopFoto = ''; }
+    else if (kpFoto) {
+      if (DEMO) c.shopFoto = URL.createObjectURL(kpFoto);
+      else {
+        const pfad = c.id + '.jpg';
+        const {error} = await sb.storage.from('kundenbilder').upload(pfad, kpFoto, {upsert:true, contentType:'image/jpeg'});
+        if (error) throw error;
+        c.shopFoto = pfad + '?v=' + Date.now();   // neue Version → neues Vorschaubild
+      }
+    }
+    c.verkaufsstelle = document.getElementById('kp-verkauf').checked;
+    c.shopText = document.getElementById('kp-text').value.trim();
+    c.kontakt = document.getElementById('kp-web').value.trim();
+    sichern(); document.getElementById('kp-dialog').classList.add('versteckt');
+    if (auswahl === c.id) panelZeichnen(c);
+    toast(c.verkaufsstelle ? 'Kundenprofil gespeichert – Kakaoshop ✓' : 'Kundenprofil gespeichert ✓');
+  } catch (err) { knopf.disabled = false; fehlerZeigen('Das Kundenprofil ließ sich nicht speichern:', err.message || String(err)); }
+});
+// Liste der Verkaufsstellen (Team-Seite) – Grundlage für die Kakaoshop-Seite
+function verkaufsstellenAbschnitt(){
+  const liste = D.cafes.filter(c => c.verkaufsstelle).sort((a, b) => (a.stadt || '').localeCompare(b.stadt || '', 'de') || a.name.localeCompare(b.name, 'de'));
+  setTimeout(() => liste.forEach(async c => { const url = await kundenFotoUrl(c), el = document.querySelector(`[data-shop-bild="${c.id}"]`); if (el && url) el.src = url; }), 0);
+  return `<details class="klappe" id="shops-klappe" ${shopsOffen ? 'open' : ''}><summary><h3>Kakaoshops <span class="leise" style="font-weight:400;font-size:13px">${liste.length} · für mayamunay.com/kakaoshops</span></h3></summary>
+    <div class="hinweis" style="text-align:left;margin:-4px 0 8px">Alle Kunden, bei denen es unseren Kakao zu kaufen gibt – mit Foto, Beschreibung, Adresse, Website und Standort-Link.
+      Markiert wird am Ort unter „Kundenprofil“. ${istLeitung() ? 'Mit „⬇︎ Excel“ gibt es alles als Tabelle für die Website.' : ''}</div>
+    ${istLeitung() && liste.length ? '<button class="knopf leise klein" data-shops-excel style="margin-bottom:8px">⬇︎ Excel für die Website</button>' : ''}
+    ${liste.map(c => `<div class="shop-karte">${c.shopFoto ? `<img data-shop-bild="${c.id}" alt="">` : '<div class="leer-bild">🛍️</div>'}
+      <div><b>${esc(c.name)}</b> <span class="leise" style="font-size:13px">${esc([c.adresse, c.stadt].filter(Boolean).join(', '))}</span>
+        ${c.shopText ? `<div style="font-size:13px;margin:3px 0">${esc(c.shopText)}</div>` : '<div class="leise" style="font-size:13px">Noch keine Beschreibung.</div>'}
+        <div style="font-size:13px">${c.kontakt ? esc(c.kontakt) + ' · ' : ''}<a href="${mapsLink(c)}" target="_blank" rel="noopener" style="color:var(--kakao)">Zum Standort</a>
+          · <button class="link-knopf" data-cafe-auf="${c.id}" style="padding:0">Ort öffnen</button></div></div></div>`).join('') || '<div class="leer">Noch kein Kakaoshop markiert.</div>'}</details>`;
+}
+let shopsOffen = false;
+document.getElementById('seite-einstellungen').addEventListener('toggle', e => { if (e.target.id === 'shops-klappe') shopsOffen = e.target.open; }, true);
+document.getElementById('seite-einstellungen').addEventListener('click', async e => {
+  const auf = e.target.closest('[data-cafe-auf]')?.dataset.cafeAuf;
+  if (auf) { ansichtWechseln('karte'); return cafeOeffnen(auf); }
+  if (!e.target.closest('[data-shops-excel]')) return;
+  try {
+    if (!window.XLSX) await skriptLaden('https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js');
+    const liste = D.cafes.filter(c => c.verkaufsstelle), zeilen = [];
+    for (const c of liste) {
+      let foto = '';
+      if (c.shopFoto && !DEMO) { const {data} = await sb.storage.from('kundenbilder').createSignedUrl(c.shopFoto.split('?')[0], 7 * 86400); foto = data?.signedUrl || ''; }
+      zeilen.push({Name:c.name, Beschreibung:c.shopText, Adresse:c.adresse, Stadt:c.stadt, Land:c.land, 'Website / Instagram':c.kontakt,
+        'Standort-Link':mapsLink(c), 'Foto (Link 7 Tage gültig)':foto, Art:(c.art || []).join(', '), Botschafter:person(c.betreuung)?.name || ''});
+    }
+    const ws = XLSX.utils.json_to_sheet(zeilen.length ? zeilen : [{'':'(keine Kakaoshops)'}]);
+    ws['!cols'] = [28, 60, 28, 18, 14, 28, 40, 40, 20, 16].map(w => ({wch:w}));
+    const mappe = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(mappe, ws, 'Kakaoshops');
+    XLSX.writeFile(mappe, `kakaoshops-${heute()}.xlsx`);
+  } catch (err) { fehlerZeigen('Die Excel-Datei ließ sich nicht erstellen:', err.message || String(err)); }
+});
+
 /* ---------- Bestellstatus aus Odoo: Angebot / bestätigt / storniert · Versand mit Sendungsnummer · Zahlung ---------- */
 let AUFTRAEGE = [];
 async function auftraegeLaden(){
@@ -1975,8 +2375,8 @@ const AUFTRAG_STATUS = {angebot:'<span class="rueck offen">Angebot</span>', best
 function versandHtml(a){
   if (!a.versand) return '';
   const nr = a.sendungsnummer ? ` <span style="white-space:nowrap">Sendungsnr. ${a.tracking_url ? `<a href="${esc(a.tracking_url)}" target="_blank" rel="noopener">${esc(a.sendungsnummer)}</a>` : esc(a.sendungsnummer)}</span>` : '';
-  return a.versand === 'versendet' ? `<span class="rueck ja">📦 versendet${a.versendet_am ? ' am ' + datumDe(a.versendet_am) : ''}</span>${nr}`
-    : a.versand === 'teilweise versendet' ? `<span class="rueck gold">📦 teilweise versendet</span>${nr}`
+  return a.versand === 'versendet' ? `<span class="rueck ja">📦 abgeschickt${a.versendet_am ? ' am ' + datumDe(a.versendet_am) : ''}</span>${nr}`
+    : a.versand === 'teilweise versendet' ? `<span class="rueck gold">📦 teilweise abgeschickt</span>${nr}`
     : '<span class="rueck offen">wird vorbereitet</span>';
 }
 const ZAHLUNG_KURZ = {bezahlt:'<span class="rueck ja">bezahlt</span>', offen:'<span class="rueck offen">Rechnung offen</span>', 'ohne Rechnung':'<span class="rueck offen">noch keine Rechnung</span>'};
@@ -2217,6 +2617,7 @@ function panelZeichnen(c){
       ${c.status === 'kunde' && c.betreuung ? `<label style="display:flex;align-items:flex-start;gap:8px;font-size:13px;margin-top:8px"><input type="checkbox" data-f="kundenpflege" style="flex:0 0 auto;margin-top:2px" ${c.kundenpflege !== false ? 'checked' : ''} ${dis}>
         <span>Kunde wird aktiv betreut <span class="leise">(Folgeaufträge mit Kundenpflege – höhere Provision)</span></span></label>` : ''}
     </div>
+    ${c.status === 'kunde' ? kundenprofilHtml(c, dis) : ''}
     <label class="feld">Notiz zum Ort <small>(Öffnungszeiten, Besonderheiten …)</small><textarea data-f="notiz" ${dis}>${esc(c.notiz)}</textarea></label>
 
     <div class="abschnitt">
@@ -2280,6 +2681,7 @@ panel.addEventListener('change', e => {
     c[f] = e.target.type === 'checkbox' ? e.target.checked : e.target.value;
     sichern(); markerZeichnen(); leisteZeichnen(); badgeSetzen();
     if (['status','betreuung','name'].includes(f)) panelZeichnen(c);
+    if (f === 'status' && c.status === 'kunde' && !c.verkaufsstelle && !c.shopText && !c.shopFoto) setTimeout(() => kundenprofilOeffnen(c, true), 250);
   }
   if (e.target.dataset.akt === 'probe-status') { c.proben[+e.target.dataset.i].bestellung = e.target.value; sichern(); badgeSetzen();
     if (e.target.value === 'ja' && c.status !== 'kunde') { c.status = 'kunde'; sichern(); panelZeichnen(c); markerZeichnen(); leisteZeichnen(); toast('Wie schön! Status steht jetzt auf „Kunde“.'); } }
@@ -2349,6 +2751,7 @@ panel.addEventListener('click', e => {
   }
   if (akt === 'bestellen') return bestellDialogOeffnen(c);
   if (akt === 'willkommen-vorschau') return willkommenVorschau(c.id);
+  if (akt === 'kundenprofil') return kundenprofilOeffnen(c, false);
   if (akt === 'mail-begruessung' || akt === 'mail-willkommen') return mailSendenKnopf(c, akt.slice(5), b);
   if (akt === 'antrag') return antragStellen(c);
   if (akt === 'antrag-zurueck') return antragEntfernen(b.dataset.id, 'zurueckgezogen');
@@ -2902,6 +3305,36 @@ const monatPlus = (m, n) => { const d = new Date(m + '-15T12:00'); d.setMonth(d.
 const stueck = liste => liste.reduce((n, x) => n + Math.max(1, +x.anzahl || 1), 0);
 const alleAbgaben = () => D.cafes.flatMap(c => c.proben.map(p => ({...p, ort:c})));
 
+// Größe einheitlich schreiben: „100g“, „100 G“ → „100 g“; „1kg“ → „1 kg“
+const groesse = m => { const t = String(m || '').trim().replace(/\s+/g, ' '); const x = t.match(/^(\d+(?:[.,]\d+)?)\s*(g|kg|ml|l|stk\.?|stück)$/i);
+  return x ? `${x[1].replace('.', ',')} ${x[2].toLowerCase().replace(/^stk\.?$|^stück$/, 'Stück')}` : t; };
+const sorteName = s => D.einstellungen.sorten.find(x => x.toLowerCase() === String(s).trim().toLowerCase()) || String(s).trim();
+// Je Person: erhalten / abgegeben im Monat und „noch da“ bis Monatsende – nach Produkt und Größe
+function probenBestand(personId){
+  const imMonat = x => String(x.datum).slice(0, 7) === probenMonat, bisEnde = x => String(x.datum).slice(0, 7) <= probenMonat;
+  const zeilen = {};
+  const zeile = x => { const k = sorteName(x.sorte) + '|' + groesse(x.menge);
+    return zeilen[k] = zeilen[k] || {sorte:sorteName(x.sorte), groesse:groesse(x.menge), erhalten:0, abgegeben:0, erhaltenGesamt:0, abgegebenGesamt:0}; };
+  (D.ausgaben || []).filter(x => x.person === personId && bisEnde(x)).forEach(x => { const z = zeile(x), n = Math.max(1, +x.anzahl || 1);
+    z.erhaltenGesamt += n; if (imMonat(x)) z.erhalten += n; });
+  alleAbgaben().filter(x => x.person === personId && bisEnde(x)).forEach(x => { const z = zeile(x), n = Math.max(1, +x.anzahl || 1);
+    z.abgegebenGesamt += n; if (imMonat(x)) z.abgegeben += n; });
+  const liste = Object.values(zeilen).map(z => ({...z, noch:z.erhaltenGesamt - z.abgegebenGesamt}));
+  // Ältere Einträge „erhalten“ ohne Größe: abgegebene Proben derselben Sorte zuerst damit verrechnen (statt ein Minus zu zeigen)
+  liste.filter(z => z.noch < 0 && z.groesse).forEach(z => {
+    const pool = liste.find(y => y.sorte === z.sorte && !y.groesse && y.noch > 0); if (!pool) return;
+    const n = Math.min(pool.noch, -z.noch); pool.noch -= n; z.noch += n; });
+  return liste
+    .filter(z => z.erhalten || z.abgegeben || z.noch).sort((a, b) => a.sorte.localeCompare(b.sorte, 'de') || a.groesse.localeCompare(b.groesse, 'de', {numeric:true}));
+}
+function bestandTabelle(personId){
+  const zeilen = probenBestand(personId);
+  if (!zeilen.length) return '';
+  return `<div style="overflow-x:auto"><table class="produkte"><tr><th>Produkt</th><th>Größe</th><th class="zahl">Erhalten</th><th class="zahl">Abgegeben</th><th class="zahl" title="alle erhaltenen minus alle abgegebenen bis Monatsende">Noch da</th></tr>
+    ${zeilen.map(z => `<tr><td>${esc(z.sorte)}</td><td>${esc(z.groesse) || '<span class="leise">–</span>'}</td><td class="zahl">${z.erhalten || ''}</td><td class="zahl">${z.abgegeben || ''}</td>
+      <td class="zahl">${z.noch < 0 ? `<span class="vs-warn" title="Mehr abgegeben als erhalten eingetragen – vielleicht fehlt ein Eintrag bei „Erhalten“">${z.noch} ⚠︎</span>` : `<b>${z.noch}</b>`}</td></tr>`).join('')}
+  </table></div>`;
+}
 function probenDaten(){
   if (probenPerson === null) probenPerson = istLeitung() ? '' : ich.id;
   const imMonat = x => String(x.datum).slice(0, 7) === probenMonat;
@@ -2944,12 +3377,17 @@ function probenZeichnen(){
         <td class="zahl">${z.bestellt}</td></tr>`).join('')}</table></div>`
       : '<div class="leer">In diesem Monat gibt es noch keine Proben.</div>'}
 
+    <h3>Nach Produkt und Größe</h3>
+    <p class="leise" style="margin:-4px 0 8px;font-size:13px">Was jede Person im ${monatName(probenMonat)} erhalten und abgegeben hat – und was bis Monatsende noch da ist.</p>
+    ${d.personen.map(z => { const t = bestandTabelle(z.p.id); return t ? `<div class="prov-person"><b>${esc(z.p.name)}</b></div>${t}` : ''; }).join('')
+      || '<div class="leer">Noch nichts eingetragen.</div>'}
+
     <h3>Abgegeben im ${monatName(probenMonat)} <span class="leise" style="font-weight:400;font-size:13px">${stueck(d.abgegeben)} ${stueck(d.abgegeben) === 1 ? 'Probe' : 'Proben'} an ${(n => n + (n === 1 ? ' Ort' : ' Orten'))(new Set(d.abgegeben.map(x => x.ort.id)).size)}</span></h3>
     ${Object.keys(proProdukt).length ? `<div class="einst-liste" style="margin-bottom:8px">${Object.entries(proProdukt).sort((a, b) => b[1] - a[1]).map(([s, n]) => `<span class="tag">${esc(s)} · ${n}</span>`).join('')}</div>` : ''}
     <div class="karten-liste">${d.abgegeben.map(x => `<div class="cafe-karte" data-cafe="${x.ort.id}">
-        <span class="status-pille" style="background:${STATUS.probe.farbe}">${Math.max(1, +x.anzahl || 1)} × ${esc(x.sorte)}</span>
+        <span class="status-pille" style="background:${STATUS.probe.farbe}">${Math.max(1, +x.anzahl || 1)} × ${esc(x.sorte)}${x.menge ? ' ' + esc(groesse(x.menge)) : ''}</span>
         <div class="info"><div class="name">${esc(x.ort.name)}</div>
-          <div class="klein">${datumDe(x.datum)} · ${esc([x.ort.stadt, x.ort.land].filter(Boolean).join(', ') || 'ohne Adresse')}${x.menge ? ' · ' + esc(x.menge) : ''} · von ${esc(person(x.person)?.name || '?')}</div>
+          <div class="klein">${datumDe(x.datum)} · ${esc([x.ort.stadt, x.ort.land].filter(Boolean).join(', ') || 'ohne Adresse')} · von ${esc(person(x.person)?.name || '?')}</div>
           <div class="klein">${rueck[x.bestellung] || ''}</div></div></div>`).join('')
       || '<div class="leer">Keine abgegebenen Proben in diesem Monat.</div>'}</div>
 
@@ -2960,13 +3398,15 @@ function probenZeichnen(){
         <select id="au-person">${D.team.map(p => `<option value="${p.id}" ${(probenPerson || '') === p.id ? 'selected' : ''}>${esc(p.name)}</option>`).join('')}</select>
         <input id="au-sorte" list="au-produkte" placeholder="Produkt" style="flex:1;min-width:120px">
         <datalist id="au-produkte">${D.einstellungen.sorten.map(s => `<option value="${esc(s)}">`).join('')}</datalist>
+        <input id="au-menge" list="au-groessen" placeholder="Größe, z.B. 100 g" style="width:130px">
+        <datalist id="au-groessen">${['10 g', '20 g', '25 g', '33 g', '100 g', '150 g', '250 g', '300 g', '500 g', '1 kg', '1 Stück'].map(g => `<option value="${g}">`).join('')}</datalist>
         <input id="au-anzahl" type="number" min="1" value="1" style="width:70px" aria-label="Anzahl">
         <input id="au-datum" type="date" value="${probenMonat === heute().slice(0, 7) ? heute() : probenMonat + '-01'}">
         <input id="au-notiz" placeholder="Notiz (optional)" style="flex:1;min-width:120px">
         <button class="knopf klein" data-pr-dazu>Eintragen</button>
       </div></div>` : ''}
     <div class="karten-liste">${d.erhalten.map(a => `<div class="cafe-karte">
-        <span class="status-pille" style="background:var(--gold)">${Math.max(1, +a.anzahl || 1)} × ${esc(a.sorte)}</span>
+        <span class="status-pille" style="background:var(--gold)">${Math.max(1, +a.anzahl || 1)} × ${esc(a.sorte)}${a.menge ? ' ' + esc(groesse(a.menge)) : ''}</span>
         <div class="info"><div class="name">${esc(person(a.person)?.name || '?')}</div>
           <div class="klein">${datumDe(a.datum)}${a.notiz ? ' · ' + esc(a.notiz) : ''}${a.erfasstVon ? ' · eingetragen von ' + esc(person(a.erfasstVon)?.name || '?') : ''}</div></div>
         ${leitung ? `<button class="weg" data-pr-weg="${a.id}" title="Eintrag löschen" aria-label="Eintrag löschen">×</button>` : ''}</div>`).join('')
@@ -2983,10 +3423,10 @@ document.getElementById('seite-proben').addEventListener('click', e => {
     const bekannt = D.einstellungen.sorten.find(x => x.toLowerCase() === sorte.toLowerCase());
     if (!bekannt) D.einstellungen.sorten.push(sorte);
     const a = {id:uid(), person:document.getElementById('au-person').value, datum:document.getElementById('au-datum').value || heute(),
-      sorte:bekannt || sorte, anzahl:Math.max(1, +document.getElementById('au-anzahl').value || 1),
+      sorte:bekannt || sorte, menge:groesse(document.getElementById('au-menge').value), anzahl:Math.max(1, +document.getElementById('au-anzahl').value || 1),
       notiz:document.getElementById('au-notiz').value.trim(), erfasstVon:ich.id};
     D.ausgaben.push(a); sichern(); probenZeichnen();
-    return toast(`Eingetragen: ${a.anzahl} × ${a.sorte} für ${person(a.person)?.name || '?'}.`);
+    return toast(`Eingetragen: ${a.anzahl} × ${a.sorte}${a.menge ? ' ' + a.menge : ''} für ${person(a.person)?.name || '?'}.`);
   }
   if (b.dataset.prWeg) {
     const a = D.ausgaben.find(x => x.id === b.dataset.prWeg);
@@ -3013,10 +3453,12 @@ async function probenExcel(){
     };
     blatt(d.personen.map(z => ({'Botschafter':z.p.name, 'Erhalten':z.erhalten, 'Abgegeben':z.abgegeben, 'Noch da (bis Monatsende)':z.erfasst ? z.noch : '', 'Bestellung danach':z.bestellt})),
       'Übersicht', [24, 10, 10, 22, 16]);
+    blatt(d.personen.flatMap(z => probenBestand(z.p.id).map(b => ({'Botschafter':z.p.name, 'Produkt':b.sorte, 'Größe':b.groesse,
+      'Erhalten (Monat)':b.erhalten, 'Abgegeben (Monat)':b.abgegeben, 'Noch da (bis Monatsende)':b.noch}))), 'Nach Produkt', [20, 18, 10, 16, 18, 22]);
     blatt(d.abgegeben.map(x => ({'Datum':datum(x.datum), 'Ort':x.ort.name, 'Adresse':x.ort.adresse, 'Stadt':x.ort.stadt, 'Land':x.ort.land,
-      'Produkt':x.sorte, 'Anzahl':Math.max(1, +x.anzahl || 1), 'Größe':x.menge, 'Botschafter':person(x.person)?.name || '',
+      'Produkt':x.sorte, 'Anzahl':Math.max(1, +x.anzahl || 1), 'Größe':groesse(x.menge), 'Botschafter':person(x.person)?.name || '',
       'Bestellung danach':{offen:'noch offen', ja:'ja', nein:'nein'}[x.bestellung] || ''})), 'Abgegeben', [12, 28, 24, 18, 14, 18, 8, 12, 18, 16]);
-    blatt(d.erhalten.map(a => ({'Datum':datum(a.datum), 'Botschafter':person(a.person)?.name || '', 'Produkt':a.sorte, 'Anzahl':Math.max(1, +a.anzahl || 1),
+    blatt(d.erhalten.map(a => ({'Datum':datum(a.datum), 'Botschafter':person(a.person)?.name || '', 'Produkt':a.sorte, 'Größe':a.menge || '', 'Anzahl':Math.max(1, +a.anzahl || 1),
       'Notiz':a.notiz, 'Eingetragen von':person(a.erfasstVon)?.name || ''})), 'Erhalten', [12, 18, 18, 8, 30, 18]);
     XLSX.writeFile(mappe, `proben-${probenMonat}${istLeitung() && !probenPerson ? '' : '-' + (person(istLeitung() ? probenPerson : ich.id)?.name || '').toLowerCase().replace(/[^a-z0-9äöüß]+/g, '-')}.xlsx`);
     toast('Excel-Tabelle ist heruntergeladen ✓');
@@ -3047,6 +3489,7 @@ function einstellungenZeichnen(){
     ${!DEMO ? odooAbschnitt(leitung) : ''}
     ${!DEMO && leitung ? abgaengeAbschnitt() : ''}
     ${leitung ? willkommenAbschnitt() : ''}
+    ${verkaufsstellenAbschnitt()}
     <h3>Arten (Auswahlliste)</h3>${liste('arten')}
     <h3>Produkte für Proben</h3><div class="hinweis" style="text-align:left;margin:-4px 0 8px">Neue Produkte entstehen auch automatisch, wenn jemand bei einer Probe etwas Neues eintippt.</div>${liste('sorten')}
     <h3>Erinnerung</h3>
@@ -3391,7 +3834,9 @@ async function start(){
   document.getElementById('ich-name').textContent = ich.name;
   document.getElementById('ich-avatar').textContent = ich.name.split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase();
   document.getElementById('ich-rolle').textContent = istLeitung() ? 'Teamleitung' : 'Betreuung';
+  document.querySelectorAll('#tabs button').forEach(b => { b.title = b.querySelector(':scope > span:last-child')?.textContent.trim() || ''; });
   avatarZeichnen();
+  austauschLaden().then(austauschBadge); setInterval(() => { if (!document.hidden) austauschLaden().then(austauschNeu); }, 60000);
   legendeZeichnen(); allesZeichnen(); ansichtWechseln('karte');
   googleStandLaden();
   setTimeout(() => odooAbgleich(false), 1500);
