@@ -576,11 +576,11 @@ table.modell td.treffer{background:var(--gold-hell);font-weight:700}
 
 <div id="leiste">
   <label class="suche-feld"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg><input type="search" id="suche" placeholder="Ort, Stadt oder Adresse suchen …" aria-label="Suchen" enterkeyhint="search"><button type="button" id="suche-los" class="suche-los" aria-label="Suchen">Suchen</button></label>
-  <div class="chips" id="status-chips"></div>
+  <button class="chip" id="f-meine">Nur meine</button>
   <select id="f-betreuung"></select>
   <select id="f-art"></select>
-  <button class="chip" id="f-meine">Nur meine</button>
   <button class="chip versteckt" id="f-ohne" title="Orte, die noch keinen Punkt auf der Karte haben – z.B. aus Odoo ohne Adresse"></button>
+  <div class="chips" id="status-chips"></div>
   <span id="google-zaehler" class="google-zaehler versteckt" title="Google-Tageslimit – damit die App kostenlos bleibt"></span>
 </div>
 
