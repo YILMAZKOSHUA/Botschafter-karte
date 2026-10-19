@@ -470,6 +470,19 @@ table.team th{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color
 nav.tabs{overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;min-width:0;flex-shrink:1}
 nav.tabs::-webkit-scrollbar{display:none}
 nav.tabs button{flex-shrink:0;white-space:nowrap}
+@media (max-width:760px){
+  /* Ort-Fenster: ganzer Bildschirm, schließen mit × oben rechts */
+  #panel{position:fixed;inset:0;top:0;width:100%;height:100%;border-radius:0;border-top:0;z-index:1600;padding-top:env(safe-area-inset-top)}
+  body.panel-offen main{z-index:1700}
+  body.panel-offen header, body.panel-offen #leiste, body.panel-offen nav.tabs{visibility:hidden}
+  #leiste select,.inline select,.feld select{height:auto;min-height:42px}
+  /* iPhone vergrößert die Seite beim Tippen in Felder unter 16 px Schrift – deshalb 16 px */
+  input,select,textarea{font-size:16px!important}
+  /* Hinweis „Tippe auf die Karte …“ als Leiste unten statt Blase */
+  #modus{top:auto;bottom:12px;left:12px;right:12px;transform:none;max-width:none;border-radius:16px;flex-wrap:wrap;justify-content:center;text-align:center;padding:10px 12px}
+  #modus-text{flex:1 1 100%;line-height:1.35}
+  body.neu-modus #treffer{bottom:118px;max-height:calc(100% - 140px)}   /* Suchtreffer über der Hinweis-Leiste */
+}
 @media (max-width:760px){ nav.tabs{justify-content:flex-start} nav.tabs button{flex:0 0 auto;min-width:68px;padding:6px 8px}
   nav.tabs button span:not(.badge){font-size:11px} }
 .so-gehts{background:#fff;border:1px solid var(--linie);border-radius:12px;padding:8px 12px;margin:0 0 10px;font-size:14px}
@@ -1325,7 +1338,7 @@ document.getElementById('suche').addEventListener('keydown', async e => {
     if (mitPunkt.length < treffer.length) toast(`${treffer.length - mitPunkt.length} Treffer ohne Kartenpunkt – sie stehen in der Liste.`);
     return;
   }
-  // Kein eigener Ort gefunden → bei Google nach Orten suchen (z.B. „Solebich Bad Kissingen“)
+  // Kein eigener Ort gefunden → bei Google nach Orten suchen (z.B. „Cafe Sonnenschein Berlin“)
   if (K.art === 'google') {
     ansichtWechseln('karte');
     const n = await googleSuche(q, false);
@@ -2997,7 +3010,7 @@ async function googleSuche(text, imBereich){
       adresse:p.formattedAddress || '', info:''}));
     kandidatenZeigen(liste);
     if (liste.length > 1 && !imBereich) K.fitPoints(liste.map(k => [k.lat, k.lng]), 16);
-    if (!liste.length) toast('Google hat dazu nichts gefunden. Magst du den Namen mit Stadt probieren, z.B. „Solebich Bad Kissingen“?');
+    if (!liste.length) toast('Google hat dazu nichts gefunden. Magst du den Namen mit Stadt probieren, z.B. „Cafe Sonnenschein Berlin“?');
     else toast(`${liste.length} Treffer`);
     return liste.length;
   } catch(e){
@@ -3099,17 +3112,29 @@ function aktivitaeten(c){
 const letzteAktivitaet = c => aktivitaeten(c)[0] || null;
 const wannText = iso => { const n = tageSeit(iso); return n <= 0 ? 'heute' : n === 1 ? 'gestern' : `vor ${n} Tagen`; };
 
-let listeModus = 'orte', listeSort = 'aktiv', chronikPerson = '';
+let listeModus = 'orte', listeSort = 'aktiv', chronikPerson = '', listePerson = 'ich';
+try { listePerson = localStorage.getItem('mm-liste-person') ?? 'ich'; } catch(e){}
+// Liste + Kennzahlen zeigen zuerst die eigenen Orte – umschaltbar auf alle, eine Person oder „ohne Betreuung“ (die Karte zeigt weiter alle)
+const listeFilter = c => listePerson === '' ? true : listePerson === 'ohne' ? !c.betreuung : c.betreuung === (listePerson === 'ich' ? ich.id : listePerson);
 try { listeModus = localStorage.getItem('mm-liste-modus') || 'orte'; listeSort = localStorage.getItem('mm-liste-sort') || 'aktiv'; } catch(e){}
 
 function listeZeichnen(){
-  const cafes = sichtbareCafes();
-  const zahl = s => D.cafes.filter(c => c.status === s).length;
-  const probenOffen = D.cafes.reduce((n, c) => n + c.proben.filter(p => p.bestellung === 'offen').length, 0);
-  const alle = D.cafes.flatMap(aktivitaeten);
+  if (listePerson !== 'ich' && listePerson !== '' && listePerson !== 'ohne' && !person(listePerson)) listePerson = 'ich';
+  const meine = D.cafes.filter(listeFilter), cafes = sichtbareCafes().filter(listeFilter);
+  const zahl = s => meine.filter(c => c.status === s).length;
+  const probenOffen = meine.reduce((n, c) => n + c.proben.filter(p => p.bestellung === 'offen').length, 0);
+  const alle = meine.flatMap(aktivitaeten);
+  const titel = listePerson === 'ich' ? 'Meine Orte' : listePerson === '' ? 'Alle Orte' : listePerson === 'ohne' ? 'Orte ohne Betreuung' : `Orte von ${person(listePerson)?.name || '?'}`;
   const letzte30 = alle.filter(a => tageSeit(a.datum) <= 30).length;
   const kopf = `
-    <div class="liste-kopf"><h2>Alle Orte</h2>${istLeitung() ? '<button class="knopf leise klein" data-excel>⬇︎ Excel</button>' : ''}</div>
+    <div class="liste-kopf"><h2>${esc(titel)}</h2>${istLeitung() ? '<button class="knopf leise klein" data-excel>⬇︎ Excel</button>' : ''}</div>
+    <div class="inline" style="margin:-4px 0 12px;align-items:center"><span class="leise" style="font-size:13px">Zeigen:</span>
+      <select data-liste-person>
+        <option value="ich" ${listePerson === 'ich' ? 'selected' : ''}>Meine Orte</option>
+        <option value="" ${listePerson === '' ? 'selected' : ''}>Alle Botschafter</option>
+        ${D.team.filter(p => p.id !== ich.id).map(p => `<option value="${p.id}" ${listePerson === p.id ? 'selected' : ''}>${esc(p.name)}</option>`).join('')}
+        <option value="ohne" ${listePerson === 'ohne' ? 'selected' : ''}>Ohne Betreuung</option>
+      </select></div>
     <div class="kennzahlen">
       <div class="kennzahl"><b>${zahl('kunde')}</b><span>Kunden</span></div>
       <div class="kennzahl"><b>${zahl('probe') + zahl('angesprochen')}</b><span>im Gespräch</span></div>
@@ -3156,7 +3181,7 @@ function listeZeichnen(){
       <div class="karten-liste">${liste.map(c => {
         const k = listeSort === 'region' && c.region !== region ? `<h3>${esc(c.region || 'Ohne Region')}</h3>` : ''; region = c.region;
         return k + cafeZeile(c);
-      }).join('') || '<div class="leer">Mit diesen Filtern zeigt sich gerade kein Ort.</div>'}</div>`;
+      }).join('') || `<div class="leer">${listePerson === 'ich' && !meine.length ? 'Du betreust noch keinen Ort – oben bei „Zeigen“ siehst du alle.' : 'Mit diesen Filtern zeigt sich gerade kein Ort.'}</div>`}</div>`;
   }
   document.getElementById('liste-inhalt').innerHTML = kopf + inhalt;
 }
@@ -3267,6 +3292,7 @@ document.getElementById('seite-liste').addEventListener('click', e => {
 });
 document.getElementById('seite-liste').addEventListener('change', e => {
   if (e.target.matches('[data-liste-sort]')) { listeSort = e.target.value; try { localStorage.setItem('mm-liste-sort', listeSort); } catch(err){} listeZeichnen(); }
+  if (e.target.matches('[data-liste-person]')) { listePerson = e.target.value; try { localStorage.setItem('mm-liste-person', listePerson); } catch(err){} listeZeichnen(); }
   if (e.target.matches('[data-chronik-person]')) { chronikPerson = e.target.value; listeZeichnen(); }
 });
 function cafeZeile(c, zusatz = ''){
@@ -3790,7 +3816,7 @@ const RUNDGANG = [
     <div class="rg-leg"><span class="leg-gold"></span><span>goldener Punkt – offen für eine Kakao-Zeremonie oder ein Event</span></div>
     <p class="leise" style="font-size:13px">Die Legende findest du auch unten links auf der Karte.</p>`},
   {titel:'Orte finden und anlegen', html:() => `
-    <p>🔎 <b>Suchen:</b> Oben den Namen mit Stadt eintippen, z.B. „Solebich Bad Kissingen“, und Enter drücken.
+    <p>🔎 <b>Suchen:</b> Oben den Namen mit Stadt eintippen, z.B. „Cafe Sonnenschein Berlin“, und Enter drücken.
        Es öffnet sich eine Ortskarte mit Öffnungszeiten, Telefon und Website.</p>
     <p>➕ <b>Auf die Karte bringen:</b> In der Ortskarte auf „Als potenziell auf die Karte“ tippen –
        oder mit <b>＋ Ort / Kunde</b> einfach auf die Karte tippen.</p>
