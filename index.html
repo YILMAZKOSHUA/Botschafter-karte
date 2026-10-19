@@ -449,6 +449,7 @@ table.team th{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color
 .blase-zeit{font-size:11px;color:var(--leise);margin-top:2px}
 .chat-eingabe{display:flex;gap:8px;align-items:flex-end;margin-top:8px}
 .chat-eingabe textarea{flex:1}
+.ort-link{padding:0;font-size:13px;text-align:left}
 .mail-zeile{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:6px;font-size:13px}
 
 /* Dokumente + Abgänge */
@@ -465,10 +466,12 @@ table.team th{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color
 .abgang-tag.erledigt{opacity:.75}
 .link-knopf{border:0;background:none;color:var(--kakao);text-decoration:underline;font-size:12px;padding:0 0 0 6px}
 @media (max-width:760px){ nav.tabs button span:not(.badge){font-size:10px} }
-/* Acht Reiter: auf mittelbreiten Bildschirmen enger, dazwischen nur Symbole (Name als Tooltip) */
-@media (min-width:761px) and (max-width:1280px){ nav.tabs button{padding:8px 9px;gap:6px;font-size:13px} }
-@media (min-width:761px) and (max-width:1060px){ nav.tabs button > span:last-child:not(.tab-sym){display:none} nav.tabs button{padding:9px 11px} }
-@media (max-width:420px){ nav.tabs button span:not(.badge){font-size:9px;letter-spacing:-.1px} nav.tabs{padding-left:2px;padding-right:2px} }
+/* Acht Reiter: Namen bleiben lesbar – passt es nicht, lässt sich die Leiste seitlich wischen */
+nav.tabs{overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;min-width:0;flex-shrink:1}
+nav.tabs::-webkit-scrollbar{display:none}
+nav.tabs button{flex-shrink:0;white-space:nowrap}
+@media (max-width:760px){ nav.tabs{justify-content:flex-start} nav.tabs button{flex:0 0 auto;min-width:68px;padding:6px 8px}
+  nav.tabs button span:not(.badge){font-size:11px} }
 .so-gehts{background:#fff;border:1px solid var(--linie);border-radius:12px;padding:8px 12px;margin:0 0 10px;font-size:14px}
 .so-gehts summary{cursor:pointer;font-weight:600;color:var(--kakao)}
 .so-gehts ol{margin:8px 0 6px;padding-left:20px}
@@ -1346,6 +1349,7 @@ document.getElementById('tabs').onclick = e => { const b = e.target.closest('[da
 function ansichtWechseln(v){
   ansicht = v;
   document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('aktiv', b.dataset.view === v));
+  document.querySelector(`#tabs button[data-view="${v}"]`)?.scrollIntoView({inline:'nearest', block:'nearest'});
   ['liste','erinnerungen','proben','dokumente','austausch','provision','einstellungen'].forEach(s => document.getElementById('seite-'+s).classList.toggle('versteckt', s !== v));
   ['karten-knoepfe','legende'].forEach(id => document.getElementById(id).classList.toggle('versteckt', v !== 'karte'));
   document.getElementById('leiste').classList.toggle('versteckt', ['einstellungen', 'erinnerungen', 'proben', 'dokumente', 'austausch', 'provision'].includes(v));
@@ -2052,6 +2056,11 @@ async function bestellungenLaden(){
 const KATEGORIEN = {frage:'Frage', event:'Eventplanung', faq:'FAQ', feedback:'Feedback', allgemein:'Allgemein'};
 let FORUM = {themen:[], beitraege:[], gelesen:{}}, CHAT = [], austauschGeladen = false;
 let austauschAnsicht = 'forum', themaOffen = null, chatMit = null, forumFilter = 'alle', neuesThemaOffen = false, austauschKanal = null;
+// Entwürfe: Getipptes bleibt erhalten, auch wenn die Seite neu gezeichnet wird (neue Nachrichten, Abgleich)
+const ENTWURF = {};
+const entwurfKey = id => id + '|' + (id === 'aus-nachricht' ? chatMit : id === 'aus-antwort' ? themaOffen : 'neu');
+const entwurf = id => esc(ENTWURF[entwurfKey(id)] || '');
+const austauschStand = () => `${FORUM.themen.length}|${FORUM.beitraege.length}|${CHAT.length}|${CHAT.filter(m => m.gelesen).length}`;
 function demoAustausch(){
   const t = (tageZurueck, std) => { const d = new Date(); d.setDate(d.getDate() - tageZurueck); d.setHours(std, 15, 0, 0); return d.toISOString(); };
   const lena = D.team.find(p => p.name === 'Lena')?.id, mira = D.team.find(p => p.name === 'Mira')?.id;
@@ -2116,6 +2125,13 @@ async function gelesenMarkieren(){
 }
 async function austauschOeffnen(){ await austauschLaden(); austauschZeichnen(); gelesenMarkieren(); }
 function austauschZeichnen(){
+  // Fokus und Cursor merken, damit man nach dem Neuzeichnen einfach weitertippen kann
+  const fokus = document.activeElement?.id?.startsWith('aus-') ? document.activeElement : null;
+  const merk = fokus ? {id:fokus.id, a:fokus.selectionStart, b:fokus.selectionEnd} : null;
+  austauschInhalt();
+  if (merk) { const el = document.getElementById(merk.id); if (el) { el.focus(); try { el.setSelectionRange(merk.a, merk.b); } catch(e){} } }
+}
+function austauschInhalt(){
   const el = document.getElementById('austausch-inhalt'), leitung = istLeitung();
   if (!DEMO && !austauschGeladen) { el.innerHTML = '<h2>Austausch</h2><div class="leer">Lädt … (Falls das so bleibt: bitte einmal die neue schema.sql in Supabase ausführen.)</div>'; return; }
   const neuForum = FORUM.themen.filter(themaNeu).length, neuChat = chatUngelesen();
@@ -2137,7 +2153,7 @@ function austauschZeichnen(){
         <div class="beitrag-inhalt"><div class="beitrag-kopf"><b>${esc(person(b.person)?.name || '?')}</b> <span class="leise">${vorWann(b.erstellt)}</span>
           ${b.person === ich.id || leitung ? `<button class="weg" data-aus-beitrag-weg="${b.id}" title="Beitrag löschen" aria-label="Beitrag löschen">×</button>` : ''}</div>
           <div>${textHtml(b.text)}</div></div></div>`).join('') || '<div class="leer">Noch keine Beiträge.</div>'}</div>
-      <div class="neu-box" style="margin-top:10px"><textarea id="aus-antwort" rows="3" placeholder="Deine Antwort …" style="width:100%"></textarea>
+      <div class="neu-box" style="margin-top:10px"><textarea id="aus-antwort" rows="3" placeholder="Deine Antwort …" style="width:100%">${entwurf('aus-antwort')}</textarea>
         <div class="inline" style="justify-content:flex-end;margin-top:6px"><button class="knopf gold klein" data-aus-antworten>Antworten</button></div></div>`;
     return;
   }
@@ -2147,10 +2163,10 @@ function austauschZeichnen(){
       <div class="chips">${[['alle', 'Alle'], ...Object.entries(KATEGORIEN)].map(([k, v]) => `<button class="chip${forumFilter === k ? ' an' : ''}" data-aus-filter="${k}">${v}</button>`).join('')}</div>
       <button class="knopf gold klein" data-aus-neu>＋ Neues Thema</button></div>
     ${neuesThemaOffen ? `<div class="neu-box" style="margin-bottom:10px">
-      <input id="aus-titel" maxlength="200" placeholder="Worum geht's? z.B. „Zeremonie im November – wer ist dabei?“" style="width:100%">
+      <input id="aus-titel" maxlength="200" placeholder="Worum geht's? z.B. „Zeremonie im November – wer ist dabei?“" style="width:100%" value="${entwurf('aus-titel')}">
       <div class="inline" style="margin:6px 0"><select id="aus-kat">${Object.entries(KATEGORIEN).map(([k, v]) => `<option value="${k}" ${forumFilter === k ? 'selected' : ''}>${v}</option>`).join('')}</select>
         ${leitung ? '<label style="font-size:13px"><input type="checkbox" id="aus-anheften"> oben anheften</label>' : ''}</div>
-      <textarea id="aus-text" rows="4" placeholder="Dein erster Beitrag …" style="width:100%"></textarea>
+      <textarea id="aus-text" rows="4" placeholder="Dein erster Beitrag …" style="width:100%">${entwurf('aus-text')}</textarea>
       <div class="inline" style="justify-content:flex-end;margin-top:6px"><button class="knopf leise klein" data-aus-neu>Abbrechen</button><button class="knopf gold klein" data-aus-starten>Thema starten</button></div></div>` : ''}
     <div class="karten-liste">${liste.map(t => { const n = FORUM.beitraege.filter(b => b.thema_id === t.id).length;
       return `<div class="cafe-karte thema-zeile" data-aus-thema="${t.id}"><div class="info">
@@ -2173,7 +2189,7 @@ function chatHtml(){
     <h3 style="margin:0 0 8px">${esc(person(chatMit)?.name || '?')}</h3>
     <div class="chat-verlauf" id="chat-verlauf">${verlauf.map(m => `<div class="blase ${m.von === ich.id ? 'eigen' : ''}">${textHtml(m.text)}
       <div class="blase-zeit">${zeitDe(m.erstellt)}${m.von === ich.id && m.gelesen ? ' · gelesen' : ''}</div></div>`).join('') || '<div class="leer">Schreib die erste Nachricht.</div>'}</div>
-    <div class="chat-eingabe"><textarea id="aus-nachricht" rows="2" placeholder="Nachricht an ${esc(person(chatMit)?.name || '')} … (Enter = senden)"></textarea>
+    <div class="chat-eingabe"><textarea id="aus-nachricht" rows="2" placeholder="Nachricht an ${esc(person(chatMit)?.name || '')} … (Enter = senden)">${entwurf('aus-nachricht')}</textarea>
       <button class="knopf gold" data-aus-senden>Senden</button></div>`;
 }
 async function austauschSchreiben(tabelle, zeile){
@@ -2184,10 +2200,13 @@ async function austauschSchreiben(tabelle, zeile){
 }
 async function nachrichtSenden(){
   const feld = document.getElementById('aus-nachricht'), text = feld?.value.trim(); if (!text) return;
-  feld.value = '';
-  const m = await austauschSchreiben('chat_nachrichten', {von:ich.id, an:chatMit, text}); if (!m) { feld.value = text; return; }
+  feld.value = ''; delete ENTWURF[entwurfKey('aus-nachricht')];
+  const m = await austauschSchreiben('chat_nachrichten', {von:ich.id, an:chatMit, text}); if (!m) { feld.value = text; ENTWURF[entwurfKey('aus-nachricht')] = text; return; }
   if (!CHAT.some(x => x.id === m.id)) CHAT.push(m); austauschZeichnen(); document.getElementById('aus-nachricht')?.focus();
 }
+document.getElementById('seite-austausch').addEventListener('input', e => {
+  if (['aus-antwort', 'aus-nachricht', 'aus-titel', 'aus-text'].includes(e.target.id)) ENTWURF[entwurfKey(e.target.id)] = e.target.value;
+});
 document.getElementById('seite-austausch').addEventListener('keydown', e => {
   if (e.target.id === 'aus-nachricht' && e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); nachrichtSenden(); }
 });
@@ -2210,12 +2229,14 @@ document.getElementById('seite-austausch').addEventListener('click', async e => 
     if (DEMO) t.zuletzt = t.erstellt;
     FORUM.themen.push(t);
     const bt = await austauschSchreiben('forum_beitraege', {thema_id:t.id, person:ich.id, text}); if (bt && !FORUM.beitraege.some(x => x.id === bt.id)) FORUM.beitraege.push(bt);
+    delete ENTWURF[entwurfKey('aus-titel')]; delete ENTWURF[entwurfKey('aus-text')];
     t.zuletzt = bt?.erstellt || t.zuletzt; neuesThemaOffen = false; themaOffen = t.id; austauschZeichnen(); gelesenMarkieren();
     return toast('Thema gestartet ✓');
   }
   if ('ausAntworten' in d) {
     const feld = document.getElementById('aus-antwort'), text = feld.value.trim(); if (!text) return;
     const bt = await austauschSchreiben('forum_beitraege', {thema_id:themaOffen, person:ich.id, text}); if (!bt) return;
+    delete ENTWURF[entwurfKey('aus-antwort')];
     if (!FORUM.beitraege.some(x => x.id === bt.id)) FORUM.beitraege.push(bt);
     const t = FORUM.themen.find(x => x.id === themaOffen); if (t) t.zuletzt = bt.erstellt;
     austauschZeichnen(); return gelesenMarkieren();
@@ -3309,16 +3330,19 @@ const alleAbgaben = () => D.cafes.flatMap(c => c.proben.map(p => ({...p, ort:c})
 const groesse = m => { const t = String(m || '').trim().replace(/\s+/g, ' '); const x = t.match(/^(\d+(?:[.,]\d+)?)\s*(g|kg|ml|l|stk\.?|stück)$/i);
   return x ? `${x[1].replace('.', ',')} ${x[2].toLowerCase().replace(/^stk\.?$|^stück$/, 'Stück')}` : t; };
 const sorteName = s => D.einstellungen.sorten.find(x => x.toLowerCase() === String(s).trim().toLowerCase()) || String(s).trim();
+// „Kukulkan 100g“ → Produkt „Kukulkan“, Größe „100 g“ (wenn die Größe im Produktnamen steht)
+const sorteTeilen = (sorte, menge) => { const m = String(sorte).trim().match(/^(.*?)[\s,–-]*\(?(\d+(?:[.,]\d+)?\s*(?:g|kg))\)?$/i);
+  return m && m[1].trim() ? {sorte:sorteName(m[1].trim()), groesse:groesse(menge) || groesse(m[2])} : {sorte:sorteName(sorte), groesse:groesse(menge)}; };
 // Je Person: erhalten / abgegeben im Monat und „noch da“ bis Monatsende – nach Produkt und Größe
 function probenBestand(personId){
   const imMonat = x => String(x.datum).slice(0, 7) === probenMonat, bisEnde = x => String(x.datum).slice(0, 7) <= probenMonat;
   const zeilen = {};
-  const zeile = x => { const k = sorteName(x.sorte) + '|' + groesse(x.menge);
-    return zeilen[k] = zeilen[k] || {sorte:sorteName(x.sorte), groesse:groesse(x.menge), erhalten:0, abgegeben:0, erhaltenGesamt:0, abgegebenGesamt:0}; };
+  const zeile = x => { const t = sorteTeilen(x.sorte, x.menge), k = t.sorte + '|' + t.groesse;
+    return zeilen[k] = zeilen[k] || {...t, erhalten:0, abgegeben:0, erhaltenGesamt:0, abgegebenGesamt:0, orte:{}}; };
   (D.ausgaben || []).filter(x => x.person === personId && bisEnde(x)).forEach(x => { const z = zeile(x), n = Math.max(1, +x.anzahl || 1);
     z.erhaltenGesamt += n; if (imMonat(x)) z.erhalten += n; });
   alleAbgaben().filter(x => x.person === personId && bisEnde(x)).forEach(x => { const z = zeile(x), n = Math.max(1, +x.anzahl || 1);
-    z.abgegebenGesamt += n; if (imMonat(x)) z.abgegeben += n; });
+    z.abgegebenGesamt += n; if (imMonat(x)) { z.abgegeben += n; z.orte[x.ort.id] = (z.orte[x.ort.id] || 0) + n; } });
   const liste = Object.values(zeilen).map(z => ({...z, noch:z.erhaltenGesamt - z.abgegebenGesamt}));
   // Ältere Einträge „erhalten“ ohne Größe: abgegebene Proben derselben Sorte zuerst damit verrechnen (statt ein Minus zu zeigen)
   liste.filter(z => z.noch < 0 && z.groesse).forEach(z => {
@@ -3330,9 +3354,14 @@ function probenBestand(personId){
 function bestandTabelle(personId){
   const zeilen = probenBestand(personId);
   if (!zeilen.length) return '';
-  return `<div style="overflow-x:auto"><table class="produkte"><tr><th>Produkt</th><th>Größe</th><th class="zahl">Erhalten</th><th class="zahl">Abgegeben</th><th class="zahl" title="alle erhaltenen minus alle abgegebenen bis Monatsende">Noch da</th></tr>
+  // Ohne eingetragene „Erhalten“ lässt sich „noch da“ nicht sagen → „–“ statt Minus
+  const erfasst = (D.ausgaben || []).some(x => x.person === personId && String(x.datum).slice(0, 7) <= probenMonat);
+  const ortName = id => D.cafes.find(c => c.id === id)?.name || 'Ort';
+  return `<div style="overflow-x:auto"><table class="produkte"><tr><th>Produkt</th><th>Größe</th><th class="zahl">Erhalten</th><th class="zahl">Abgegeben</th><th>Abgegeben bei</th><th class="zahl" title="alle erhaltenen minus alle abgegebenen bis Monatsende">Noch da</th></tr>
     ${zeilen.map(z => `<tr><td>${esc(z.sorte)}</td><td>${esc(z.groesse) || '<span class="leise">–</span>'}</td><td class="zahl">${z.erhalten || ''}</td><td class="zahl">${z.abgegeben || ''}</td>
-      <td class="zahl">${z.noch < 0 ? `<span class="vs-warn" title="Mehr abgegeben als erhalten eingetragen – vielleicht fehlt ein Eintrag bei „Erhalten“">${z.noch} ⚠︎</span>` : `<b>${z.noch}</b>`}</td></tr>`).join('')}
+      <td>${Object.entries(z.orte).map(([id, n]) => `<button class="link-knopf ort-link" data-cafe="${id}" title="Ort öffnen">${esc(ortName(id))}</button>${n > 1 ? ` <span class="leise">(${n})</span>` : ''}`).join(', ')}</td>
+      <td class="zahl">${!erfasst ? '<span class="leise" title="Noch keine erhaltenen Proben eingetragen">–</span>'
+        : z.noch < 0 ? `<span class="vs-warn" title="Mehr abgegeben als erhalten eingetragen – vielleicht fehlt ein Eintrag bei „Erhalten“">${z.noch} ⚠︎</span>` : `<b>${z.noch}</b>`}</td></tr>`).join('')}
   </table></div>`;
 }
 function probenDaten(){
@@ -3359,7 +3388,8 @@ function probenDaten(){
 function probenZeichnen(){
   const d = probenDaten(), leitung = istLeitung();
   const proProdukt = {};
-  d.abgegeben.forEach(x => { proProdukt[x.sorte] = (proProdukt[x.sorte] || 0) + Math.max(1, +x.anzahl || 1); });
+  const probeName = x => { const t = sorteTeilen(x.sorte, x.menge); return t.sorte + (t.groesse ? ' ' + t.groesse : ''); };
+  d.abgegeben.forEach(x => { const k = probeName(x); proProdukt[k] = (proProdukt[k] || 0) + Math.max(1, +x.anzahl || 1); });
   const rueck = {offen:'<span class="rueck offen">Rückmeldung offen</span>', ja:'<span class="rueck ja">Bestellung 🎉</span>', nein:'<span class="rueck nein">keine Bestellung</span>'};
   document.getElementById('proben-inhalt').innerHTML = `
     <div class="liste-kopf"><h2>Proben</h2><button class="knopf leise klein" data-pr-excel>⬇︎ Monat als Excel</button></div>
@@ -3385,7 +3415,7 @@ function probenZeichnen(){
     <h3>Abgegeben im ${monatName(probenMonat)} <span class="leise" style="font-weight:400;font-size:13px">${stueck(d.abgegeben)} ${stueck(d.abgegeben) === 1 ? 'Probe' : 'Proben'} an ${(n => n + (n === 1 ? ' Ort' : ' Orten'))(new Set(d.abgegeben.map(x => x.ort.id)).size)}</span></h3>
     ${Object.keys(proProdukt).length ? `<div class="einst-liste" style="margin-bottom:8px">${Object.entries(proProdukt).sort((a, b) => b[1] - a[1]).map(([s, n]) => `<span class="tag">${esc(s)} · ${n}</span>`).join('')}</div>` : ''}
     <div class="karten-liste">${d.abgegeben.map(x => `<div class="cafe-karte" data-cafe="${x.ort.id}">
-        <span class="status-pille" style="background:${STATUS.probe.farbe}">${Math.max(1, +x.anzahl || 1)} × ${esc(x.sorte)}${x.menge ? ' ' + esc(groesse(x.menge)) : ''}</span>
+        <span class="status-pille" style="background:${STATUS.probe.farbe}">${Math.max(1, +x.anzahl || 1)} × ${esc(probeName(x))}</span>
         <div class="info"><div class="name">${esc(x.ort.name)}</div>
           <div class="klein">${datumDe(x.datum)} · ${esc([x.ort.stadt, x.ort.land].filter(Boolean).join(', ') || 'ohne Adresse')} · von ${esc(person(x.person)?.name || '?')}</div>
           <div class="klein">${rueck[x.bestellung] || ''}</div></div></div>`).join('')
@@ -3406,7 +3436,7 @@ function probenZeichnen(){
         <button class="knopf klein" data-pr-dazu>Eintragen</button>
       </div></div>` : ''}
     <div class="karten-liste">${d.erhalten.map(a => `<div class="cafe-karte">
-        <span class="status-pille" style="background:var(--gold)">${Math.max(1, +a.anzahl || 1)} × ${esc(a.sorte)}${a.menge ? ' ' + esc(groesse(a.menge)) : ''}</span>
+        <span class="status-pille" style="background:var(--gold)">${Math.max(1, +a.anzahl || 1)} × ${esc(probeName(a))}</span>
         <div class="info"><div class="name">${esc(person(a.person)?.name || '?')}</div>
           <div class="klein">${datumDe(a.datum)}${a.notiz ? ' · ' + esc(a.notiz) : ''}${a.erfasstVon ? ' · eingetragen von ' + esc(person(a.erfasstVon)?.name || '?') : ''}</div></div>
         ${leitung ? `<button class="weg" data-pr-weg="${a.id}" title="Eintrag löschen" aria-label="Eintrag löschen">×</button>` : ''}</div>`).join('')
@@ -3454,7 +3484,9 @@ async function probenExcel(){
     blatt(d.personen.map(z => ({'Botschafter':z.p.name, 'Erhalten':z.erhalten, 'Abgegeben':z.abgegeben, 'Noch da (bis Monatsende)':z.erfasst ? z.noch : '', 'Bestellung danach':z.bestellt})),
       'Übersicht', [24, 10, 10, 22, 16]);
     blatt(d.personen.flatMap(z => probenBestand(z.p.id).map(b => ({'Botschafter':z.p.name, 'Produkt':b.sorte, 'Größe':b.groesse,
-      'Erhalten (Monat)':b.erhalten, 'Abgegeben (Monat)':b.abgegeben, 'Noch da (bis Monatsende)':b.noch}))), 'Nach Produkt', [20, 18, 10, 16, 18, 22]);
+      'Erhalten (Monat)':b.erhalten, 'Abgegeben (Monat)':b.abgegeben,
+      'Abgegeben bei':Object.entries(b.orte).map(([id, n]) => (D.cafes.find(c => c.id === id)?.name || 'Ort') + (n > 1 ? ` (${n})` : '')).join(', '),
+      'Noch da (bis Monatsende)':b.noch}))), 'Nach Produkt', [20, 18, 10, 16, 18, 40, 22]);
     blatt(d.abgegeben.map(x => ({'Datum':datum(x.datum), 'Ort':x.ort.name, 'Adresse':x.ort.adresse, 'Stadt':x.ort.stadt, 'Land':x.ort.land,
       'Produkt':x.sorte, 'Anzahl':Math.max(1, +x.anzahl || 1), 'Größe':groesse(x.menge), 'Botschafter':person(x.person)?.name || '',
       'Bestellung danach':{offen:'noch offen', ja:'ja', nein:'nein'}[x.bestellung] || ''})), 'Abgegeben', [12, 28, 24, 18, 14, 18, 8, 12, 18, 16]);
@@ -3836,7 +3868,7 @@ async function start(){
   document.getElementById('ich-rolle').textContent = istLeitung() ? 'Teamleitung' : 'Betreuung';
   document.querySelectorAll('#tabs button').forEach(b => { b.title = b.querySelector(':scope > span:last-child')?.textContent.trim() || ''; });
   avatarZeichnen();
-  austauschLaden().then(austauschBadge); setInterval(() => { if (!document.hidden) austauschLaden().then(austauschNeu); }, 60000);
+  austauschLaden().then(austauschBadge); setInterval(() => { if (document.hidden) return; const vorher = austauschStand(); austauschLaden().then(() => austauschStand() !== vorher ? austauschNeu() : austauschBadge()); }, 60000);
   legendeZeichnen(); allesZeichnen(); ansichtWechseln('karte');
   googleStandLaden();
   setTimeout(() => odooAbgleich(false), 1500);
