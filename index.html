@@ -421,6 +421,9 @@ table.team th{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color
 .pf-bild{width:84px;height:84px;border-radius:50%;background:var(--creme) center/cover no-repeat;display:grid;place-items:center;font-size:26px;color:var(--kakao);flex:none;border:2px solid #fff;box-shadow:0 0 0 1px var(--linie)}
 #ich-avatar{cursor:pointer;background-size:cover;background-position:center}
 .willkommen-status{font-size:13px;color:var(--leise);margin-top:8px}
+.auftrag-chips{margin-top:4px;display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:12px}
+.auftrag-chips a{color:var(--kakao)}
+.rueck.storno{background:#f6e3e0;color:#8a2f22}
 .mail-zeile{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:6px;font-size:13px}
 
 /* Dokumente + Abgänge */
@@ -826,6 +829,7 @@ async function datenLaden(){
   await bestellungenLaden();
   await abgaengeLaden();
   await umsaetzeLaden();
+  await auftraegeLaden();
   await profileLaden();
   // Aus Odoo (schreibt nur die Brücke): Produkte, Odoo-Benutzer, letzter Abgleich
   const [pr2, nu, ab] = await Promise.all([
@@ -1948,19 +1952,58 @@ async function bestellungenLaden(){
   if (!error) D.bestellungen = data.map(x => ({id:x.id, ortId:x.ort_id, person:x.person || '', positionen:x.positionen || [], notiz:x.notiz,
     status:x.status, odooName:x.odoo_name, odooStatus:x.odoo_status, summe:x.summe, fehler:x.fehler, erstellt:x.erstellt}));
 }
+/* ---------- Bestellstatus aus Odoo: Angebot / bestätigt / storniert · Versand mit Sendungsnummer · Zahlung ---------- */
+let AUFTRAEGE = [];
+async function auftraegeLaden(){
+  if (DEMO || !sb) return;
+  const {data, error} = await sb.from('odoo_auftraege').select('*').order('datum', {ascending:false});
+  AUFTRAEGE = error ? [] : data;
+}
+// Demo: zu jedem Kunden ein paar Aufträge in verschiedenen Ständen
+function demoAuftraege(){
+  const t = n => tag(-n), liste = []; let n = 101;
+  D.cafes.filter(c => c.status === 'kunde').forEach((c, i) => {
+    liste.push({odoo_id:n, name:'S00' + n++, ort_id:c.id, datum:t(30 + i), status:'bestaetigt', betrag:777.7, versand:'versendet', sendungsnummer:'00340434' + (161 + i),
+      tracking_url:'https://www.dhl.de/de/privatkunden/pakete-empfangen/verfolgen.html', versendet_am:t(28 + i), zahlung:'bezahlt'});
+    liste.push({odoo_id:n, name:'S00' + n++, ort_id:c.id, datum:t(3), status:'bestaetigt', betrag:388.85, versand:i % 2 ? 'wird vorbereitet' : 'versendet',
+      sendungsnummer:i % 2 ? '' : '00340434' + (171 + i), tracking_url:'', versendet_am:i % 2 ? null : t(1), zahlung:'offen'});
+    if (i === 0) liste.push({odoo_id:n, name:'S00' + n++, ort_id:c.id, datum:t(12), status:'storniert', betrag:0, versand:'', sendungsnummer:'', tracking_url:'', versendet_am:null, zahlung:''});
+  });
+  return liste;
+}
+const AUFTRAG_STATUS = {angebot:'<span class="rueck offen">Angebot</span>', bestaetigt:'<span class="rueck ja">bestätigt</span>', storniert:'<span class="rueck storno">storniert</span>'};
+function versandHtml(a){
+  if (!a.versand) return '';
+  const nr = a.sendungsnummer ? ` <span style="white-space:nowrap">Sendungsnr. ${a.tracking_url ? `<a href="${esc(a.tracking_url)}" target="_blank" rel="noopener">${esc(a.sendungsnummer)}</a>` : esc(a.sendungsnummer)}</span>` : '';
+  return a.versand === 'versendet' ? `<span class="rueck ja">📦 versendet${a.versendet_am ? ' am ' + datumDe(a.versendet_am) : ''}</span>${nr}`
+    : a.versand === 'teilweise versendet' ? `<span class="rueck gold">📦 teilweise versendet</span>${nr}`
+    : '<span class="rueck offen">wird vorbereitet</span>';
+}
+const ZAHLUNG_KURZ = {bezahlt:'<span class="rueck ja">bezahlt</span>', offen:'<span class="rueck offen">Rechnung offen</span>', 'ohne Rechnung':'<span class="rueck offen">noch keine Rechnung</span>'};
 function bestellListeHtml(c){
-  const liste = D.bestellungen.filter(b => b.ortId === c.id);
-  if (!liste.length) return '<div class="meta" style="font-size:13px;color:var(--leise)">Noch keine Bestellung aus der App.</div>';
-  return liste.map(b => {
-    const stueck = b.positionen.reduce((n, p) => n + (+p.menge || 0), 0);
-    const st = b.status === 'angebot' ? `<span class="rueck ja">${esc(b.odooStatus || 'Angebot')} ${esc(b.odooName)}${b.summe != null ? ' · ' + euro(b.summe) : ''}</span>`
-      : b.status === 'fehler' ? `<span class="rueck nein" title="${esc(b.fehler)}">hat nicht geklappt – Teamleitung informiert</span>`
-      : `<span class="rueck offen">wird an Odoo übertragen …</span>`;
-    return `<div class="eintrag"><div class="eintrag-kopf"><div><b>${stueck} Artikel</b> <span class="meta">am ${datumDe(String(b.erstellt).slice(0, 10))} · ${esc(person(b.person)?.name || '?')}</span></div></div>
-      <div class="klein" style="font-size:13px">${b.positionen.map(p => `${p.menge} × ${esc(p.name)}`).join(' · ')}</div>
-      ${b.notiz ? `<div class="meta" style="font-size:12px;color:var(--leise)">Hinweis: ${esc(b.notiz)}</div>` : ''}
-      <div style="margin-top:4px">${st}</div></div>`;
-  }).join('');
+  if (DEMO && !AUFTRAEGE.length) AUFTRAEGE = demoAuftraege();
+  const odoo = AUFTRAEGE.filter(a => a.ort_id === c.id).sort((x, y) => String(y.datum).localeCompare(String(x.datum)) || y.odoo_id - x.odoo_id);
+  const ausApp = D.bestellungen.filter(b => b.ortId === c.id);
+  const appVon = Object.fromEntries(ausApp.filter(b => b.odooName).map(b => [b.odooName, b]));
+  // App-Bestellungen, die noch nicht (oder nicht mehr) in Odoo stehen
+  const offen = ausApp.filter(b => !b.odooName || !odoo.some(a => a.name === b.odooName));
+  if (!odoo.length && !offen.length) return '<div class="meta" style="font-size:13px;color:var(--leise)">Noch keine Bestellung.</div>';
+  const zeile = (kopf, positionen, notiz, chips) => `<div class="eintrag"><div class="eintrag-kopf"><div>${kopf}</div></div>
+      ${positionen ? `<div class="klein" style="font-size:13px">${positionen}</div>` : ''}
+      ${notiz ? `<div class="meta" style="font-size:12px;color:var(--leise)">Hinweis: ${esc(notiz)}</div>` : ''}
+      <div class="auftrag-chips">${chips}</div></div>`;
+  return odoo.map(a => { const b = appVon[a.name];
+      return zeile(`<b>${esc(a.name)}</b> <span class="meta">am ${datumDe(a.datum)}${a.status !== 'storniert' ? ' · ' + euro(a.betrag) : ''}${b ? ' · über die App von ' + esc(person(b.person)?.name || '?') : ''}</span>`,
+        b ? b.positionen.map(p => `${p.menge} × ${esc(p.name)}`).join(' · ') : '', b?.notiz,
+        [AUFTRAG_STATUS[a.status] || '', versandHtml(a), a.status === 'bestaetigt' ? ZAHLUNG_KURZ[a.zahlung] || '' : ''].filter(Boolean).join(' '));
+    }).join('') + offen.map(b => {
+      const stueck = b.positionen.reduce((n, p) => n + (+p.menge || 0), 0);
+      const st = b.status === 'fehler' ? `<span class="rueck nein" title="${esc(b.fehler)}">hat nicht geklappt – Teamleitung informiert</span>`
+        : b.odooName ? `<span class="rueck offen">${esc(b.odooStatus || 'Angebot')} ${esc(b.odooName)} – Stand kommt beim nächsten Abgleich</span>`
+        : '<span class="rueck offen">wird an Odoo übertragen …</span>';
+      return zeile(`<b>${stueck} Artikel</b> <span class="meta">am ${datumDe(String(b.erstellt).slice(0, 10))} · ${esc(person(b.person)?.name || '?')}</span>`,
+        b.positionen.map(p => `${p.menge} × ${esc(p.name)}`).join(' · '), b.notiz, st);
+    }).join('');
 }
 let bestellOrt = null, bestellMengen = {}, bestellSuche = '', bestellNurBestand = true;
 function bestellDialogOeffnen(c){
@@ -2167,7 +2210,7 @@ function panelZeichnen(c){
       <div id="g-infos">${GDETAILS.has(c.google) ? googleInfoHtml(GDETAILS.get(c.google))
         : '<button class="knopf leise klein" data-akt="google-infos">ⓘ Infos von Google anzeigen (Öffnungszeiten, Bewertung …)</button>'}</div></div>` : ''}
     <div class="abschnitt" style="margin-top:4px">
-      <h4>Bestellungen</h4>
+      <h4>Bestellungen <span class="leise" style="font-weight:400;font-size:12px">(Stand aus Odoo)</span></h4>
       <div id="bestell-liste">${bestellListeHtml(c)}</div>
       <button class="knopf gold klein" data-akt="bestellen" style="margin-top:8px">🛒 Bestellung aufgeben</button>
       ${mailKnoepfeHtml(c)}
