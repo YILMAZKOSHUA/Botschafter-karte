@@ -3820,10 +3820,10 @@ async function excelExport(){
 }
 document.addEventListener('click', e => { if (e.target.closest('[data-excel]')) excelExport(); });
 
-/* ============ Rundgang beim ersten Login (höchstens 5 Fenster) ============ */
+/* ============ Rundgang beim ersten Login (7 Fenster; wer v1 kennt, sieht ab „Neu“) ============ */
 const legZeile = (status, text) => `<div class="rg-leg"><span class="leg-sym" style="--farbe:${STATUS[status].farbe}">${statusSvg(status, 16)}</span><span>${text}</span></div>`;
 const RUNDGANG = [
-  {titel:'Aloha, schön, dass du da bist 🌱', html:() => `
+  {titel:'Aloha, wundervoll, dass du da bist 🌱', html:() => `
     <p>Die <b>Botschafter-Karte</b> ist unsere einheitliche Karte für den Kakao von Maya Munay.</p>
     <p>Hier sehen wir alle Orte, an denen der Kakao schon ist oder gut hinpassen könnte –
        <b>Cafés, Yoga-Studios, Höfe, Supermärkte und Event-Locations</b>.</p>
@@ -3839,7 +3839,8 @@ const RUNDGANG = [
     <p class="leise" style="font-size:13px">Die Legende findest du auch unten links auf der Karte.</p>`},
   {titel:'Orte finden und anlegen', html:() => `
     <p>🔎 <b>Suchen:</b> Oben den Namen mit Stadt eintippen, z.B. „Cafe Sonnenschein Berlin“, und Enter drücken.
-       Es öffnet sich eine Ortskarte mit Öffnungszeiten, Telefon und Website.</p>
+       Es öffnet sich eine Ortskarte mit Öffnungszeiten, Telefon und Website.
+       Du kannst auch direkt auf einen Ort in der Google-Karte tippen.</p>
     <p>➕ <b>Auf die Karte bringen:</b> In der Ortskarte auf „Als potenziell auf die Karte“ tippen –
        oder mit <b>＋ Ort / Kunde</b> einfach auf die Karte tippen.</p>
     <p>✨ <b>Passende Orte finden</b> zeigt passende Orte im aktuellen Kartenausschnitt, z.B. Yoga-Studios, wenn du oben diese Art wählst.</p>
@@ -3851,7 +3852,26 @@ const RUNDGANG = [
     <p>👣 einen <b>Besuch</b> notieren · 🍫 eine <b>Probe</b> eintragen (Produkt einfach eintippen) ·
        den <b>Status</b> anpassen – und unten auf <b>„Speichern & schließen“</b>.</p>
     <p>🔔 <b>Erinnerungen</b> zeigen dir, wo ein Kontakt ansteht oder eine Probe auf Rückmeldung wartet.</p>
-    <p>📋 Unter <b>Liste → Neueste Aktivitäten</b> siehst du, wo im Team gerade Bewegung ist.</p>`},
+    <p>📋 Die <b>Liste</b> zeigt zuerst deine eigenen Orte – über „Zeigen:“ auch die vom ganzen Team.
+       Unter <b>Neueste Aktivitäten</b> siehst du, wo gerade Bewegung ist.</p>
+    <p>🍫 Im Reiter <b>Proben</b> siehst du deine Proben nach Produkt und Größe – und mit einem Tipp, bei welchem Ort sie abgegeben wurden.</p>
+    <p class="leise" style="font-size:13px">Auf dem Handy öffnet sich ein Ort über die ganze Seite – mit × oben rechts geht’s zurück.</p>`},
+  {titel:'Neu: Kunden begleiten 🛒', html:() => `
+    <p>Ist ein Ort <b>Kunde</b>, findest du in seinem Fenster:</p>
+    <p>🛒 <b>Bestellung aufgeben</b> – sie landet bei Maya Munay als Angebot und wird dort geprüft.</p>
+    <p>📦 <b>Bestellstatus</b> aus Odoo: Angebot, bestätigt oder storniert · abgeschickt am … mit <b>Sendungsnummer</b> · bezahlt oder offen.</p>
+    <p>✉ <b>Zwei Mails per Knopf</b> – du entscheidest, wann: die <b>Begrüßung</b> nach dem ersten Besuch und
+       <b>Willkommen in der Familie</b> nach der ersten Bestellung, mit persönlichem Flyer. Danach steht dort „gesendet am …“.</p>
+    <p>🛍️ <b>Kundenprofil:</b> Foto, kurzer Text, Website – und ein Häkchen, wenn es dort unseren Kakao zu kaufen gibt.
+       Dann kommt der Ort auf die <b>Kakaoshop-Seite</b>.</p>
+    <p>🤝 Das Häkchen <b>„Kunde wird aktiv betreut“</b> zeigt, dass du am Kunden dranbleibst – das zählt bei der Provision.</p>`},
+  {titel:'Neu: Provision, Austausch und dein Profil', html:() => `
+    <p>💰 <b>Provision:</b> eigener Reiter mit dem Modell „Geld oder Kakao“, einem Rechner und deinen Aufträgen –
+       Schritt für Schritt <b>ausstehend → genehmigt → bezahlt</b>. Die Sätze sind noch ein Beispiel, bis das Team sie bestätigt.</p>
+    <p>💬 <b>Austausch:</b> ein Forum mit Themen für Fragen und Wissen – und ein direkter Chat mit einzelnen Personen aus dem Team.</p>
+    <p>📄 <b>Dokumente:</b> Flyer, Preislisten und Infos zum Nachlesen – auch zum Selbst-Lernen.</p>
+    <p>🙂 <b>Dein Profil</b> (rundes Symbol oben rechts): Foto, Name, Telefon, E-Mail und ob du deine Provision lieber in Geld oder in Kakao möchtest.
+       Name und Foto erscheinen auch im Willkommens-Flyer für deine Kunden.</p>`},
   {titel:'Achtsam mit Daten 🤍', html:() => `
     <p>Uns ist wichtig, dass sich alle hier sicher fühlen:</p>
     <p>🔐 <b>Nur eingeladene Personen</b> aus dem Team sehen die Karte. Die Anmeldung läuft ohne Passwort über einen Link per Mail.</p>
@@ -3864,7 +3884,8 @@ const RUNDGANG = [
     <p class="leise" style="font-size:13px">Diesen Rundgang findest du jederzeit wieder über das <b>?</b> oben rechts.</p>`},
 ];
 let rgSchritt = 0;
-const rgSchluessel = () => 'mm-rundgang-v1-' + (ich?.id || '');
+const rgSchluessel = (v = 2) => `mm-rundgang-v${v}-` + (ich?.id || '');
+const RG_NEU_AB = 4;   // erstes Fenster mit Neuerungen (für alle, die v1 schon kennen)
 function rundgangZeigen(i = 0){
   rgSchritt = Math.max(0, Math.min(RUNDGANG.length - 1, i));
   const s = RUNDGANG[rgSchritt];
@@ -3922,8 +3943,8 @@ async function start(){
   setTimeout(() => odooAbgleich(false), 1500);
   odooStatusZeichnen();
   if (istLeitung() && D.antraege.length) setTimeout(() => toast(`🗑️ ${D.antraege.length} ${D.antraege.length === 1 ? 'Ort soll' : 'Orte sollen'} entfernt werden – siehe Erinnerungen.`), 1200);
-  let gesehen = false; try { gesehen = !!localStorage.getItem(rgSchluessel()); } catch(e){}
-  if (!gesehen) setTimeout(() => rundgangZeigen(0), 400);
+  let gesehen = false, alt = false; try { gesehen = !!localStorage.getItem(rgSchluessel()); alt = !!localStorage.getItem(rgSchluessel(1)); } catch(e){}
+  if (!gesehen) setTimeout(() => rundgangZeigen(alt ? RG_NEU_AB : 0), 400);
   if (!istLeitung()) {
     const eigene = D.cafes.filter(c => c.betreuung === ich.id && hatPunkt(c));
     if (eigene.length) K.fitPoints(eigene.map(c => [c.lat, c.lng]), 13);
